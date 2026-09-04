@@ -7,7 +7,8 @@
  *   entries: Array<{date: string, flow: string|null, symptoms: string[], mood: string|null, note: string}>,
  *   settings: Record<string, any>,
  *   calendarMonth: string,
- *   editingDate: string|null
+ *   editingDate: string|null,
+ *   logFocusSection: 'flow'|'symptom'|'mood'|null
  * }} */
 export const state = {
   activeScreen: 'home',
@@ -15,7 +16,8 @@ export const state = {
   entries: [],
   settings: {},
   calendarMonth: '',
-  editingDate: null
+  editingDate: null,
+  logFocusSection: null
 };
 
 const listeners = new Set();

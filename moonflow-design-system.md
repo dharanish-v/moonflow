@@ -102,7 +102,7 @@ A single screen, shown once before any data exists: last period start date (nati
 
 
 
-1. **Home** — a literal illustration of the current moon phase (not an abstract progress ring), cycle day + status text, a small Tamil word (பிறை, "crescent") as a quiet personal signature, 3 quick-action buttons, glass tab bar
+1. **Home** — a literal illustration of the current moon phase (not an abstract progress ring), cycle day + status text, a small Tamil word (பிறை, "crescent") as a quiet personal signature, 3 quick-action buttons, glass tab bar. The 3 quick actions (Flow/Mood/Symptom) all open the same log-entry sheet, but each scrolls to and focuses its own section on open — they're shortcuts to the relevant part of today's entry, not three identical buttons to the same screen
 2. **Calendar** — month grid; solid rose = logged period, gold tint = fertile window (peak ringed), dashed rose outline = predicted period; legend row. Tapping any past date opens the log-entry sheet for that date, pre-filled if a log exists, with a "Clear this day's log" option. Future dates are non-interactive.
 3. **Log entry** — flow-intensity pills (None/Spotting/Light/Medium/Heavy), multi-select symptom chips, single-select mood row, notes field, save button
 4. **Insights** — 2×2 stat cards (avg cycle, avg period, variability, cycles logged), 6-cycle bar chart, symptom-frequency bars

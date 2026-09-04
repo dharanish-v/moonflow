@@ -160,7 +160,10 @@ async function render() {
       const { renderHomeScreen, mountHomeScreen } = await import('./screens/home.js');
       content.innerHTML = renderHomeScreen(state.entries, state.settings);
       mountHomeScreen(content, {
-        onQuickAction: () => setState({ activeScreen: 'log', editingDate: todayString() })
+        // Each quick action opens the same sheet but scrolled/focused to its
+        // own section — otherwise Flow/Mood/Symptom are three identical
+        // shortcuts to the exact same screen (see log-entry.js's focusSection).
+        onQuickAction: (kind) => setState({ activeScreen: 'log', editingDate: todayString(), logFocusSection: kind })
       });
       break;
     }
@@ -169,7 +172,7 @@ async function render() {
       const { renderCalendarScreen, mountCalendarScreen } = await import('./screens/calendar.js');
       content.innerHTML = renderCalendarScreen(state.calendarMonth, state.entries, state.settings);
       mountCalendarScreen(content, {
-        onSelectDate: (date) => setState({ activeScreen: 'log', editingDate: date }),
+        onSelectDate: (date) => setState({ activeScreen: 'log', editingDate: date, logFocusSection: null }),
         onChangeMonth: (dir) => {
           const [y, m] = state.calendarMonth.split('-').map(Number);
           const next = new Date(y, m - 1 + (dir === 'next' ? 1 : -1), 1);
@@ -194,7 +197,7 @@ async function render() {
           latestLogDraft = null;
           await setSetting('draftEntry', null);
           const entries = await loadAllEntries();
-          setState({ entries, settings: { ...state.settings, draftEntry: null }, activeScreen: existing ? 'calendar' : 'home', editingDate: null });
+          setState({ entries, settings: { ...state.settings, draftEntry: null }, activeScreen: existing ? 'calendar' : 'home', editingDate: null, logFocusSection: null });
           return true;
         },
         onClear: existing
@@ -203,15 +206,15 @@ async function render() {
               latestLogDraft = null;
               await setSetting('draftEntry', null);
               const entries = await loadAllEntries();
-              setState({ entries, settings: { ...state.settings, draftEntry: null }, activeScreen: 'calendar', editingDate: null });
+              setState({ entries, settings: { ...state.settings, draftEntry: null }, activeScreen: 'calendar', editingDate: null, logFocusSection: null });
             }
           : undefined,
         onClose: async () => {
           latestLogDraft = null;
           await setSetting('draftEntry', null);
-          setState({ settings: { ...state.settings, draftEntry: null }, activeScreen: existing ? 'calendar' : 'home', editingDate: null });
+          setState({ settings: { ...state.settings, draftEntry: null }, activeScreen: existing ? 'calendar' : 'home', editingDate: null, logFocusSection: null });
         }
-      });
+      }, state.logFocusSection);
       break;
     }
 

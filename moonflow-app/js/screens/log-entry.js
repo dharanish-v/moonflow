@@ -66,17 +66,17 @@ export function renderLogEntryScreen(date, existingEntry, draftEntry = null) {
         <button type="button" id="log-close" aria-label="Close" style="background:none;border:none;color:var(--text-inactive);cursor:pointer;width:2.75rem;height:2.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${ICONS.x}</button>
       </div>
 
-      <div class="field">
+      <div class="field" id="log-field-flow">
         <span class="field__label">Flow</span>
         <div class="pill-group">${flowPills}</div>
       </div>
 
-      <div class="field">
+      <div class="field" id="log-field-symptom">
         <span class="field__label">Symptoms</span>
         <div class="chip-group">${symptomChips}</div>
       </div>
 
-      <div class="field">
+      <div class="field" id="log-field-mood">
         <span class="field__label">Mood</span>
         <div class="mood-group">${moodButtons}</div>
       </div>
@@ -103,8 +103,12 @@ export function renderLogEntryScreen(date, existingEntry, draftEntry = null) {
  *   onClose: () => void,
  *   onDraftChange?: (draft: {date: string, flow: string|null, symptoms: string[], mood: string|null, note: string}) => void
  * }} handlers
+ * @param {'flow'|'symptom'|'mood'|null} [focusSection] Which section to scroll to and
+ *   focus on open — the home screen's three quick-action buttons (Flow/Mood/Symptom)
+ *   otherwise all land on the exact same screen at the exact same scroll position,
+ *   making them functionally identical apart from which icon was tapped.
  */
-export function mountLogEntryScreen(container, date, { onSave, onClear, onClose, onDraftChange }) {
+export function mountLogEntryScreen(container, date, { onSave, onClear, onClose, onDraftChange }, focusSection = null) {
   let flow = null;
   let symptoms = new Set();
   let mood = null;
@@ -231,4 +235,17 @@ export function mountLogEntryScreen(container, date, { onSave, onClear, onClose,
       if (saveError) saveError.style.display = 'block';
     }
   });
+
+  // Land on the section the quick action actually promised, not always the
+  // top of the sheet — otherwise Flow/Mood/Symptom are three identical
+  // shortcuts to the same screen (see the home-screen quick-action buttons).
+  if (focusSection) {
+    const sectionEl = container.querySelector(`#log-field-${focusSection}`);
+    if (sectionEl) {
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      sectionEl.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+      const firstControl = /** @type {HTMLElement|null} */ (sectionEl.querySelector('button, textarea, input'));
+      firstControl?.focus();
+    }
+  }
 }

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<!-- Open this file directly in a browser to run the tests — no Node, no install, nothing but a browser. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Moonflow — log-entry quick-action focus tests</title>
+<style>
+  body { font-family: -apple-system, sans-serif; padding: 24px; background: #14132b; color: #f5f3ec; }
+  .pass { color: #8fe0a8; }
+  .fail { color: #e08f9f; }
+  h1 { font-size: 16px; font-weight: 500; }
+</style>
+</head>
+<body>
+<h1>Moonflow — log-entry quick-action focus test results</h1>
+<pre id="output">Running...</pre>
+
+<script type="module">
+import { renderLogEntryScreen, mountLogEntryScreen } from '../js/screens/log-entry.js';
+
+const results = [];
+
+function test(name, fn) {
+  try {
+    fn();
+    results.push({ name, pass: true });
+  } catch (e) {
+    results.push({ name, pass: false, message: e.message });
+  }
+}
+
+function assertOk(value, label) {
+  if (!value) throw new Error(`${label ?? 'value'} was falsy`);
+}
+
+function assertEqual(actual, expected, label) {
+  if (actual !== expected) throw new Error(`${label ?? 'expected'} ${expected}, got ${actual}`);
+}
+
+function mountWithFocus(focusSection) {
+  const container = document.createElement('div');
+  container.innerHTML = renderLogEntryScreen('2026-09-04', null);
+  document.body.appendChild(container);
+  mountLogEntryScreen(container, '2026-09-04', { onSave: async () => true, onClose: () => {} }, focusSection);
+  return container;
+}
+
+// --- Each quick-action kind must land focus in its own section, not always the top ---
+
+test('tapping the Flow quick action focuses the Flow section', () => {
+  const container = mountWithFocus('flow');
+  const flowSection = container.querySelector('#log-field-flow');
+  assertOk(flowSection.contains(document.activeElement), 'active element is inside the Flow section');
+  container.remove();
+});
+
+test('tapping the Symptom quick action focuses the Symptoms section, not Flow', () => {
+  const container = mountWithFocus('symptom');
+  const symptomSection = container.querySelector('#log-field-symptom');
+  assertOk(symptomSection.contains(document.activeElement), 'active element is inside the Symptoms section');
+  container.remove();
+});
+
+test('tapping the Mood quick action focuses the Mood section, not Flow', () => {
+  const container = mountWithFocus('mood');
+  const moodSection = container.querySelector('#log-field-mood');
+  assertOk(moodSection.contains(document.activeElement), 'active element is inside the Mood section');
+  container.remove();
+});
+
+test('opening from the calendar (no quick-action kind) forces no particular focus', () => {
+  document.body.focus(); // ensure a known baseline before mounting
+  const container = mountWithFocus(null);
+  // The calendar-edit path has no "kind" to honor — confirms mounting doesn't
+  // throw and doesn't invent a forced focus target when none was asked for.
+  assertEqual(document.activeElement, document.body, 'no section grabbed focus');
+  container.remove();
+});
+
+// --- Render ---
+const passCount = results.filter(r => r.pass).length;
+document.getElementById('output').innerHTML = results
+  .map(r => r.pass
+    ? `<span class="pass">✓ ${r.name}</span>`
+    : `<span class="fail">✗ ${r.name}\n    ${r.message}</span>`)
+  .join('\n') + `\n\n${passCount}/${results.length} passed`;
+</script>
+</body>
+</html>
