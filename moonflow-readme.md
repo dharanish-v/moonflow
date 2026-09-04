@@ -31,6 +31,12 @@ Any static host works, since there's no server code (Vercel, Netlify, GitHub Pag
 
 Share whichever link matches the icon you want (see ADR-011 — this can't be switched later without reinstalling, since it's fixed at install time).
 
+**Live (GitHub Pages, deployed via `.github/workflows/deploy-pages.yml` on every push to `main`):**
+- Real icon: https://dharanish-v.github.io/moonflow/index.html
+- Discreet icon: https://dharanish-v.github.io/moonflow/planner.html
+
+The repo is public (GitHub Pages doesn't support private repos on the free plan — see ADR-023). No user data is ever in the repo or the deployed site regardless; everything logged lives only in each install's own on-device IndexedDB.
+
 ## Installing on iPhone
 
 1. Send the install link via WhatsApp/Telegram.
