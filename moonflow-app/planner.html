@@ -21,14 +21,14 @@
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     overscroll-behavior: none;
   }
-  /* Clears the fixed tab bar below (its own padding/border/icon-size math,
+  /* Clears the fixed tab bar below (its own padding/border/button-height math,
      plus its bottom offset and a small gap) so content is never hidden
      behind it — reserved unconditionally, since screens without a tab bar
      (onboarding, the log sheet, PIN lock) just get a bit of harmless extra
      space at the very bottom rather than any risk of clipped content on the
      screens that do show it. */
   #app-content {
-    padding-bottom: calc(2 * var(--space-3) + 2 * var(--border-width) + 1.2rem + var(--space-3) + env(safe-area-inset-bottom, 0.5rem));
+    padding-bottom: calc(2 * var(--space-2) + 2 * var(--border-width) + 2.75rem + var(--space-3) + env(safe-area-inset-bottom, 0.5rem));
   }
 
   /* LCP skeleton (ADR-018) — a static placeholder that paints before app.js has
@@ -76,12 +76,17 @@
        while still capping/centering at 26rem on wider screens. */
     width: min(26rem, calc(100% - 2 * var(--space-4)));
     box-sizing: border-box; /* width above must include the padding+border below, or they re-add the exact margin the calc just carved out */
-    padding: var(--space-3) var(--space-4);
+    padding: var(--space-2) var(--space-4);
     background: var(--glass-fill);
     border: var(--border-width) solid var(--glass-border);
     border-radius: var(--radius-tabbar);
   }
   #tab-bar button {
+    width: 2.75rem; /* 44px — WCAG/HIG touch-target minimum, was a 19px icon-only hit area */
+    height: 2.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: none;
     border: none;
     padding: 0;

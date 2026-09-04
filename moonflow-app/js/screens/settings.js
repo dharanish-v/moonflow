@@ -37,10 +37,10 @@ export function renderSettingsScreen(settings) {
         <div class="list-row__right">${ICONS['chevron-right']}</div>
       </button>
 
-      <div class="list-row">
+      <button type="button" class="list-row" id="export-data" aria-label="Export data" style="width:100%;background:none;border:none;font:inherit;color:inherit;cursor:pointer;">
         <div class="list-row__left">${ICONS.download}<span class="list-row__label">Export data</span></div>
-        <button type="button" id="export-data" aria-label="Export data" style="background:none;border:none;padding:0;cursor:pointer;">${ICONS['chevron-right']}</button>
-      </div>
+        <div class="list-row__right">${ICONS['chevron-right']}</div>
+      </button>
 
       <p id="discreet-explainer" style="display:none; font-size: var(--text-micro); color: var(--text-muted); margin-top: var(--space-2);">To switch to a discreet home screen icon, remove Moonflow from your home screen and reinstall using the alternate link.</p>
     </div>

@@ -68,12 +68,13 @@ Single system sans-serif (SF Pro / `-apple-system`). Two weights only: 400 regul
 - Device frame radius: **36px**
 - Spacing rhythm: 4 / 6 / 8px for tight clusters, 14–20px between sections
 - Borders are always **0.5px** — hairline-thin, never heavier
+- **Touch targets are 44×44px minimum** (WCAG/Apple HIG) on every interactive control — buttons, pills, chips, the mood picker, the stepper, calendar nav arrows, the tab bar, and full-row settings items. Two accepted exceptions, both matching real native conventions rather than one-off shortcuts: the **toggle switch** (51×31px, Apple's own UISwitch size — a binary control where an adjacent mis-tap costs nothing) and **calendar day cells** (40×40px — the largest size that fits a 7-column grid across the real iPhone width range alongside the screen's own padding; Apple's Calendar/Health apps make the same tradeoff for dense date grids, and a mis-tap there just lands on an adjacent day)
 
 ## Components
 
 - **Quick-action button** — flat card, 0.5px border-muted, icon above label, no fill unless active
 - **Chip (symptom)** — pill; unselected = transparent + border-muted + text-muted; selected = 18% accent tint + accent border + accent text
-- **Toggle** — 36×20 track; gold = on, border-muted = off; knob always bg-frame
+- **Toggle** — 51×31px track (Apple UISwitch proportions — see the touch-target note above); gold = on, border-muted = off; knob always bg-frame
 - **Moon-phase illustration** — the actual current lunar phase, rendered via an offset-circle technique (a lit gold circle with a dark circle overlapping to carve the correct phase shape) plus a subtle dot-grain texture on the lit portion, for an illustrated rather than flat-vector quality; a small rose dot marks the fertile-window day. Replaces an earlier abstract progress-ring concept — literal and tied to the app's name, not a decorative metaphor (ADR-019)
 - **Bar chart** — flat gold bars, rounded top corners only, no gridlines
 - **Tab bar (the one glass element)** — floating inset capsule, glass-fill + glass-border, margin on all sides so it visibly floats above content
@@ -146,6 +147,7 @@ A single screen, shown once before any data exists: last period start date (nati
 - Floating tab bar uses `padding-bottom: env(safe-area-inset-bottom)` + `viewport-fit=cover`, so it clears the home-indicator area
 - Portrait-locked via the manifest's `orientation` field
 - Fluid layout across screen sizes, not a fixed mockup width
+- 44×44px minimum touch targets on every interactive control (see Shape & Spacing) — the whole app shipped this pass with icon-only 19-32px hit areas throughout; caught by measuring actual rendered geometry, not by visual review
 
 ### Data-safety rules
 - Draft log entries autosave on backgrounding (Page Visibility API), so an iOS-killed tab doesn't lose in-progress data

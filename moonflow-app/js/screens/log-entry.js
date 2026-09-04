@@ -63,7 +63,7 @@ export function renderLogEntryScreen(date, existingEntry, draftEntry = null) {
       <div class="log-sheet__handle" aria-hidden="true"></div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--space-6);">
         <span class="screen__title" style="margin:0;">${formatHeaderDate(date)}</span>
-        <button type="button" id="log-close" aria-label="Close" style="background:none;border:none;color:var(--text-inactive);cursor:pointer;">${ICONS.x}</button>
+        <button type="button" id="log-close" aria-label="Close" style="background:none;border:none;color:var(--text-inactive);cursor:pointer;width:2.75rem;height:2.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${ICONS.x}</button>
       </div>
 
       <div class="field">
@@ -86,7 +86,7 @@ export function renderLogEntryScreen(date, existingEntry, draftEntry = null) {
         <textarea id="log-note" class="notes-input" placeholder="Add a note for today...">${note}</textarea>
       </div>
 
-      ${existingEntry ? `<button type="button" id="log-clear" style="background:none;border:none;color:var(--accent-rose);font-size:var(--text-secondary-size);font-family:inherit;cursor:pointer;padding:0 0 var(--space-4);">Clear this day's log</button>` : ''}
+      ${existingEntry ? `<button type="button" id="log-clear" style="background:none;border:none;color:var(--accent-rose);font-size:var(--text-secondary-size);font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;min-height:2.75rem;padding:0;margin-bottom:var(--space-2);">Clear this day's log</button>` : ''}
 
       <p id="log-save-error" style="display:none;color:var(--accent-rose);font-size:var(--text-secondary-size);margin:0 0 var(--space-3);">Couldn't save — try again</p>
       <button type="button" class="button button--primary" id="log-save">Save</button>
