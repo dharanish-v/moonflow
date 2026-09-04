@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<!-- Open directly in a browser (via the local server — see README) to see and interact
+     with the onboarding screen in isolation, before app.js/routing exist. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moonflow — onboarding preview</title>
+<link rel="stylesheet" href="../css/tokens.css">
+<link rel="stylesheet" href="../css/components.css">
+<style>
+  body { margin: 0; background: var(--bg-screen); min-height: 100vh; font-family: -apple-system, sans-serif; }
+  #result { max-width: 26rem; margin: 0 auto; padding: 0 var(--space-5) var(--space-6); color: var(--text-secondary); font-size: var(--text-secondary-size); white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="result"></div>
+
+<script type="module">
+  import { renderOnboardingScreen, mountOnboardingScreen } from '../js/screens/onboarding.js';
+
+  const app = document.getElementById('app');
+  const result = document.getElementById('result');
+
+  app.innerHTML = renderOnboardingScreen();
+  mountOnboardingScreen(app, (data) => {
+    result.textContent = 'onComplete called with:\n' + JSON.stringify(data, null, 2);
+  });
+</script>
+</body>
+</html>

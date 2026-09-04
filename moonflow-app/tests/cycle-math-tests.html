@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!-- Open this file directly in a browser to run the tests — no Node, no install, nothing but a browser. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Moonflow — cycle-math tests</title>
+<style>
+  body { font-family: -apple-system, sans-serif; padding: 24px; background: #14132b; color: #f5f3ec; }
+  .pass { color: #8fe0a8; }
+  .fail { color: #e08f9f; }
+  h1 { font-size: 16px; font-weight: 500; }
+</style>
+</head>
+<body>
+<h1>Moonflow — cycle-math test results</h1>
+<pre id="output">Running...</pre>
+
+<script type="module">
+import { derivePeriods, predictNextPeriod, estimateFertileWindow } from '../js/cycle-math.js';
+
+const results = [];
+
+function test(name, fn) {
+  try {
+    fn();
+    results.push({ name, pass: true });
+  } catch (e) {
+    results.push({ name, pass: false, message: e.message });
+  }
+}
+
+function assertEqual(actual, expected, label) {
+  if (actual !== expected) {
+    throw new Error(`${label ?? 'expected'} ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+  }
+}
+
+function assertOk(value, label) {
+  if (!value) throw new Error(`${label ?? 'value'} was falsy`);
+}
+
+// --- Tests, unchanged in substance from the original set ---
+
+test('derivePeriods groups consecutive flow days into one period', () => {
+  const periods = derivePeriods([
+    { date: '2026-09-01', flow: 'light' },
+    { date: '2026-09-02', flow: 'medium' },
+    { date: '2026-09-03', flow: 'medium' },
+  ]);
+  assertEqual(periods.length, 1, 'period count');
+  assertEqual(periods[0].start, '2026-09-01');
+  assertEqual(periods[0].end, '2026-09-03');
+});
+
+test('derivePeriods excludes spotting-only days from period boundaries', () => {
+  const periods = derivePeriods([
+    { date: '2026-08-20', flow: 'spotting' },
+    { date: '2026-09-01', flow: 'light' },
+  ]);
+  assertEqual(periods.length, 1);
+  assertEqual(periods[0].start, '2026-09-01');
+});
+
+test('derivePeriods treats a 1-day gap as the same period (missed-log tolerance)', () => {
+  const periods = derivePeriods([
+    { date: '2026-09-01', flow: 'medium' },
+    { date: '2026-09-03', flow: 'light' },
+  ]);
+  assertEqual(periods.length, 1);
+});
+
+test('derivePeriods treats a 3+ day gap as two separate periods', () => {
+  const periods = derivePeriods([
+    { date: '2026-08-05', flow: 'medium' },
+    { date: '2026-09-01', flow: 'light' },
+  ]);
+  assertEqual(periods.length, 2);
+});
+
+test('predictNextPeriod falls back to the onboarding average with fewer than 2 real periods', () => {
+  const result = predictNextPeriod(
+    [{ start: '2026-08-01', end: '2026-08-05' }],
+    { avgCycleLength: 28 }
+  );
+  assertEqual(result.confidence, 'estimated');
+});
+
+test('predictNextPeriod uses the median cycle length once 2+ periods exist', () => {
+  const result = predictNextPeriod(
+    [{ start: '2026-06-01' }, { start: '2026-06-29' }, { start: '2026-07-27' }],
+    { avgCycleLength: 28 }
+  );
+  assertEqual(result.confidence, 'confirmed');
+  assertEqual(result.date, '2026-08-24');
+});
+
+test('predictNextPeriod returns a range, not a false-precision date, when history is highly variable', () => {
+  const result = predictNextPeriod(
+    [{ start: '2026-04-01' }, { start: '2026-04-25' }, { start: '2026-06-05' }],
+    { avgCycleLength: 28 }
+  );
+  assertEqual(result.confidence, 'wide');
+  assertOk(result.rangeStart && result.rangeEnd, 'range bounds');
+});
+
+test('estimateFertileWindow places ovulation 14 days before the predicted period', () => {
+  const window = estimateFertileWindow('2026-09-29');
+  assertEqual(window.peak, '2026-09-15');
+});
+
+// --- Render ---
+const passCount = results.filter(r => r.pass).length;
+document.getElementById('output').innerHTML = results
+  .map(r => r.pass
+    ? `<span class="pass">✓ ${r.name}</span>`
+    : `<span class="fail">✗ ${r.name}\n    ${r.message}</span>`)
+  .join('\n') + `\n\n${passCount}/${results.length} passed`;
+</script>
+</body>
+</html>

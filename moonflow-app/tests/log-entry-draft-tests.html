@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<!-- Open this file directly in a browser to run the tests — no Node, no install, nothing but a browser. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Moonflow — log-entry draft-resolution tests</title>
+<style>
+  body { font-family: -apple-system, sans-serif; padding: 24px; background: #14132b; color: #f5f3ec; }
+  .pass { color: #8fe0a8; }
+  .fail { color: #e08f9f; }
+  h1 { font-size: 16px; font-weight: 500; }
+</style>
+</head>
+<body>
+<h1>Moonflow — log-entry draft-resolution test results</h1>
+<pre id="output">Running...</pre>
+
+<script type="module">
+import { resolveInitialDraft } from '../js/screens/log-entry.js';
+
+const results = [];
+
+function test(name, fn) {
+  try {
+    fn();
+    results.push({ name, pass: true });
+  } catch (e) {
+    results.push({ name, pass: false, message: e.message });
+  }
+}
+
+function assertEqual(actual, expected, label) {
+  const a = JSON.stringify(actual), e = JSON.stringify(expected);
+  if (a !== e) throw new Error(`${label ?? 'expected'} ${e}, got ${a}`);
+}
+
+test('no draft, no existing entry -> empty blank form', () => {
+  const result = resolveInitialDraft('2026-09-04', null, null);
+  assertEqual(result, { flow: null, symptoms: [], mood: null, note: '', fromDraft: false });
+});
+
+test('no draft, existing saved entry -> prefills from the existing entry', () => {
+  const existing = { flow: 'medium', symptoms: ['cramps'], mood: 'neutral', note: 'ow' };
+  const result = resolveInitialDraft('2026-09-04', existing, null);
+  assertEqual(result, { flow: 'medium', symptoms: ['cramps'], mood: 'neutral', note: 'ow', fromDraft: false });
+});
+
+test('draft for today, no saved entry -> restores the draft, not a blank form', () => {
+  const draft = { date: '2026-09-04', flow: 'light', symptoms: ['fatigue'], mood: 'sad', note: 'draft note' };
+  const result = resolveInitialDraft('2026-09-04', null, draft);
+  assertEqual(result, { flow: 'light', symptoms: ['fatigue'], mood: 'sad', note: 'draft note', fromDraft: true });
+});
+
+test('draft for a DIFFERENT date is ignored (no leaking a stale draft into today)', () => {
+  const staleDraft = { date: '2026-09-03', flow: 'heavy', symptoms: [], mood: 'cry', note: 'yesterday' };
+  const result = resolveInitialDraft('2026-09-04', null, staleDraft);
+  assertEqual(result, { flow: null, symptoms: [], mood: null, note: '', fromDraft: false });
+});
+
+test('draft for the same date as an existing saved entry -> the in-progress draft wins', () => {
+  const existing = { flow: 'medium', symptoms: ['cramps'], mood: 'neutral', note: 'saved' };
+  const draft = { date: '2026-09-04', flow: 'heavy', symptoms: ['nausea'], mood: 'sad', note: 'not yet saved' };
+  const result = resolveInitialDraft('2026-09-04', existing, draft);
+  assertEqual(result, { flow: 'heavy', symptoms: ['nausea'], mood: 'sad', note: 'not yet saved', fromDraft: true });
+});
+
+// --- Render ---
+const passCount = results.filter(r => r.pass).length;
+document.getElementById('output').innerHTML = results
+  .map(r => r.pass
+    ? `<span class="pass">✓ ${r.name}</span>`
+    : `<span class="fail">✗ ${r.name}\n    ${r.message}</span>`)
+  .join('\n') + `\n\n${passCount}/${results.length} passed`;
+</script>
+</body>
+</html>

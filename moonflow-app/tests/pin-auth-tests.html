@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<!-- Open this file directly in a browser to run the tests — no Node, no install, nothing but a browser. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Moonflow — pin-auth tests</title>
+<style>
+  body { font-family: -apple-system, sans-serif; padding: 24px; background: #14132b; color: #f5f3ec; }
+  .pass { color: #8fe0a8; }
+  .fail { color: #e08f9f; }
+  h1 { font-size: 16px; font-weight: 500; }
+</style>
+</head>
+<body>
+<h1>Moonflow — pin-auth test results</h1>
+<pre id="output">Running...</pre>
+
+<script type="module">
+import { hashPin, evaluatePinAttempt } from '../js/pin-auth.js';
+import { PIN_LOCKOUT_AFTER_ATTEMPTS, PIN_LOCKOUT_SECONDS } from '../js/constants.js';
+
+const results = [];
+
+async function test(name, fn) {
+  try {
+    await fn();
+    results.push({ name, pass: true });
+  } catch (e) {
+    results.push({ name, pass: false, message: e.message });
+  }
+}
+
+function assertEqual(actual, expected, label) {
+  if (actual !== expected) {
+    throw new Error(`${label ?? 'expected'} ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+  }
+}
+
+function assertOk(value, label) {
+  if (!value) throw new Error(`${label ?? 'value'} was falsy`);
+}
+
+// --- hashPin ---
+
+await test('hashPin("1234") matches the known SHA-256 hex digest', async () => {
+  const hash = await hashPin('1234');
+  assertEqual(hash, '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4');
+});
+
+await test('hashPin is deterministic for the same input', async () => {
+  const a = await hashPin('9999');
+  const b = await hashPin('9999');
+  assertEqual(a, b);
+});
+
+await test('hashPin differs for different inputs', async () => {
+  const a = await hashPin('0000');
+  const b = await hashPin('9999');
+  assertOk(a !== b, 'hashes should differ');
+});
+
+// --- evaluatePinAttempt (pure lockout/attempt decision logic) ---
+
+await test('correct PIN unlocks and clears attempts + lockout', () => {
+  const result = evaluatePinAttempt({
+    enteredHash: 'abc', storedHash: 'abc', failedAttempts: 3, lockoutUntil: null, now: 1000
+  });
+  assertEqual(result.ok, true);
+  assertEqual(result.locked, false);
+  assertEqual(result.patch.pinFailedAttempts, 0);
+  assertEqual(result.patch.pinLockoutUntil, null);
+});
+
+await test('wrong PIN below the lockout threshold just increments attempts', () => {
+  const result = evaluatePinAttempt({
+    enteredHash: 'wrong', storedHash: 'abc', failedAttempts: 2, lockoutUntil: null, now: 1000
+  });
+  assertEqual(result.ok, false);
+  assertEqual(result.locked, false);
+  assertEqual(result.patch.pinFailedAttempts, 3);
+  assertEqual(result.patch.pinLockoutUntil, null);
+});
+
+await test(`the ${PIN_LOCKOUT_AFTER_ATTEMPTS}th wrong PIN triggers a lockout and resets the counter`, () => {
+  const result = evaluatePinAttempt({
+    enteredHash: 'wrong', storedHash: 'abc',
+    failedAttempts: PIN_LOCKOUT_AFTER_ATTEMPTS - 1, lockoutUntil: null, now: 1000
+  });
+  assertEqual(result.ok, false);
+  assertEqual(result.locked, true);
+  assertEqual(result.secondsRemaining, PIN_LOCKOUT_SECONDS);
+  assertEqual(result.patch.pinFailedAttempts, 0);
+  assertEqual(result.patch.pinLockoutUntil, 1000 + PIN_LOCKOUT_SECONDS * 1000);
+});
+
+await test('an attempt made while still locked out is rejected without touching the hash', () => {
+  const result = evaluatePinAttempt({
+    enteredHash: 'abc', storedHash: 'abc', // even the CORRECT hash must be rejected while locked
+    failedAttempts: 0, lockoutUntil: 5000, now: 4000
+  });
+  assertEqual(result.ok, false);
+  assertEqual(result.locked, true);
+  assertEqual(result.secondsRemaining, 1);
+  assertEqual(result.patch, null);
+});
+
+await test('lockout that has just expired is treated as not locked', () => {
+  const result = evaluatePinAttempt({
+    enteredHash: 'abc', storedHash: 'abc', failedAttempts: 0, lockoutUntil: 5000, now: 5000
+  });
+  assertEqual(result.ok, true);
+  assertEqual(result.locked, false);
+});
+
+// --- Render ---
+const passCount = results.filter(r => r.pass).length;
+document.getElementById('output').innerHTML = results
+  .map(r => r.pass
+    ? `<span class="pass">✓ ${r.name}</span>`
+    : `<span class="fail">✗ ${r.name}\n    ${r.message}</span>`)
+  .join('\n') + `\n\n${passCount}/${results.length} passed`;
+</script>
+</body>
+</html>
