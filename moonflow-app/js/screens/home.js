@@ -13,6 +13,20 @@ function toDateString(date) {
   return `${y}-${m}-${d}`;
 }
 
+// Tracks whether the moon-phase illustration has already played its one-time
+// fade-and-scale-in this session — it must animate on first load only, never
+// on every re-render (design-system.md edge-case rules, ADR-015).
+let hasAnimatedMoonPhaseThisSession = false;
+
+/**
+ * Pure: decides the animation class for a given prior-animated state — kept
+ * separate from the mutable session flag above so it's unit-testable.
+ * @param {boolean} alreadyAnimated
+ */
+export function getMoonPhaseAnimationClass(alreadyAnimated) {
+  return alreadyAnimated ? '' : ' moon-phase--animate-in';
+}
+
 /**
  * Computes everything the home screen needs to display, from raw entries + settings.
  * Exported separately from the render function so it's independently testable.
@@ -65,10 +79,12 @@ export function computeHomeStatus(entries, settings, today = new Date()) {
 export function renderHomeScreen(entries, settings, today = new Date()) {
   const status = computeHomeStatus(entries, settings, today);
   const dayLabel = status.cycleDay !== null ? `Day ${status.cycleDay}` : moonPhaseLabel(status.moonPhase);
+  const animationClass = getMoonPhaseAnimationClass(hasAnimatedMoonPhaseThisSession);
+  hasAnimatedMoonPhaseThisSession = true;
 
   return `
     <div class="screen">
-      ${renderMoonPhaseSVG(status.moonPhase).replace('<svg ', '<svg class="moon-phase" ')}
+      ${renderMoonPhaseSVG(status.moonPhase).replace('<svg ', `<svg class="moon-phase${animationClass}" `)}
       <div style="text-align:center; margin-top: var(--space-4);">
         <div class="screen__title" style="margin-bottom:0;">${dayLabel}</div>
         <div class="screen__subtitle" style="margin-bottom:0;">${status.statusText}${status.isEstimated ? ' &middot; estimated' : ''}</div>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!-- Open this file directly in a browser to run the tests — no Node, no install, nothing but a browser. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Moonflow — animation/gesture tests</title>
+<style>
+  body { font-family: -apple-system, sans-serif; padding: 24px; background: #14132b; color: #f5f3ec; }
+  .pass { color: #8fe0a8; }
+  .fail { color: #e08f9f; }
+  h1 { font-size: 16px; font-weight: 500; }
+</style>
+</head>
+<body>
+<h1>Moonflow — animation/gesture test results</h1>
+<pre id="output">Running...</pre>
+
+<script type="module">
+import { shouldDismissSheet } from '../js/gestures.js';
+import { getMoonPhaseAnimationClass } from '../js/screens/home.js';
+
+const results = [];
+
+function test(name, fn) {
+  try {
+    fn();
+    results.push({ name, pass: true });
+  } catch (e) {
+    results.push({ name, pass: false, message: e.message });
+  }
+}
+
+function assertEqual(actual, expected, label) {
+  if (actual !== expected) throw new Error(`${label ?? 'expected'} ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+}
+
+// --- shouldDismissSheet ---
+
+test('a small, slow downward drag does not dismiss', () => {
+  assertEqual(shouldDismissSheet({ deltaY: 20, velocity: 0.1 }), false);
+});
+
+test('dragging past the distance threshold dismisses, even slowly', () => {
+  assertEqual(shouldDismissSheet({ deltaY: 100, velocity: 0.05 }), true);
+});
+
+test('a fast flick dismisses even if the distance is short', () => {
+  assertEqual(shouldDismissSheet({ deltaY: 10, velocity: 0.9 }), true);
+});
+
+test('dragging upward never dismisses, regardless of velocity', () => {
+  assertEqual(shouldDismissSheet({ deltaY: -50, velocity: 5 }), false);
+});
+
+test('no movement at all does not dismiss', () => {
+  assertEqual(shouldDismissSheet({ deltaY: 0, velocity: 0 }), false);
+});
+
+// --- getMoonPhaseAnimationClass: animate once per session, never on every re-render ---
+
+test('the first render gets the animate-in class', () => {
+  assertEqual(getMoonPhaseAnimationClass(false), ' moon-phase--animate-in');
+});
+
+test('a subsequent render (already animated) gets no animation class', () => {
+  assertEqual(getMoonPhaseAnimationClass(true), '');
+});
+
+// --- Render ---
+const passCount = results.filter(r => r.pass).length;
+document.getElementById('output').innerHTML = results
+  .map(r => r.pass
+    ? `<span class="pass">✓ ${r.name}</span>`
+    : `<span class="fail">✗ ${r.name}\n    ${r.message}</span>`)
+  .join('\n') + `\n\n${passCount}/${results.length} passed`;
+</script>
+</body>
+</html>

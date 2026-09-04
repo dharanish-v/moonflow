@@ -2,7 +2,7 @@
 // changes any cached file (see README "Shipping an update") — this is what makes
 // old cached versions actually get replaced instead of silently persisting.
 
-const CACHE_VERSION = 'moonflow-v2';
+const CACHE_VERSION = 'moonflow-v4';
 
 const PRECACHE_FILES = [
   './',
@@ -21,6 +21,7 @@ const PRECACHE_FILES = [
   './js/icons.js',
   './js/pin-auth.js',
   './js/export.js',
+  './js/gestures.js',
   './js/vendor/dexie.mjs',
   './js/screens/onboarding.js',
   './js/screens/home.js',
@@ -39,7 +40,14 @@ const PRECACHE_FILES = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(PRECACHE_FILES))
+    caches.open(CACHE_VERSION).then((cache) =>
+      // {cache: 'reload'} bypasses the browser's own HTTP cache for each
+      // precache fetch — without it, a file served with no explicit
+      // Cache-Control (like this project's plain python3 -m http.server dev
+      // setup) can be served stale from Chrome's heuristic HTTP cache even
+      // though CACHE_VERSION was bumped, silently re-caching old bytes.
+      cache.addAll(PRECACHE_FILES.map((url) => new Request(url, { cache: 'reload' })))
+    )
   );
   self.skipWaiting();
 });

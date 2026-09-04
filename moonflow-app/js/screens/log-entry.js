@@ -5,6 +5,7 @@
 
 import { ICONS } from '../icons.js';
 import { FLOW_OPTIONS, SYMPTOM_OPTIONS, MOOD_OPTIONS } from '../constants.js';
+import { shouldDismissSheet } from '../gestures.js';
 
 /**
  * Pure decision for what a log-entry screen should open pre-filled with —
@@ -58,7 +59,8 @@ export function renderLogEntryScreen(date, existingEntry, draftEntry = null) {
   `).join('');
 
   return `
-    <div class="screen">
+    <div class="screen log-sheet">
+      <div class="log-sheet__handle" aria-hidden="true"></div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--space-6);">
         <span class="screen__title" style="margin:0;">${formatHeaderDate(date)}</span>
         <button type="button" id="log-close" aria-label="Close" style="background:none;border:none;color:var(--text-inactive);cursor:pointer;">${ICONS.x}</button>
@@ -162,6 +164,47 @@ export function mountLogEntryScreen(container, date, { onSave, onClear, onClose,
 
   const closeBtn = container.querySelector('#log-close');
   if (closeBtn) closeBtn.addEventListener('click', onClose);
+
+  // T22 swipe-to-dismiss (ADR-015: native Pointer Events, no gesture library).
+  // Scoped to the drag handle only, so normal taps/typing elsewhere in the
+  // sheet are never intercepted.
+  const sheet = /** @type {HTMLElement} */ (container.querySelector('.log-sheet'));
+  const handle = container.querySelector('.log-sheet__handle');
+  if (handle && sheet) {
+    let dragStartY = /** @type {number|null} */ (null);
+    let dragStartTime = 0;
+
+    handle.addEventListener('pointerdown', (e) => {
+      const pe = /** @type {PointerEvent} */ (e);
+      dragStartY = pe.clientY;
+      dragStartTime = performance.now();
+      sheet.style.transition = 'none';
+      /** @type {HTMLElement} */ (handle).setPointerCapture(pe.pointerId);
+    });
+
+    handle.addEventListener('pointermove', (e) => {
+      if (dragStartY === null) return;
+      const deltaY = /** @type {PointerEvent} */ (e).clientY - dragStartY;
+      if (deltaY > 0) sheet.style.transform = `translateY(${deltaY}px)`;
+    });
+
+    const endDrag = (/** @type {Event} */ e) => {
+      if (dragStartY === null) return;
+      const deltaY = Math.max(0, /** @type {PointerEvent} */ (e).clientY - dragStartY);
+      const elapsedMs = performance.now() - dragStartTime;
+      const velocity = elapsedMs > 0 ? deltaY / elapsedMs : 0;
+      sheet.style.transition = '';
+      dragStartY = null;
+      if (shouldDismissSheet({ deltaY, velocity })) {
+        onClose();
+      } else {
+        sheet.style.transform = '';
+      }
+    };
+
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
+  }
 
   const clearBtn = container.querySelector('#log-clear');
   if (clearBtn && onClear) clearBtn.addEventListener('click', onClear);

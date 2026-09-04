@@ -280,6 +280,16 @@ async function render() {
       break;
     }
   }
+
+  // ADR-015 screen transition — content.innerHTML above always produces a
+  // fresh element (ADR-007's full-re-render model), so this class re-triggers
+  // the CSS animation on every navigation without any JS-driven cleanup.
+  // The log sheet has its own more specific slide-up animation (.log-sheet)
+  // instead — applying both would just have one silently clobber the other,
+  // since `animation` is a single-value CSS property.
+  if (state.activeScreen !== 'log') {
+    content.firstElementChild?.classList.add('screen-enter');
+  }
 }
 
 // Wire the static tab bar exactly once — it is real HTML in index.html, never

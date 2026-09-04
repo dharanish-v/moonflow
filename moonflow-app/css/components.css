@@ -10,6 +10,33 @@
   box-sizing: border-box;
 }
 
+/* Screen-enter transition (ADR-015) — a fresh element every render (ADR-007's
+   full-re-render model), so re-adding this class always replays the animation
+   exactly once per navigation, never on every re-render of the same screen. */
+.screen-enter {
+  animation: screen-fade-in 180ms ease;
+}
+@keyframes screen-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Moon-phase illustration's one-time fade-and-scale-in (design-system.md:
+   "fades and scales in once on load, not on every re-render") — see
+   getMoonPhaseAnimationClass() in screens/home.js, which only applies this
+   class on the very first render of the session. */
+.moon-phase--animate-in {
+  animation: moon-phase-in 500ms ease-out;
+}
+@keyframes moon-phase-in {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-enter, .moon-phase--animate-in { animation: none; }
+}
+
 .screen__icon {
   width: 2.75rem;
   height: 2.75rem;
@@ -281,6 +308,33 @@
 .quick-action--flow svg { color: var(--accent-rose); }
 .quick-action--mood svg { color: var(--accent-gold); }
 .quick-action--symptom svg { color: var(--accent-blue); }
+
+/* Log-entry sheet — the design system's other deliberate glass exception
+   (design-system.md: "same glass treatment as the tab bar"). Slides up on
+   entry (T22, ADR-015); the handle bar is the swipe-to-dismiss drag target —
+   see gestures.js and mountLogEntryScreen(). */
+.log-sheet {
+  background: var(--glass-fill);
+  border: var(--border-width) solid var(--glass-border);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  animation: sheet-slide-up 220ms ease-out;
+}
+@keyframes sheet-slide-up {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .log-sheet { animation: none; }
+}
+
+.log-sheet__handle {
+  width: 2.25rem;
+  height: 0.25rem;
+  border-radius: 0.125rem;
+  background: var(--border-muted);
+  margin: 0 auto var(--space-4);
+  touch-action: none; /* the drag handle owns vertical pointer movement, not page scroll */
+}
 
 /* Tab bar — the one deliberate glass exception (ADR: glass rule) */
 .tab-bar {
