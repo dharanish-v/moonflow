@@ -117,6 +117,7 @@
 .field__date-input {
   width: 100%;
   box-sizing: border-box;
+  min-height: 2.75rem; /* 44px — WCAG/HIG touch-target minimum */
   background: var(--surface-card);
   border: var(--border-width) solid var(--border-muted);
   border-radius: var(--radius-pill);
