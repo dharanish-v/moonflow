@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<!-- Open this file directly in a browser to run the tests — no Node, no install, nothing but a browser. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Moonflow — accessibility tests</title>
+<style>
+  body { font-family: -apple-system, sans-serif; padding: 24px; background: #14132b; color: #f5f3ec; }
+  .pass { color: #8fe0a8; }
+  .fail { color: #e08f9f; }
+  h1 { font-size: 16px; font-weight: 500; }
+</style>
+</head>
+<body>
+<h1>Moonflow — accessibility test results</h1>
+<pre id="output">Running...</pre>
+
+<script type="module">
+import { renderSettingsScreen } from '../js/screens/settings.js';
+import { renderLogEntryScreen } from '../js/screens/log-entry.js';
+import { renderCalendarScreen } from '../js/screens/calendar.js';
+
+const results = [];
+
+function test(name, fn) {
+  try {
+    fn();
+    results.push({ name, pass: true });
+  } catch (e) {
+    results.push({ name, pass: false, message: e.message });
+  }
+}
+
+function assertOk(value, label) {
+  if (!value) throw new Error(`${label ?? 'value'} was falsy`);
+}
+
+function assertEqual(actual, expected, label) {
+  if (actual !== expected) throw new Error(`${label ?? 'expected'} ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+}
+
+/** Renders an HTML string into a detached container so it can be queried. */
+function parse(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div;
+}
+
+/** An element's computed accessible name, close enough for a test: aria-label wins, else trimmed text content. */
+function accessibleName(el) {
+  return (el.getAttribute('aria-label') || el.textContent || '').trim();
+}
+
+// --- Settings screen ---
+
+const settingsHtml = renderSettingsScreen({ pinLockEnabled: false, avgCycleLength: 28, avgPeriodLength: 5 });
+const settingsDom = parse(settingsHtml);
+
+test('Export data button has a real accessible name (not just an aria-hidden chevron icon)', () => {
+  const btn = settingsDom.querySelector('#export-data');
+  assertOk(btn, 'export button exists');
+  assertOk(accessibleName(btn).length > 0, 'export button accessible name');
+});
+
+test('Average cycle length row is a real, focusable button (not an inert div)', () => {
+  const row = [...settingsDom.querySelectorAll('button')].find(b => accessibleName(b).includes('Average cycle length'));
+  assertOk(row, 'a <button> for the cycle-length row');
+  assertEqual(row.tagName, 'BUTTON');
+});
+
+test('Average period length row is a real, focusable button', () => {
+  const row = [...settingsDom.querySelectorAll('button')].find(b => accessibleName(b).includes('Average period length'));
+  assertOk(row, 'a <button> for the period-length row');
+});
+
+test('Discreet icon row is a real, focusable button', () => {
+  const row = [...settingsDom.querySelectorAll('button')].find(b => accessibleName(b).includes('Discreet icon'));
+  assertOk(row, 'a <button> for the discreet-icon row');
+});
+
+// --- Log-entry screen: selection state must be exposed via aria-pressed ---
+
+const logHtml = renderLogEntryScreen('2026-09-04', { flow: 'medium', symptoms: ['cramps'], mood: 'happy', note: '' });
+const logDom = parse(logHtml);
+
+test('the selected flow pill reports aria-pressed="true"', () => {
+  const el = logDom.querySelector('[data-flow="medium"]');
+  assertEqual(el.getAttribute('aria-pressed'), 'true');
+});
+
+test('an unselected flow pill reports aria-pressed="false"', () => {
+  const el = logDom.querySelector('[data-flow="light"]');
+  assertEqual(el.getAttribute('aria-pressed'), 'false');
+});
+
+test('the selected symptom chip reports aria-pressed="true"', () => {
+  const el = logDom.querySelector('[data-symptom="cramps"]');
+  assertEqual(el.getAttribute('aria-pressed'), 'true');
+});
+
+test('an unselected symptom chip reports aria-pressed="false"', () => {
+  const el = logDom.querySelector('[data-symptom="headache"]');
+  assertEqual(el.getAttribute('aria-pressed'), 'false');
+});
+
+test('the selected mood button reports aria-pressed="true"', () => {
+  const el = logDom.querySelector('[data-mood="happy"]');
+  assertEqual(el.getAttribute('aria-pressed'), 'true');
+});
+
+// --- Calendar: every day needs a full spoken state ---
+
+const calendarHtml = renderCalendarScreen('2026-09', [{ date: '2026-09-04', flow: 'medium' }], { avgCycleLength: 28, lastPeriodStart: '2026-08-01' });
+const calendarDom = parse(calendarHtml);
+
+test('a logged period day announces the date and "period"', () => {
+  const el = calendarDom.querySelector('[data-date="2026-09-04"]');
+  const label = (el.getAttribute('aria-label') || '').toLowerCase();
+  assertOk(label.includes('4'), 'includes the day number');
+  assertOk(label.includes('period'), 'includes "period"');
+});
+
+test('an unlogged day still announces a spoken date (not just a bare number)', () => {
+  const el = calendarDom.querySelector('[data-date="2026-09-10"]');
+  const label = el.getAttribute('aria-label') || '';
+  assertOk(label.length > 2, 'has a real spoken label, not just "10"');
+});
+
+// --- Render ---
+const passCount = results.filter(r => r.pass).length;
+document.getElementById('output').innerHTML = results
+  .map(r => r.pass
+    ? `<span class="pass">✓ ${r.name}</span>`
+    : `<span class="fail">✗ ${r.name}\n    ${r.message}</span>`)
+  .join('\n') + `\n\n${passCount}/${results.length} passed`;
+</script>
+</body>
+</html>

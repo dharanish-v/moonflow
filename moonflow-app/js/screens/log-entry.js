@@ -46,15 +46,15 @@ export function renderLogEntryScreen(date, existingEntry, draftEntry = null) {
   const { flow, symptoms, mood, note } = resolveInitialDraft(date, existingEntry, draftEntry);
 
   const flowPills = FLOW_OPTIONS.map(opt => `
-    <button type="button" class="pill${opt.id === flow ? ' pill--selected' : ''}" data-flow="${opt.id}">${opt.label}</button>
+    <button type="button" class="pill${opt.id === flow ? ' pill--selected' : ''}" data-flow="${opt.id}" aria-pressed="${opt.id === flow}">${opt.label}</button>
   `).join('');
 
   const symptomChips = SYMPTOM_OPTIONS.map(opt => `
-    <button type="button" class="chip${symptoms.includes(opt.id) ? ' chip--selected' : ''}" data-symptom="${opt.id}">${opt.label}</button>
+    <button type="button" class="chip${symptoms.includes(opt.id) ? ' chip--selected' : ''}" data-symptom="${opt.id}" aria-pressed="${symptoms.includes(opt.id)}">${opt.label}</button>
   `).join('');
 
   const moodButtons = MOOD_OPTIONS.map(opt => `
-    <button type="button" class="mood-option${opt.id === mood ? ' mood-option--selected' : ''}" data-mood="${opt.id}" aria-label="${opt.id}">${ICONS[opt.icon]}</button>
+    <button type="button" class="mood-option${opt.id === mood ? ' mood-option--selected' : ''}" data-mood="${opt.id}" aria-label="${opt.id}" aria-pressed="${opt.id === mood}">${ICONS[opt.icon]}</button>
   `).join('');
 
   return `
@@ -126,7 +126,11 @@ export function mountLogEntryScreen(container, date, { onSave, onClear, onClose,
   container.querySelectorAll('[data-flow]').forEach(el => {
     el.addEventListener('click', () => {
       flow = el.getAttribute('data-flow');
-      container.querySelectorAll('[data-flow]').forEach(p => p.classList.toggle('pill--selected', p === el));
+      container.querySelectorAll('[data-flow]').forEach(p => {
+        const selected = p === el;
+        p.classList.toggle('pill--selected', selected);
+        p.setAttribute('aria-pressed', String(selected));
+      });
       reportDraft();
     });
   });
@@ -134,8 +138,10 @@ export function mountLogEntryScreen(container, date, { onSave, onClear, onClose,
   container.querySelectorAll('[data-symptom]').forEach(el => {
     el.addEventListener('click', () => {
       const id = el.getAttribute('data-symptom');
-      if (symptoms.has(id)) { symptoms.delete(id); el.classList.remove('chip--selected'); }
-      else { symptoms.add(id); el.classList.add('chip--selected'); }
+      const nowSelected = !symptoms.has(id);
+      if (nowSelected) symptoms.add(id); else symptoms.delete(id);
+      el.classList.toggle('chip--selected', nowSelected);
+      el.setAttribute('aria-pressed', String(nowSelected));
       reportDraft();
     });
   });
@@ -143,7 +149,11 @@ export function mountLogEntryScreen(container, date, { onSave, onClear, onClose,
   container.querySelectorAll('[data-mood]').forEach(el => {
     el.addEventListener('click', () => {
       mood = el.getAttribute('data-mood');
-      container.querySelectorAll('[data-mood]').forEach(m => m.classList.toggle('mood-option--selected', m === el));
+      container.querySelectorAll('[data-mood]').forEach(m => {
+        const selected = m === el;
+        m.classList.toggle('mood-option--selected', selected);
+        m.setAttribute('aria-pressed', String(selected));
+      });
       reportDraft();
     });
   });

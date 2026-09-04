@@ -2,7 +2,7 @@
 // changes any cached file (see README "Shipping an update") — this is what makes
 // old cached versions actually get replaced instead of silently persisting.
 
-const CACHE_VERSION = 'moonflow-v1';
+const CACHE_VERSION = 'moonflow-v2';
 
 const PRECACHE_FILES = [
   './',
@@ -19,6 +19,8 @@ const PRECACHE_FILES = [
   './js/cycle-math.js',
   './js/moon-phase.js',
   './js/icons.js',
+  './js/pin-auth.js',
+  './js/export.js',
   './js/vendor/dexie.mjs',
   './js/screens/onboarding.js',
   './js/screens/home.js',
@@ -26,6 +28,7 @@ const PRECACHE_FILES = [
   './js/screens/log-entry.js',
   './js/screens/insights.js',
   './js/screens/settings.js',
+  './js/screens/pin-lock.js',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png',

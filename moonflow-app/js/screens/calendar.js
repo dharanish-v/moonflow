@@ -78,7 +78,17 @@ export function renderCalendarScreen(monthStr, entries, settings) {
     const futureClass = isFuture ? ' calendar-day__cell--future' : '';
     const disabled = isFuture ? 'disabled' : '';
 
-    return `<div class="calendar-day"><button type="button" class="calendar-day__cell ${stateClass}${todayClass}${futureClass}" data-date="${dateStr}" ${disabled}>${dayNum}</button></div>`;
+    // Full spoken state for VoiceOver — color alone (period/fertile/predicted)
+    // is never the only signal (edge-case rules in moonflow-design-system.md).
+    const spokenParts = [toDate(dateStr).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })];
+    if (loggedPeriodDates.has(dateStr)) spokenParts.push('period day');
+    else if (dateStr === fertilePeak) spokenParts.push('peak fertile day');
+    else if (fertileDates.has(dateStr)) spokenParts.push('fertile window');
+    else if (predictedDates.has(dateStr)) spokenParts.push('predicted period');
+    if (isToday) spokenParts.push('today');
+    const spokenLabel = spokenParts.join(', ');
+
+    return `<div class="calendar-day"><button type="button" class="calendar-day__cell ${stateClass}${todayClass}${futureClass}" data-date="${dateStr}" aria-label="${spokenLabel}" ${disabled}>${dayNum}</button></div>`;
   }).join('');
 
   const monthLabel = firstOfMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });

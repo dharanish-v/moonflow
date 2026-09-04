@@ -54,8 +54,10 @@ Depends on: T8, T11
 
 ## Phase 5 — Polish
 **T22 — Animations & gestures** (M) — screen transitions, sheet slide/swipe-dismiss, button press states (ADR-015)
-**T23 — Accessibility pass** (M) — aria-labels, `rem` sizing, safe-area insets, VoiceOver order
+**T23 — Accessibility pass** (M) ⏳ in progress — fixed via `tests/accessibility-tests.html` (11/11): Export-data button had zero accessible name (icon-only, aria-hidden SVG, no label); Discreet-icon/cycle-length/period-length settings rows were inert `<div>`s with only a click listener, unreachable by VoiceOver swipe; flow pills/symptom chips/mood buttons exposed no `aria-pressed` selection state; calendar day cells had no spoken state beyond the bare number (now "September 4, period day, today" per the design-doc edge-case rule). Remaining: `rem` sizing and safe-area insets already verified in place from Phase 2/3; full on-device VoiceOver swipe-order and grayscale-screenshot checks are manual, left for T26.
 **T24 — Web Vitals pass** (S) — optimistic Save UI, explicit SVG dimensions, confirm no CLS on skeleton swap
+
+**Bug found + fixed during T23** — `service-worker.js`'s `CACHE_VERSION` was never bumped after Phase 4, so its cache-first strategy was silently serving pre-Phase-4 `app.js`/`settings.js`/`calendar.js`/`log-entry.js`, and `pin-auth.js`/`export.js`/`screens/pin-lock.js` were never added to `PRECACHE_FILES` at all — meaning PIN lock and export would have failed outright in airplane mode (breaks the "fully works with airplane mode on" QA item, for a security feature no less). Bumped to `moonflow-v2`, added the missing files, verified live: PIN lock, home, and Settings (export button included) all load and work correctly with the network fully offline.
 
 Depends on: everything above
 

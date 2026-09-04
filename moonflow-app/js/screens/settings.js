@@ -22,24 +22,24 @@ export function renderSettingsScreen(settings) {
         <button type="button" class="toggle" id="toggle-reminders" role="switch" aria-checked="false" aria-label="Reminders" disabled title="Coming in V2"><span class="toggle__knob"></span></button>
       </div>
 
-      <div class="list-row">
+      <button type="button" class="list-row" id="row-cycle-length" aria-label="Average cycle length, ${settings.avgCycleLength} days" style="width:100%;background:none;border:none;font:inherit;color:inherit;cursor:pointer;">
         <div class="list-row__left">${ICONS.calendar}<span class="list-row__label">Average cycle length</span></div>
         <div class="list-row__right"><span class="list-row__value">${settings.avgCycleLength} days</span>${ICONS['chevron-right']}</div>
-      </div>
+      </button>
 
-      <div class="list-row">
+      <button type="button" class="list-row" id="row-period-length" aria-label="Average period length, ${settings.avgPeriodLength} days" style="width:100%;background:none;border:none;font:inherit;color:inherit;cursor:pointer;">
         <div class="list-row__left">${ICONS.droplet}<span class="list-row__label">Average period length</span></div>
         <div class="list-row__right"><span class="list-row__value">${settings.avgPeriodLength} days</span>${ICONS['chevron-right']}</div>
-      </div>
+      </button>
 
-      <div class="list-row">
+      <button type="button" class="list-row" id="row-discreet-icon" aria-label="Discreet icon" aria-expanded="false" style="width:100%;background:none;border:none;font:inherit;color:inherit;cursor:pointer;">
         <div class="list-row__left">${ICONS['eye-off']}<span class="list-row__label">Discreet icon</span></div>
         <div class="list-row__right">${ICONS['chevron-right']}</div>
-      </div>
+      </button>
 
       <div class="list-row">
         <div class="list-row__left">${ICONS.download}<span class="list-row__label">Export data</span></div>
-        <button type="button" id="export-data" style="background:none;border:none;padding:0;cursor:pointer;">${ICONS['chevron-right']}</button>
+        <button type="button" id="export-data" aria-label="Export data" style="background:none;border:none;padding:0;cursor:pointer;">${ICONS['chevron-right']}</button>
       </div>
 
       <p id="discreet-explainer" style="display:none; font-size: var(--text-micro); color: var(--text-muted); margin-top: var(--space-2);">To switch to a discreet home screen icon, remove Moonflow from your home screen and reinstall using the alternate link.</p>
@@ -66,16 +66,15 @@ export function mountSettingsScreen(container, { onTogglePinLock, onEditCycleLen
   });
 
   const explainer = container.querySelector('#discreet-explainer');
-  const discreetRow = [...container.querySelectorAll('.list-row')].find(r => r.textContent.includes('Discreet icon'));
-  if (discreetRow) discreetRow.addEventListener('click', () => {
-    explainer.style.display = explainer.style.display === 'none' ? 'block' : 'none';
+  const discreetRow = container.querySelector('#row-discreet-icon');
+  discreetRow.addEventListener('click', () => {
+    const nowOpen = explainer.style.display === 'none';
+    explainer.style.display = nowOpen ? 'block' : 'none';
+    discreetRow.setAttribute('aria-expanded', String(nowOpen));
   });
 
-  const rows = [...container.querySelectorAll('.list-row')];
-  const cycleRow = rows.find(r => r.textContent.includes('Average cycle length'));
-  if (cycleRow) cycleRow.addEventListener('click', onEditCycleLength);
-  const periodRow = rows.find(r => r.textContent.includes('Average period length'));
-  if (periodRow) periodRow.addEventListener('click', onEditPeriodLength);
+  container.querySelector('#row-cycle-length').addEventListener('click', onEditCycleLength);
+  container.querySelector('#row-period-length').addEventListener('click', onEditPeriodLength);
 
   container.querySelector('#export-data').addEventListener('click', onExport);
 }
