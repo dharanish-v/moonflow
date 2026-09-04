@@ -50,14 +50,21 @@
   #tab-bar {
     display: none; /* shown by app.js once a screen that needs it is active */
     justify-content: space-around;
-    margin: var(--space-6) var(--space-4) var(--space-3);
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-3);
+    margin-left: auto;
+    margin-right: auto;
+    /* max-width alone collapses to 0 horizontal margin on any viewport
+       narrower than 26rem — true of every real iPhone — losing the floating
+       capsule's inset entirely (design-system.md: "margin on all sides so it
+       visibly floats"). width: min(...) guarantees the space-4 inset always,
+       while still capping/centering at 26rem on wider screens. */
+    width: min(26rem, calc(100% - 2 * var(--space-4)));
+    box-sizing: border-box; /* width above must include the padding+border below, or they re-add the exact margin the calc just carved out */
     padding: var(--space-3) var(--space-4);
     background: var(--glass-fill);
     border: var(--border-width) solid var(--glass-border);
     border-radius: var(--radius-tabbar);
-    max-width: 26rem;
-    margin-left: auto;
-    margin-right: auto;
     position: sticky;
     bottom: env(safe-area-inset-bottom, 0.5rem);
   }
