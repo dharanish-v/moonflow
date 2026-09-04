@@ -63,37 +63,44 @@ export function computeInsights(entries) {
 export function renderInsightsScreen(entries) {
   const data = computeInsights(entries);
 
-  const body = data.hasEnoughHistory ? `
-    <div class="card-grid">
-      <div class="card"><div class="card__label">Avg cycle</div><div class="card__value">${data.avgCycleLength} days</div></div>
-      <div class="card"><div class="card__label">Avg period</div><div class="card__value">${data.avgPeriodLength} days</div></div>
-      <div class="card"><div class="card__label">Variability</div><div class="card__value">&plusmn;${data.variability} days</div></div>
-      <div class="card"><div class="card__label">Cycles logged</div><div class="card__value">${data.cyclesLogged}</div></div>
-    </div>
-
-    <div class="section-label">Cycle length, last ${data.recentCycleLengths.length} cycles</div>
-    <div class="bar-chart">
-      ${data.recentCycleLengths.map(len => `<div class="bar-chart__bar" style="height:${Math.max(8, (len - 20) * 4)}px"></div>`).join('')}
-    </div>
-    <div class="bar-chart__labels">${data.recentCycleLengths.map(len => `<span>${len}</span>`).join('')}</div>
-
-    ${data.topSymptoms.length ? `
-      <div class="section-label">Most logged symptoms</div>
-      ${data.topSymptoms.map(s => `
-        <div class="freq-row">
-          <div class="freq-row__top"><span>${s.label}</span><span>${s.percent}%</span></div>
-          <div class="freq-row__track"><div class="freq-row__fill" style="width:${s.percent}%"></div></div>
-        </div>
-      `).join('')}
-    ` : ''}
-  ` : `
-    <p class="screen__subtitle" style="margin-top: var(--space-6);">Not enough history yet — check back after your next cycle</p>
-  `;
+  // Empty state matches the onboarding/PIN-lock centered icon+title+subtitle
+  // composition — a bare heading pinned to the top with nothing else on the
+  // screen read as unfinished, not as "deliberately calm."
+  if (!data.hasEnoughHistory) {
+    return `
+      <div class="screen screen--centered">
+        <div class="screen__icon">${ICONS['chart-bar']}</div>
+        <h1 class="screen__title">Insights</h1>
+        <p class="screen__subtitle" style="margin-bottom:0;">Not enough history yet — check back after your next cycle</p>
+      </div>
+    `;
+  }
 
   return `
     <div class="screen">
       <h1 class="screen__title" style="text-align:left; margin-bottom: var(--space-4);">Insights</h1>
-      ${body}
+      <div class="card-grid">
+        <div class="card"><div class="card__label">Avg cycle</div><div class="card__value">${data.avgCycleLength} days</div></div>
+        <div class="card"><div class="card__label">Avg period</div><div class="card__value">${data.avgPeriodLength} days</div></div>
+        <div class="card"><div class="card__label">Variability</div><div class="card__value">&plusmn;${data.variability} days</div></div>
+        <div class="card"><div class="card__label">Cycles logged</div><div class="card__value">${data.cyclesLogged}</div></div>
+      </div>
+
+      <div class="section-label">Cycle length, last ${data.recentCycleLengths.length} cycles</div>
+      <div class="bar-chart">
+        ${data.recentCycleLengths.map(len => `<div class="bar-chart__bar" style="height:${Math.max(8, (len - 20) * 4)}px"></div>`).join('')}
+      </div>
+      <div class="bar-chart__labels">${data.recentCycleLengths.map(len => `<span>${len}</span>`).join('')}</div>
+
+      ${data.topSymptoms.length ? `
+        <div class="section-label">Most logged symptoms</div>
+        ${data.topSymptoms.map(s => `
+          <div class="freq-row">
+            <div class="freq-row__top"><span>${s.label}</span><span>${s.percent}%</span></div>
+            <div class="freq-row__track"><div class="freq-row__fill" style="width:${s.percent}%"></div></div>
+          </div>
+        `).join('')}
+      ` : ''}
     </div>
   `;
 }

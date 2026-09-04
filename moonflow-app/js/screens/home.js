@@ -83,7 +83,7 @@ export function renderHomeScreen(entries, settings, today = new Date()) {
   hasAnimatedMoonPhaseThisSession = true;
 
   return `
-    <div class="screen">
+    <div class="screen screen--centered">
       ${renderMoonPhaseSVG(status.moonPhase).replace('<svg ', `<svg class="moon-phase${animationClass}" `)}
       <div style="text-align:center; margin-top: var(--space-4);">
         <div class="screen__title" style="margin-bottom:0;">${dayLabel}</div>

@@ -38,11 +38,24 @@
      position:fixed a containing block, so at the wide breakpoint it stays
      pinned to *this* simulated screen's edges instead of the real browser
      window's. */
+  /* height (not min-height) + its own scroll, unconditionally — not just at
+     the wide/framed breakpoint. Screens like Home need to vertically center
+     their content within "the real available screen space" (#app-content's
+     min-height:100% below), which only resolves against a parent with a
+     definite height; min-height:100vh leaves that undefined at narrow
+     widths, silently disabling centering on an actual phone precisely where
+     it matters most. Content taller than the frame still scrolls exactly as
+     it always did, just as this element's own scroll instead of the page's —
+     immaterial once installed as a standalone PWA (no browser chrome to
+     interact with regardless), the only context where this app is actually
+     used day to day. */
   #phone-frame {
     position: relative;
     width: 100%;
-    min-height: 100vh;
+    height: 100vh;
     background: var(--bg-screen);
+    overflow-x: hidden;
+    overflow-y: auto;
     transform: translateZ(0);
   }
   /* 27rem — just past .screen's own 26rem max-width — not an arbitrary
@@ -55,10 +68,7 @@
       width: 24.5625rem;  /* 393px — a representative modern iPhone width */
       height: 53.25rem;   /* 852px */
       max-height: 92vh;
-      min-height: 0;
       border-radius: var(--radius-frame);
-      overflow-x: hidden;
-      overflow-y: auto;
       box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.55), 0 0 0 0.5px var(--border-muted);
     }
   }
@@ -70,6 +80,10 @@
      screens that do show it. */
   #app-content {
     padding-bottom: calc(2 * var(--space-2) + 2 * var(--border-width) + 2.75rem + var(--space-3) + env(safe-area-inset-bottom, 0.5rem));
+    min-height: 100%; /* resolves against #phone-frame's now-definite height above — lets .screen--centered actually have real vertical space to center within, instead of just being as tall as its own content */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
   }
 
   /* LCP skeleton (ADR-018) — a static placeholder that paints before app.js has
@@ -78,8 +92,9 @@
   #skeleton {
     padding: var(--space-6) var(--space-5);
     max-width: 26rem;
-    margin: 0 auto;
+    margin: auto; /* centers within #app-content's flex column, matching Home's own centered composition once it renders */
     box-sizing: border-box;
+    width: 100%;
     text-align: center;
   }
   #skeleton .skeleton-moon {

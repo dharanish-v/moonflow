@@ -2,12 +2,30 @@
    tokens.css — never a hardcoded hex value (ADR-016), so a future theme
    only ever requires editing tokens.css. */
 
-/* Screen shell — shared wrapper every screen renders into */
+/* Screen shell — shared wrapper every screen renders into. flex:1 + a column
+   axis costs nothing for a top-anchored list/grid screen (Settings,
+   Calendar, Insights) — it behaves exactly like plain block stacking would —
+   but it's what lets .screen--centered below actually have real leftover
+   space to center within, instead of every screen just being exactly as
+   tall as its own content and stopping. */
 .screen {
   padding: var(--space-6) var(--space-5);
   max-width: 26rem;
   margin: 0 auto;
   box-sizing: border-box;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* For screens that are a single, weighty focal composition rather than a
+   scannable list — Home (the five-second glance this whole app exists for),
+   onboarding, and PIN lock. Centers that composition in the real available
+   space above the tab bar, instead of pinning it to the top with a large
+   dead gap below (found directly by the user testing the live app). */
+.screen--centered {
+  justify-content: center;
 }
 
 /* Screen-enter transition (ADR-015) — a fresh element every render (ADR-007's
@@ -332,6 +350,7 @@
   border: var(--border-width) solid var(--glass-border);
   border-radius: var(--radius-card) var(--radius-card) 0 0;
   animation: sheet-slide-up 220ms ease-out;
+  flex: 0 1 auto; /* overrides .screen's flex:1 — a bottom sheet sized to its own content, not stretched to fill the remaining screen height, same deliberate partial-sheet look as before */
 }
 @keyframes sheet-slide-up {
   from { transform: translateY(24px); opacity: 0; }

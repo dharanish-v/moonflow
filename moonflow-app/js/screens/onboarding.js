@@ -21,7 +21,7 @@ function todayString() {
 
 export function renderOnboardingScreen() {
   return `
-    <div class="screen">
+    <div class="screen screen--centered">
       <div class="screen__icon">${ICONS.moon}</div>
       <h1 class="screen__title">Let's set up Moonflow</h1>
       <p class="screen__subtitle">Just enough to make your first prediction</p>

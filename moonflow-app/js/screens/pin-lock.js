@@ -21,7 +21,7 @@ export function renderPinLockScreen({ mode, error }) {
     : 'Set a PIN';
 
   return `
-    <div class="screen">
+    <div class="screen screen--centered">
       <div class="screen__icon">${ICONS.lock}</div>
       <h1 class="screen__title">${title}</h1>
       <p class="screen__subtitle" style="color:var(--accent-rose); ${error ? '' : 'visibility:hidden;'}">${error || ' '}</p>
