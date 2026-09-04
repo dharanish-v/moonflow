@@ -21,7 +21,15 @@
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     overscroll-behavior: none;
   }
-  #app-content { padding-bottom: env(safe-area-inset-bottom, 0); }
+  /* Clears the fixed tab bar below (its own padding/border/icon-size math,
+     plus its bottom offset and a small gap) so content is never hidden
+     behind it — reserved unconditionally, since screens without a tab bar
+     (onboarding, the log sheet, PIN lock) just get a bit of harmless extra
+     space at the very bottom rather than any risk of clipped content on the
+     screens that do show it. */
+  #app-content {
+    padding-bottom: calc(2 * var(--space-3) + 2 * var(--border-width) + 1.2rem + var(--space-3) + env(safe-area-inset-bottom, 0.5rem));
+  }
 
   /* LCP skeleton (ADR-018) — a static placeholder that paints before app.js has
      read IndexedDB and rendered the real moon-phase illustration. Swapped out,
@@ -50,8 +58,15 @@
   #tab-bar {
     display: none; /* shown by app.js once a screen that needs it is active */
     justify-content: space-around;
-    margin-top: var(--space-6);
-    margin-bottom: var(--space-3);
+    /* position: sticky only sticks once its containing block actually has
+       scroll room — on any screen shorter than the viewport (most of them),
+       there's nothing to scroll, so it just renders in normal flow right
+       after #app-content instead of pinning to the bottom of the screen.
+       fixed always anchors to the viewport, regardless of content height. */
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: env(safe-area-inset-bottom, 0.5rem);
     margin-left: auto;
     margin-right: auto;
     /* max-width alone collapses to 0 horizontal margin on any viewport
@@ -65,8 +80,6 @@
     background: var(--glass-fill);
     border: var(--border-width) solid var(--glass-border);
     border-radius: var(--radius-tabbar);
-    position: sticky;
-    bottom: env(safe-area-inset-bottom, 0.5rem);
   }
   #tab-bar button {
     background: none;
