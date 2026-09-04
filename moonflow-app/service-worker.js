@@ -2,7 +2,7 @@
 // changes any cached file (see README "Shipping an update") — this is what makes
 // old cached versions actually get replaced instead of silently persisting.
 
-const CACHE_VERSION = 'moonflow-v15';
+const CACHE_VERSION = 'moonflow-v16';
 
 const PRECACHE_FILES = [
   './',

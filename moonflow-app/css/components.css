@@ -4,10 +4,10 @@
 
 /* Screen shell — shared wrapper every screen renders into. flex:1 + a column
    axis costs nothing for a top-anchored list/grid screen (Settings,
-   Calendar, Insights) — it behaves exactly like plain block stacking would —
-   but it's what lets .screen--centered below actually have real leftover
-   space to center within, instead of every screen just being exactly as
-   tall as its own content and stopping. */
+   Calendar) — it behaves exactly like plain block stacking would — but it's
+   what lets .screen--centered and .insights-body below actually have real
+   leftover space to center within, instead of every screen just being
+   exactly as tall as its own content and stopping. */
 .screen {
   padding: var(--space-6) var(--space-5);
   max-width: 26rem;
@@ -25,6 +25,19 @@
    space above the tab bar, instead of pinning it to the top with a large
    dead gap below (found directly by the user testing the live app). */
 .screen--centered {
+  justify-content: center;
+}
+
+/* Insights-with-data: the "Insights" title stays top-anchored (it's a page
+   identity, same as Settings'), but the stat cards/chart/symptom list below
+   it are a small, bounded set (max 6 bars, max 3 symptom rows — never an
+   open-ended list) that otherwise leaves a large dead gap above the tab bar
+   for anyone early in their tracking history. Centers that bounded content
+   group in the space left after the title, without moving the title itself. */
+.insights-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
 }
 

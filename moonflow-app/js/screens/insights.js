@@ -79,28 +79,30 @@ export function renderInsightsScreen(entries) {
   return `
     <div class="screen">
       <h1 class="screen__title" style="text-align:left; margin-bottom: var(--space-4);">Insights</h1>
-      <div class="card-grid">
-        <div class="card"><div class="card__label">Avg cycle</div><div class="card__value">${data.avgCycleLength} days</div></div>
-        <div class="card"><div class="card__label">Avg period</div><div class="card__value">${data.avgPeriodLength} days</div></div>
-        <div class="card"><div class="card__label">Variability</div><div class="card__value">&plusmn;${data.variability} days</div></div>
-        <div class="card"><div class="card__label">Cycles logged</div><div class="card__value">${data.cyclesLogged}</div></div>
-      </div>
+      <div class="insights-body">
+        <div class="card-grid">
+          <div class="card"><div class="card__label">Avg cycle</div><div class="card__value">${data.avgCycleLength} days</div></div>
+          <div class="card"><div class="card__label">Avg period</div><div class="card__value">${data.avgPeriodLength} days</div></div>
+          <div class="card"><div class="card__label">Variability</div><div class="card__value">&plusmn;${data.variability} days</div></div>
+          <div class="card"><div class="card__label">Cycles logged</div><div class="card__value">${data.cyclesLogged}</div></div>
+        </div>
 
-      <div class="section-label">Cycle length, last ${data.recentCycleLengths.length} cycles</div>
-      <div class="bar-chart">
-        ${data.recentCycleLengths.map(len => `<div class="bar-chart__bar" style="height:${Math.max(8, (len - 20) * 4)}px"></div>`).join('')}
-      </div>
-      <div class="bar-chart__labels">${data.recentCycleLengths.map(len => `<span>${len}</span>`).join('')}</div>
+        <div class="section-label">Cycle length, last ${data.recentCycleLengths.length} cycles</div>
+        <div class="bar-chart">
+          ${data.recentCycleLengths.map(len => `<div class="bar-chart__bar" style="height:${Math.max(8, (len - 20) * 4)}px"></div>`).join('')}
+        </div>
+        <div class="bar-chart__labels">${data.recentCycleLengths.map(len => `<span>${len}</span>`).join('')}</div>
 
-      ${data.topSymptoms.length ? `
-        <div class="section-label">Most logged symptoms</div>
-        ${data.topSymptoms.map(s => `
-          <div class="freq-row">
-            <div class="freq-row__top"><span>${s.label}</span><span>${s.percent}%</span></div>
-            <div class="freq-row__track"><div class="freq-row__fill" style="width:${s.percent}%"></div></div>
-          </div>
-        `).join('')}
-      ` : ''}
+        ${data.topSymptoms.length ? `
+          <div class="section-label">Most logged symptoms</div>
+          ${data.topSymptoms.map(s => `
+            <div class="freq-row">
+              <div class="freq-row__top"><span>${s.label}</span><span>${s.percent}%</span></div>
+              <div class="freq-row__track"><div class="freq-row__fill" style="width:${s.percent}%"></div></div>
+            </div>
+          `).join('')}
+        ` : ''}
+      </div>
     </div>
   `;
 }
