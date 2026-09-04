@@ -88,6 +88,7 @@ export function renderLogEntryScreen(date, existingEntry, draftEntry = null) {
 
       ${existingEntry ? `<button type="button" id="log-clear" style="background:none;border:none;color:var(--accent-rose);font-size:var(--text-secondary-size);font-family:inherit;cursor:pointer;padding:0 0 var(--space-4);">Clear this day's log</button>` : ''}
 
+      <p id="log-save-error" style="display:none;color:var(--accent-rose);font-size:var(--text-secondary-size);margin:0 0 var(--space-3);">Couldn't save — try again</p>
       <button type="button" class="button button--primary" id="log-save">Save</button>
     </div>
   `;
@@ -97,7 +98,7 @@ export function renderLogEntryScreen(date, existingEntry, draftEntry = null) {
  * @param {HTMLElement} container
  * @param {string} date
  * @param {{
- *   onSave: (data: {flow: string|null, symptoms: string[], mood: string|null, note: string}) => void,
+ *   onSave: (data: {flow: string|null, symptoms: string[], mood: string|null, note: string}) => Promise<boolean>|boolean|void,
  *   onClear?: () => void,
  *   onClose: () => void,
  *   onDraftChange?: (draft: {date: string, flow: string|null, symptoms: string[], mood: string|null, note: string}) => void
@@ -210,8 +211,24 @@ export function mountLogEntryScreen(container, date, { onSave, onClear, onClose,
   if (clearBtn && onClear) clearBtn.addEventListener('click', onClear);
 
   const saveBtn = /** @type {HTMLButtonElement} */ (container.querySelector('#log-save'));
-  saveBtn.addEventListener('click', () => {
-    saveBtn.disabled = true; // prevents a double-tap creating a duplicate save (data-safety rules)
-    onSave({ flow, symptoms: [...symptoms], mood, note: noteInput.value });
+  const saveError = container.querySelector('#log-save-error');
+  const originalSaveLabel = saveBtn.textContent;
+
+  saveBtn.addEventListener('click', async () => {
+    // T24 optimistic Save UI (ADR-018 INP rule): "Saved" renders instantly,
+    // before the IndexedDB write resolves underneath — never blocked on it.
+    saveBtn.disabled = true; // also prevents a double-tap duplicate save (data-safety rules)
+    saveBtn.textContent = 'Saved';
+    if (saveError) saveError.style.display = 'none';
+
+    const ok = await onSave({ flow, symptoms: [...symptoms], mood, note: noteInput.value });
+
+    // A falsy result means the write failed — never a silent loss (data-safety
+    // rules): restore the button so the user can see something went wrong and retry.
+    if (ok === false) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalSaveLabel;
+      if (saveError) saveError.style.display = 'block';
+    }
   });
 }

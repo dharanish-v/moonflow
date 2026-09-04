@@ -190,11 +190,12 @@ async function render() {
         onDraftChange: (data) => { latestLogDraft = data; },
         onSave: async (data) => {
           const ok = await saveEntry({ date, ...data });
-          if (!ok) return; // db.js already logged the error; a real error toast is a Phase 4/5 refinement
+          if (!ok) return false; // db.js already logged the error; log-entry.js shows the inline "Couldn't save" error
           latestLogDraft = null;
           await setSetting('draftEntry', null);
           const entries = await loadAllEntries();
           setState({ entries, settings: { ...state.settings, draftEntry: null }, activeScreen: existing ? 'calendar' : 'home', editingDate: null });
+          return true;
         },
         onClear: existing
           ? async () => {

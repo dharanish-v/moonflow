@@ -51,7 +51,7 @@ export function renderMoonPhaseSVG(phase, size = 150) {
   const clipId = `moon-clip-${Math.round(phase * 1000)}`;
 
   return `
-    <svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${moonPhaseLabel(phase)}">
+    <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${moonPhaseLabel(phase)}">
       <defs>
         <pattern id="moon-grain" width="6" height="6" patternUnits="userSpaceOnUse">
           <circle cx="1" cy="1" r="0.6" fill="var(--bg-screen)" opacity="0.35"/>

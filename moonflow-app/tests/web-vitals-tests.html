@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!-- Open this file directly in a browser to run the tests — no Node, no install, nothing but a browser. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Moonflow — Web Vitals (T24) tests</title>
+<style>
+  body { font-family: -apple-system, sans-serif; padding: 24px; background: #14132b; color: #f5f3ec; }
+  .pass { color: #8fe0a8; }
+  .fail { color: #e08f9f; }
+  h1 { font-size: 16px; font-weight: 500; }
+</style>
+</head>
+<body>
+<h1>Moonflow — Web Vitals (T24) test results</h1>
+<pre id="output">Running...</pre>
+
+<script type="module">
+import { renderLogEntryScreen, mountLogEntryScreen } from '../js/screens/log-entry.js';
+import { renderMoonPhaseSVG } from '../js/moon-phase.js';
+import { ICONS } from '../js/icons.js';
+
+const results = [];
+
+async function test(name, fn) {
+  try {
+    await fn();
+    results.push({ name, pass: true });
+  } catch (e) {
+    results.push({ name, pass: false, message: e.message });
+  }
+}
+
+function assertEqual(actual, expected, label) {
+  if (actual !== expected) throw new Error(`${label ?? 'expected'} ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+}
+
+function assertOk(value, label) {
+  if (!value) throw new Error(`${label ?? 'value'} was falsy`);
+}
+
+function mountFresh(onSave) {
+  const container = document.createElement('div');
+  container.innerHTML = renderLogEntryScreen('2026-09-04', null);
+  document.body.appendChild(container);
+  mountLogEntryScreen(container, '2026-09-04', { onSave, onClose: () => {} });
+  return container;
+}
+
+// --- CLS: every SVG ships explicit width/height, not just viewBox ---
+
+test('the moon-phase illustration SVG has explicit width and height', () => {
+  const svg = renderMoonPhaseSVG(0.25, 150);
+  assertOk(/width="150"/.test(svg), 'width attribute');
+  assertOk(/height="150"/.test(svg), 'height attribute');
+});
+
+test('every inlined icon SVG has explicit width and height', () => {
+  for (const [name, svg] of Object.entries(ICONS)) {
+    assertOk(/\swidth="\d/.test(svg), `${name} width attribute`);
+    assertOk(/\sheight="\d/.test(svg), `${name} height attribute`);
+  }
+});
+
+// --- INP: Save gives instant visual feedback, independent of the write's outcome ---
+
+await test('tapping Save shows "Saved" immediately, before the write resolves', async () => {
+  let resolveWrite;
+  const pendingWrite = new Promise((res) => { resolveWrite = res; });
+  const container = mountFresh(async () => { await pendingWrite; return true; });
+  const saveBtn = container.querySelector('#log-save');
+
+  saveBtn.click();
+  // The write hasn't resolved yet — the optimistic label must already be showing.
+  assertEqual(saveBtn.textContent, 'Saved');
+  assertEqual(saveBtn.disabled, true);
+
+  resolveWrite();
+  await new Promise(r => setTimeout(r, 0));
+  container.remove();
+});
+
+await test('a failed save re-enables the button and shows an inline error (never a silent loss)', async () => {
+  const container = mountFresh(async () => false);
+  const saveBtn = container.querySelector('#log-save');
+
+  saveBtn.click();
+  await new Promise(r => setTimeout(r, 0));
+
+  assertEqual(saveBtn.disabled, false);
+  assertEqual(saveBtn.textContent, 'Save');
+  const error = container.querySelector('#log-save-error');
+  assertOk(error, 'error element exists');
+  assertEqual(getComputedStyle(error).display === 'none', false, 'error is visible');
+  assertOk(error.textContent.length > 0, 'error has text');
+  container.remove();
+});
+
+await test('a successful save leaves no error message showing', async () => {
+  const container = mountFresh(async () => true);
+  const saveBtn = container.querySelector('#log-save');
+
+  saveBtn.click();
+  await new Promise(r => setTimeout(r, 0));
+
+  const error = container.querySelector('#log-save-error');
+  assertEqual(getComputedStyle(error).display, 'none');
+  container.remove();
+});
+
+// --- Render ---
+const passCount = results.filter(r => r.pass).length;
+document.getElementById('output').innerHTML = results
+  .map(r => r.pass
+    ? `<span class="pass">✓ ${r.name}</span>`
+    : `<span class="fail">✗ ${r.name}\n    ${r.message}</span>`)
+  .join('\n') + `\n\n${passCount}/${results.length} passed`;
+</script>
+</body>
+</html>
