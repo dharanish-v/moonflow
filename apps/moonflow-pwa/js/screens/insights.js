@@ -2,9 +2,11 @@
 // screens/insights.js — see "Insights" in moonflow-design-system.md, including the
 // "not enough history yet" empty state.
 
+import gsap from 'gsap';
 import { ICONS } from '../icons.js';
 import { SYMPTOM_OPTIONS } from '../constants.js';
 import { derivePeriods, diffDays } from '../cycle-math.js';
+import { prefersReducedMotion } from '../motion.js';
 
 /** @param {number[]} numbers */
 function median(numbers) {
@@ -107,5 +109,20 @@ export function renderInsightsScreen(entries) {
   `;
 }
 
-// insights.js has no interactive elements of its own beyond what the global
-// tab bar (in index.html, per ADR-017) already handles — no mount function needed.
+/**
+ * insights.js has no interactive elements of its own beyond what the global
+ * tab bar (in index.html, per ADR-017) already handles — this mount exists
+ * purely for the bar/fill grow-in below (the data-populated view previously
+ * had zero entrance animation at all: bars and symptom-frequency fills just
+ * appeared instantly at their final size). A no-op on the empty state or a
+ * history with no logged symptoms — the querySelectorAll calls just find
+ * nothing to animate.
+ * @param {HTMLElement} container
+ */
+export function mountInsightsScreen(container) {
+  if (prefersReducedMotion()) return;
+  const bars = container.querySelectorAll('.bar-chart__bar');
+  if (bars.length) gsap.from(bars, { height: 0, duration: 0.4, ease: 'power2.out', stagger: 0.05 });
+  const fills = container.querySelectorAll('.freq-row__fill');
+  if (fills.length) gsap.from(fills, { width: 0, duration: 0.5, ease: 'power2.out', stagger: 0.08, delay: bars.length * 0.05 });
+}

@@ -8,7 +8,9 @@
 // smallest working piece throughout (see the ADR log), and inputmode="numeric"
 // already gets the correct iOS keyboard for free (edge-case rules).
 
+import gsap from 'gsap';
 import { ICONS } from '../icons.js';
+import { prefersReducedMotion } from '../motion.js';
 
 const PIN_LENGTH = 4;
 
@@ -48,6 +50,17 @@ export function renderPinLockScreen({ mode, error }) {
 export function mountPinLockScreen(container, { onComplete, onCancel }) {
   const input = /** @type {HTMLInputElement} */ (container.querySelector('#pin-input'));
   input.focus();
+
+  // Wrong-PIN shake — near-universal lock-screen feedback (iOS, Android,
+  // banking apps) that was entirely missing before; the error text alone is
+  // easy to miss on a screen someone's glancing at, not reading closely.
+  // renderPinLockScreen() only omits `visibility:hidden` from the subtitle
+  // when an error was actually passed, so checking that inline style here
+  // is the same signal without threading a new parameter through mount.
+  const subtitle = /** @type {HTMLElement} */ (container.querySelector('.screen__subtitle'));
+  if (subtitle && subtitle.style.visibility !== 'hidden' && !prefersReducedMotion()) {
+    gsap.fromTo(input, { x: 0 }, { x: 8, duration: 0.06, repeat: 5, yoyo: true, ease: 'power1.inOut', clearProps: 'x' });
+  }
 
   input.addEventListener('input', () => {
     input.value = input.value.replace(/\D/g, '').slice(0, PIN_LENGTH);

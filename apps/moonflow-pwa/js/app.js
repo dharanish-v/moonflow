@@ -16,6 +16,15 @@ const tabBar = document.getElementById('tab-bar');
 
 const SCREENS_WITH_TAB_BAR = new Set(['home', 'calendar', 'insights', 'settings']);
 
+// Set by the calendar's own prev/next handler right before setState, read
+// once by the very next render — lets the calendar case give month
+// navigation a directional slide (matching the standard calendar-app
+// convention this project's own task board had flagged as a deferred
+// swipe-gesture item) instead of the generic screen-enter fade every other
+// screen gets. null means "arrived at Calendar some other way" (tab switch),
+// which keeps the plain fade.
+let calendarNavDirection = /** @type {'prev'|'next'|null} */ (null);
+
 function todayString() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -176,11 +185,22 @@ async function render() {
       mountCalendarScreen(content, {
         onSelectDate: (date) => setState({ activeScreen: 'log', editingDate: date, logFocusSection: null }),
         onChangeMonth: (dir) => {
+          calendarNavDirection = dir;
           const [y, m] = state.calendarMonth.split('-').map(Number);
           const next = new Date(y, m - 1 + (dir === 'next' ? 1 : -1), 1);
           setState({ calendarMonth: `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}` });
         }
       });
+
+      if (!prefersReducedMotion()) {
+        if (calendarNavDirection) {
+          const fromX = calendarNavDirection === 'next' ? 24 : -24;
+          gsap.fromTo(content.firstElementChild, { opacity: 0, x: fromX }, { opacity: 1, x: 0, duration: 0.22, ease: 'power2.out' });
+        } else {
+          gsap.from(content.firstElementChild, { opacity: 0, y: 6, duration: 0.18, ease: 'power1.out' });
+        }
+      }
+      calendarNavDirection = null;
       break;
     }
 
@@ -221,8 +241,9 @@ async function render() {
     }
 
     case 'insights': {
-      const { renderInsightsScreen } = await import('./screens/insights.js');
+      const { renderInsightsScreen, mountInsightsScreen } = await import('./screens/insights.js');
       content.innerHTML = renderInsightsScreen(state.entries);
+      mountInsightsScreen(content);
       break;
     }
 
@@ -290,9 +311,10 @@ async function render() {
   // Screen transition — content.innerHTML above always produces a fresh
   // element (ADR-007's full-re-render model), so this fires on every
   // navigation with no JS-driven cleanup needed. The log sheet has its own
-  // more specific slide-up animation instead (see log-entry.js) — playing
-  // both would just have one visually clobber the other.
-  if (state.activeScreen !== 'log' && !prefersReducedMotion()) {
+  // more specific slide-up animation instead (see log-entry.js), and
+  // Calendar has its own directional month-nav slide (see the calendar case
+  // above) — playing this generic one too would just have it clobber theirs.
+  if (state.activeScreen !== 'log' && state.activeScreen !== 'calendar' && !prefersReducedMotion()) {
     const el = content.firstElementChild;
     if (el) gsap.from(el, { opacity: 0, y: 6, duration: 0.18, ease: 'power1.out' });
   }
