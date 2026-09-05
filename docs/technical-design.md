@@ -69,6 +69,17 @@ const state = {
 
 ## File Structure
 
+Repo-root layout (see ADR-028 — `apps/`/`docs/` split, monorepo-shaped in case the V2 push-reminder relay ever gets built as a second app):
+
+```
+/README.md, /LICENSE
+/docs/                        (this doc and its companions — prd.md, adr-log.md, design-system.md, qa-checklist.md, copy-deck.md, task-board.md)
+/.github/workflows/deploy-pages.yml
+/apps/moonflow-pwa/           (everything below is relative to here)
+```
+
+The app itself, unchanged by the reorg:
+
 ```
 /index.html                  (real icon manifest)
 /planner.html                (discreet-icon manifest — see ADR-011)
@@ -77,25 +88,25 @@ const state = {
 /css/
   tokens.css                 (custom properties — palette, type scale, spacing; the ONLY place colors are defined)
   components.css             (BEM: .chip, .toggle, .moon-phase, .tab-bar, .card, .pill — references tokens only, never a hex value)
-  screens.css
 /js/
   app.js                     (boot sequence, routing, dynamic import per screen)
   store.js                   (state + subscribe — ADR-007)
   db.js                      (Dexie schema above)
   cycle-math.js              (algorithms below — no external date library needed, see ADR-020)
   constants.js               (symptom list, mood list, flow options, thresholds — single source of truth)
-  utils.js                   (small generics: date formatting, debounce)
-  icons.js                   (inlined SVG strings for the ~17 icons in use)
-  components/
-    chip.js  toggle.js  card.js  pill.js     (shared render-helper functions, one place per component)
+  icons.js                   (inlined SVG strings for the icons in use)
+  pin-auth.js                (PIN hashing + lockout decision — T19)
+  export.js                  (export payload building — T21)
+  gestures.js                (swipe-to-dismiss threshold decision — T22)
   screens/
-    onboarding.js  home.js  calendar.js  log-entry.js  insights.js  settings.js
+    onboarding.js  home.js  calendar.js  log-entry.js  insights.js  settings.js  pin-lock.js
   vendor/
     dexie.mjs                (real vendored library — see ADR-020 for why date-fns isn't here too)
 /icons/                       (generated PNGs: real + discreet, all required sizes)
-/sounds/
-  save-chime.mp3              (tiny; only fetched if sound is enabled)
+/tests/                       (one plain HTML page per module — see ADR-014, no test runner)
 ```
+
+Two directions from the original plan that never got built, worth naming so nobody goes looking for them: a `js/components/` shared-render-helper layer (`chip.js`/`toggle.js`/etc.) — screens ended up with their own inline template strings instead, which held up fine at this size; and a `sounds/` folder for a save-chime — never implemented, no code references it. Both empty scaffold folders were removed rather than left as clutter (ADR-028) — recreate either only once there's an actual reason to.
 
 ## Theming Rule (what makes a future theme plug-and-play)
 

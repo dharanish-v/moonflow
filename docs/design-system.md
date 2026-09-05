@@ -2,7 +2,7 @@
 
 **What this document is:** Moonflow's own custom design system — not an adoption of Material, Bootstrap, or any other existing one. It's the rulebook (palette, type, spacing, component specs). The **component library** — the actual reusable HTML/CSS blocks that implement these rules (`.chip`, `.toggle`, `.moon-phase`, `.tab-bar`, `.card`) — is the next step, built fresh to match this spec exactly.
 
-**Companion documents:** `moonflow-prd.md` covers *what* problem this solves and for whom — read that one first, logically. `moonflow-adr-log.md` covers *why* each technical decision was made, as an immutable historical log. `moonflow-technical-design.md` is the concrete blueprint (schema, state shape, file structure, algorithms). `moonflow-qa-checklist.md`, `moonflow-readme.md`, and `moonflow-copy-deck.md` round out testing, deployment, and user-facing text.
+**Companion documents:** `prd.md` covers *what* problem this solves and for whom — read that one first, logically. `adr-log.md` covers *why* each technical decision was made, as an immutable historical log. `technical-design.md` is the concrete blueprint (schema, state shape, file structure, algorithms). `qa-checklist.md`, the root `README.md`, and `copy-deck.md` round out testing, deployment, and user-facing text.
 
 **Frozen:** September 4, 2026 — before implementation begins. Any visual change after this point should be a deliberate edit to this doc, not a one-off in code.
 

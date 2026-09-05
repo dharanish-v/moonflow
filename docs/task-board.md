@@ -87,6 +87,8 @@ Depends on: everything above
 
 **Eighth, and the most serious of the responsive bugs** (ADR-027): the user reported the app "looks like desktop in mobile also" on their own phone. Reproduced by emulating a real Android touchscreen at 480×900 — a perfectly ordinary width for large modern phones — and it showed the exact desktop-framed treatment (floating simulated phone, black void backdrop, shadow) that ADR-025 built specifically to distinguish desktop browser windows from real phones. Root cause: the framing breakpoint (`@media (min-width: 27rem)`) tested only viewport width, silently assuming "narrow = phone, wide = desktop" — true only for the single iPhone width (393px) this project had been testing against, false for the real Android device landscape where many phones report CSS widths well past 27rem. Fixed by adding `(hover: hover) and (pointer: fine)` to the same breakpoint in both `index.html` and `planner.html` — real touchscreens report `(hover: none)`/`(pointer: coarse)` regardless of their width, so the frame now requires *both* wide and mouse-driven, not width alone. Verified all three real cases directly: narrow iPhone touchscreen (393px, unaffected), wide Android touchscreen (480px, frame now correctly gone), desktop mouse window (1440px, frame correctly still there). Full accessibility suite re-confirmed 11/11 (pure CSS-condition change, no logic touched).
 
+**Ninth, repo structure/organization audit** (ADR-028), requested directly: the app lived at `moonflow-app/` while 8 planning docs sat flat at repo root with a redundant `moonflow-` prefix; no root `README.md` GitHub would actually render, no `LICENSE`; `technical-design.md`'s File Structure section had drifted since the T25 deploy split (still showed repo-root paths, listed files that were never created, and never once mentioned any Phase 4/5 file); two folders on disk (`js/components/`, `sounds/`) were empty scaffolding from the original plan, never filled, never removed. Separately, V2's backlog already names a real second deployable unit (the push-reminder relay) — the actual trigger for a monorepo being more than a naming preference. Reorganized: `moonflow-app/` → `apps/moonflow-pwa/` (contents untouched, every import already relative), root docs → `docs/` with the prefix dropped, `moonflow-readme.md` promoted to a real root `README.md` and rewritten to match, `technical-design.md`'s File Structure section rewritten to match reality, the two dead folders deleted. `.github/workflows/deploy-pages.yml`'s artifact path updated and redeployed successfully. No `package.json`/workspace manifest added — nothing needs one with only one app; that's the piece to add once the relay (or anything else) actually gets built.
+
 Depends on: T1–T24
 
 ---
@@ -94,7 +96,7 @@ Depends on: T1–T24
 ## Backlog — V2 & Explorations
 *Deliberately left loose, not broken into tickets yet — that's its own future work, once V1 has actually shipped and been lived with for a cycle or two.*
 
-**V2 (see `moonflow-design-system.md`)**
+**V2 (see `design-system.md`)**
 - Push reminders — needs a minimal server-side relay (a device token + a reminder date only, never cycle data)
 - BBT / ovulation-test logging
 - Irregular-cycle handling improvements

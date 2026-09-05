@@ -2,19 +2,30 @@
 
 A private, local-only period tracker. No account, no server, no data leaving your phone.
 
+## Repo layout
+
+```
+apps/moonflow-pwa/   the app — plain HTML/CSS/JS, no build step (see ADR-014)
+docs/                planning docs (this map, below)
+```
+
+Structured as a monorepo (`apps/`) in case the V2 push-reminder relay (see `docs/task-board.md`'s backlog) ever gets built as a second app — nothing about the PWA's own no-build, no-Node approach changes either way (see ADR-028).
+
 ## Documentation map
-- `moonflow-prd.md` — what this solves, for whom, and what "done" looks like
-- `moonflow-adr-log.md` — why each technical decision was made (immutable history)
-- `moonflow-design-system.md` — palette, type, spacing, components, screens, edge cases
-- `moonflow-technical-design.md` — schema, state shape, file structure, algorithms
-- `moonflow-qa-checklist.md` — manual verification before calling V1 done
-- `moonflow-copy-deck.md` — every user-facing string, tone guide, privacy statement
-- `cycle-math-tests.html` — TDD tests for the cycle-math module (open directly in a browser)
+- `docs/prd.md` — what this solves, for whom, and what "done" looks like
+- `docs/adr-log.md` — why each technical decision was made (immutable history)
+- `docs/design-system.md` — palette, type, spacing, components, screens, edge cases
+- `docs/technical-design.md` — schema, state shape, file structure, algorithms
+- `docs/qa-checklist.md` — manual verification before calling V1 done
+- `docs/copy-deck.md` — every user-facing string, tone guide, privacy statement
+- `docs/task-board.md` — phase-by-phase build log, bugs found and fixed along the way
+- `apps/moonflow-pwa/tests/` — one plain HTML page per module, open directly in a browser (see ADR-014 — no test runner)
 
 ## Local development
 
-No build step — it's plain HTML/CSS/JS. Serve the folder with any static file server. macOS/Linux already has Python installed, so no extra install is needed:
+No build step — it's plain HTML/CSS/JS. Serve `apps/moonflow-pwa/` with any static file server. macOS/Linux already has Python installed, so no extra install is needed:
 ```
+cd apps/moonflow-pwa
 python3 -m http.server 8000
 ```
 (A local server is required, not optional — service workers and ES modules both refuse to work over a plain `file://` URL.)
@@ -22,7 +33,7 @@ Open the printed `http://localhost:...` URL in a desktop browser for quick itera
 
 ## Deploying
 
-Any static host works, since there's no server code (Vercel, Netlify, GitHub Pages, Cloudflare Pages — pick whichever is easiest). Deploy the whole project folder as-is; HTTPS is required for the service worker and install prompt to work at all.
+Any static host works, since there's no server code (Vercel, Netlify, GitHub Pages, Cloudflare Pages — pick whichever is easiest). Deploy `apps/moonflow-pwa/` as-is; HTTPS is required for the service worker and install prompt to work at all.
 
 ## The two install links
 
@@ -46,7 +57,7 @@ The repo is public (GitHub Pages doesn't support private repos on the free plan 
 ## Shipping an update
 
 1. Make your changes.
-2. Bump the `CACHE_VERSION` constant at the top of `service-worker.js` (e.g. `v3` → `v4`) — this is what makes the old cached version actually get replaced instead of silently persisting.
+2. Bump the `CACHE_VERSION` constant at the top of `apps/moonflow-pwa/service-worker.js` (e.g. `v3` → `v4`) — this is what makes the old cached version actually get replaced instead of silently persisting.
 3. Redeploy. The next time the app is opened (even offline-first), the new service worker installs and takes over on the following launch.
 
 ## Data & backup
