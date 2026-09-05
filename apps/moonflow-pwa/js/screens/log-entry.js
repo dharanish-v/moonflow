@@ -9,6 +9,30 @@ import { FLOW_OPTIONS, SYMPTOM_OPTIONS, MOOD_OPTIONS } from '../constants.js';
 import { shouldDismissSheet, DISMISS_DISTANCE_PX } from '../gestures.js';
 import { prefersReducedMotion } from '../motion.js';
 
+const PILL_BASE = 'pill flex-1 flex items-center justify-center min-h-[2.75rem] text-center py-flow-2 box-border rounded-flow-pill font-[inherit] text-flow-small cursor-pointer transition-transform duration-100 ease-[ease] active:scale-[0.96]';
+/** @param {boolean} selected */
+function pillClasses(selected) {
+  return selected
+    ? `${PILL_BASE} pill--selected border-0 bg-accent-rose text-accent-rose-text font-medium`
+    : `${PILL_BASE} border-[0.5px] border-border-muted bg-transparent text-ink-muted font-normal`;
+}
+
+const CHIP_BASE = 'chip inline-flex items-center justify-center min-h-[2.75rem] box-border py-flow-2 px-flow-4 rounded-flow-pill font-[inherit] text-flow-small cursor-pointer transition-transform duration-100 ease-[ease] active:scale-[0.96]';
+/** @param {boolean} selected */
+function chipClasses(selected) {
+  return selected
+    ? `${CHIP_BASE} chip--selected bg-[rgba(159,184,232,0.18)] border-[0.5px] border-accent-blue text-accent-blue`
+    : `${CHIP_BASE} border-[0.5px] border-border-muted bg-transparent text-ink-muted`;
+}
+
+const MOOD_BASE = 'mood-option w-[2.75rem] h-[2.75rem] rounded-full flex items-center justify-center cursor-pointer transition-transform duration-100 ease-[ease] active:scale-[0.92]';
+/** @param {boolean} selected */
+function moodClasses(selected) {
+  return selected
+    ? `${MOOD_BASE} mood-option--selected bg-fertile-tint border-[1.5px] border-accent-gold text-accent-gold`
+    : `${MOOD_BASE} bg-surface-card border-[0.5px] border-border-muted text-ink-inactive`;
+}
+
 /**
  * Pure decision for what a log-entry screen should open pre-filled with —
  * see tests/log-entry-draft-tests.html. An in-progress draft for this exact
@@ -49,49 +73,49 @@ export function renderLogEntryScreen(date, existingEntry, draftEntry = null) {
   const { flow, symptoms, mood, note } = resolveInitialDraft(date, existingEntry, draftEntry);
 
   const flowPills = FLOW_OPTIONS.map(opt => `
-    <button type="button" class="pill${opt.id === flow ? ' pill--selected' : ''}" data-flow="${opt.id}" aria-pressed="${opt.id === flow}">${opt.label}</button>
+    <button type="button" class="${pillClasses(opt.id === flow)}" data-flow="${opt.id}" aria-pressed="${opt.id === flow}">${opt.label}</button>
   `).join('');
 
   const symptomChips = SYMPTOM_OPTIONS.map(opt => `
-    <button type="button" class="chip${symptoms.includes(opt.id) ? ' chip--selected' : ''}" data-symptom="${opt.id}" aria-pressed="${symptoms.includes(opt.id)}">${opt.label}</button>
+    <button type="button" class="${chipClasses(symptoms.includes(opt.id))}" data-symptom="${opt.id}" aria-pressed="${symptoms.includes(opt.id)}">${opt.label}</button>
   `).join('');
 
   const moodButtons = MOOD_OPTIONS.map(opt => `
-    <button type="button" class="mood-option${opt.id === mood ? ' mood-option--selected' : ''}" data-mood="${opt.id}" aria-label="${opt.id}" aria-pressed="${opt.id === mood}">${ICONS[opt.icon]}</button>
+    <button type="button" class="${moodClasses(opt.id === mood)}" data-mood="${opt.id}" aria-label="${opt.id}" aria-pressed="${opt.id === mood}">${ICONS[opt.icon]}</button>
   `).join('');
 
   return `
-    <div class="screen log-sheet">
-      <div class="log-sheet__handle" aria-hidden="true"></div>
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: var(--space-6);">
-        <span class="screen__title" style="margin:0;">${formatHeaderDate(date)}</span>
-        <button type="button" id="log-close" aria-label="Close" style="background:none;border:none;color:var(--text-inactive);cursor:pointer;width:2.75rem;height:2.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${ICONS.x}</button>
+    <div class="log-sheet flex flex-col w-full max-w-[26rem] mx-auto box-border py-flow-6 px-flow-5 flex-initial bg-glass-fill border-[0.5px] border-glass-border rounded-t-flow-card">
+      <div class="log-sheet__handle w-[2.25rem] h-[0.25rem] rounded-[0.125rem] bg-border-muted mx-auto mb-flow-4 [touch-action:none]" aria-hidden="true"></div>
+      <div class="flex justify-between items-center mb-flow-6">
+        <span class="text-flow-title font-medium text-ink text-center">${formatHeaderDate(date)}</span>
+        <button type="button" id="log-close" aria-label="Close" class="bg-transparent border-0 text-ink-inactive cursor-pointer w-[2.75rem] h-[2.75rem] flex items-center justify-center shrink-0">${ICONS.x}</button>
       </div>
 
-      <div class="field" id="log-field-flow">
-        <span class="field__label">Flow</span>
-        <div class="pill-group">${flowPills}</div>
+      <div class="mb-flow-6" id="log-field-flow">
+        <span class="block text-flow-caption text-ink-muted mb-flow-2">Flow</span>
+        <div class="flex gap-flow-2">${flowPills}</div>
       </div>
 
-      <div class="field" id="log-field-symptom">
-        <span class="field__label">Symptoms</span>
-        <div class="chip-group">${symptomChips}</div>
+      <div class="mb-flow-6" id="log-field-symptom">
+        <span class="block text-flow-caption text-ink-muted mb-flow-2">Symptoms</span>
+        <div class="flex flex-wrap gap-flow-2">${symptomChips}</div>
       </div>
 
-      <div class="field" id="log-field-mood">
-        <span class="field__label">Mood</span>
-        <div class="mood-group">${moodButtons}</div>
+      <div class="mb-flow-6" id="log-field-mood">
+        <span class="block text-flow-caption text-ink-muted mb-flow-2">Mood</span>
+        <div class="flex justify-between">${moodButtons}</div>
       </div>
 
-      <div class="field">
-        <label class="field__label" for="log-note">Notes</label>
-        <textarea id="log-note" class="notes-input" placeholder="Add a note for today...">${note}</textarea>
+      <div class="mb-flow-6">
+        <label class="block text-flow-caption text-ink-muted mb-flow-2" for="log-note">Notes</label>
+        <textarea id="log-note" class="w-full box-border bg-surface-card border-[0.5px] border-border-muted rounded-flow-pill p-flow-3 text-flow-caption text-ink font-[inherit] resize-none min-h-[4.5rem] placeholder:text-ink-inactive" placeholder="Add a note for today...">${note}</textarea>
       </div>
 
-      ${existingEntry ? `<button type="button" id="log-clear" style="background:none;border:none;color:var(--accent-rose);font-size:var(--text-secondary-size);font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;min-height:2.75rem;padding:0;margin-bottom:var(--space-2);">Clear this day's log</button>` : ''}
+      ${existingEntry ? `<button type="button" id="log-clear" class="bg-transparent border-0 text-accent-rose text-flow-caption font-[inherit] cursor-pointer inline-flex items-center min-h-[2.75rem] p-0 mb-flow-2">Clear this day's log</button>` : ''}
 
-      <p id="log-save-error" style="display:none;color:var(--accent-rose);font-size:var(--text-secondary-size);margin:0 0 var(--space-3);">Couldn't save — try again</p>
-      <button type="button" class="button button--primary" id="log-save">Save</button>
+      <p id="log-save-error" class="hidden text-accent-rose text-flow-caption mb-flow-3">Couldn't save — try again</p>
+      <button type="button" class="flex items-center justify-center w-full min-h-[2.75rem] box-border py-flow-3 px-flow-5 rounded-flow-card border-0 text-flow-nav font-medium text-center cursor-pointer font-[inherit] transition-transform duration-100 ease-[ease] active:scale-[0.97] bg-accent-gold text-accent-gold-text disabled:opacity-40 disabled:cursor-not-allowed" id="log-save">Save</button>
     </div>
   `;
 }
@@ -137,7 +161,7 @@ export function mountLogEntryScreen(container, date, { onSave, onClear, onClose,
       flow = el.getAttribute('data-flow');
       container.querySelectorAll('[data-flow]').forEach(p => {
         const selected = p === el;
-        p.classList.toggle('pill--selected', selected);
+        p.className = pillClasses(selected);
         p.setAttribute('aria-pressed', String(selected));
       });
       reportDraft();
@@ -149,7 +173,7 @@ export function mountLogEntryScreen(container, date, { onSave, onClear, onClose,
       const id = el.getAttribute('data-symptom');
       const nowSelected = !symptoms.has(id);
       if (nowSelected) symptoms.add(id); else symptoms.delete(id);
-      el.classList.toggle('chip--selected', nowSelected);
+      el.className = chipClasses(nowSelected);
       el.setAttribute('aria-pressed', String(nowSelected));
       reportDraft();
     });
@@ -160,7 +184,7 @@ export function mountLogEntryScreen(container, date, { onSave, onClear, onClose,
       mood = el.getAttribute('data-mood');
       container.querySelectorAll('[data-mood]').forEach(m => {
         const selected = m === el;
-        m.classList.toggle('mood-option--selected', selected);
+        m.className = moodClasses(selected);
         m.setAttribute('aria-pressed', String(selected));
       });
       reportDraft();

@@ -120,7 +120,8 @@ function updateTabBarVisibilityAndActiveState() {
   tabBar.style.display = SCREENS_WITH_TAB_BAR.has(state.activeScreen) ? 'flex' : 'none';
   tabBar.querySelectorAll('[data-nav]').forEach(btn => {
     const isActive = btn.getAttribute('data-nav') === state.activeScreen;
-    btn.classList.toggle('tab-bar__button--active', isActive);
+    btn.classList.toggle('text-accent-gold', isActive);
+    btn.classList.toggle('text-ink-secondary', !isActive);
     if (isActive) btn.setAttribute('aria-current', 'page');
     else btn.removeAttribute('aria-current');
   });

@@ -23,19 +23,18 @@ export function renderPinLockScreen({ mode, error }) {
     : 'Set a PIN';
 
   return `
-    <div class="screen screen--centered">
-      <div class="screen__icon">${ICONS.lock}</div>
-      <h1 class="screen__title">${title}</h1>
-      <p class="screen__subtitle" style="color:var(--accent-rose); ${error ? '' : 'visibility:hidden;'}">${error || ' '}</p>
+    <div class="flex-1 flex flex-col w-full max-w-[26rem] mx-auto box-border py-flow-6 px-flow-5 justify-center">
+      <div class="screen__icon w-[2.75rem] h-[2.75rem] rounded-full bg-fertile-tint text-accent-gold flex items-center justify-center mx-auto mb-flow-4">${ICONS.lock}</div>
+      <h1 class="text-flow-title font-medium text-ink text-center mb-flow-1">${title}</h1>
+      <p class="screen__subtitle text-flow-caption text-center mb-flow-6 text-accent-rose${error ? '' : ' invisible'}">${error || ' '}</p>
 
-      <div class="field">
-        <label class="field__label" for="pin-input">${title}</label>
+      <div class="mb-flow-6">
+        <label class="block text-flow-caption text-ink-muted mb-flow-2" for="pin-input">${title}</label>
         <input type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
-          maxlength="${PIN_LENGTH}" id="pin-input" class="field__date-input"
-          style="text-align:center; letter-spacing:0.5em; font-size:var(--text-stat);">
+          maxlength="${PIN_LENGTH}" id="pin-input" class="w-full box-border min-h-[2.75rem] bg-surface-card border-[0.5px] border-border-muted rounded-flow-pill py-flow-3 px-flow-4 text-ink font-[inherit] [color-scheme:dark] text-center tracking-[0.5em] text-flow-stat">
       </div>
 
-      ${mode !== 'unlock' ? `<button type="button" class="button" id="pin-cancel" style="background:none;color:var(--text-muted);">Cancel</button>` : ''}
+      ${mode !== 'unlock' ? `<button type="button" class="flex items-center justify-center w-full min-h-[2.75rem] box-border py-flow-3 px-flow-5 rounded-flow-card border-0 text-flow-nav font-medium text-center cursor-pointer font-[inherit] transition-transform duration-100 ease-[ease] active:scale-[0.97] bg-transparent text-ink-muted" id="pin-cancel">Cancel</button>` : ''}
     </div>
   `;
 }
@@ -54,11 +53,11 @@ export function mountPinLockScreen(container, { onComplete, onCancel }) {
   // Wrong-PIN shake — near-universal lock-screen feedback (iOS, Android,
   // banking apps) that was entirely missing before; the error text alone is
   // easy to miss on a screen someone's glancing at, not reading closely.
-  // renderPinLockScreen() only omits `visibility:hidden` from the subtitle
-  // when an error was actually passed, so checking that inline style here
-  // is the same signal without threading a new parameter through mount.
+  // renderPinLockScreen() only omits the `invisible` utility class from the
+  // subtitle when an error was actually passed, so checking for that class
+  // here is the same signal without threading a new parameter through mount.
   const subtitle = /** @type {HTMLElement} */ (container.querySelector('.screen__subtitle'));
-  if (subtitle && subtitle.style.visibility !== 'hidden' && !prefersReducedMotion()) {
+  if (subtitle && !subtitle.classList.contains('invisible') && !prefersReducedMotion()) {
     gsap.fromTo(input, { x: 0 }, { x: 8, duration: 0.06, repeat: 5, yoyo: true, ease: 'power1.inOut', clearProps: 'x' });
   }
 

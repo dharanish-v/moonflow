@@ -70,37 +70,37 @@ export function renderInsightsScreen(entries) {
   // screen read as unfinished, not as "deliberately calm."
   if (!data.hasEnoughHistory) {
     return `
-      <div class="screen screen--centered">
-        <div class="screen__icon">${ICONS['chart-bar']}</div>
-        <h1 class="screen__title">Insights</h1>
-        <p class="screen__subtitle" style="margin-bottom:0;">Not enough history yet — check back after your next cycle</p>
+      <div class="flex-1 flex flex-col w-full max-w-[26rem] mx-auto box-border py-flow-6 px-flow-5 justify-center">
+        <div class="screen__icon w-[2.75rem] h-[2.75rem] rounded-full bg-fertile-tint text-accent-gold flex items-center justify-center mx-auto mb-flow-4">${ICONS['chart-bar']}</div>
+        <h1 class="text-flow-title font-medium text-ink text-center mb-flow-1">Insights</h1>
+        <p class="screen__subtitle text-flow-caption text-ink-muted text-center">Not enough history yet — check back after your next cycle</p>
       </div>
     `;
   }
 
   return `
-    <div class="screen">
-      <h1 class="screen__title" style="text-align:left; margin-bottom: var(--space-4);">Insights</h1>
-      <div class="insights-body">
-        <div class="card-grid">
-          <div class="card"><div class="card__label">Avg cycle</div><div class="card__value">${data.avgCycleLength} days</div></div>
-          <div class="card"><div class="card__label">Avg period</div><div class="card__value">${data.avgPeriodLength} days</div></div>
-          <div class="card"><div class="card__label">Variability</div><div class="card__value">&plusmn;${data.variability} days</div></div>
-          <div class="card"><div class="card__label">Cycles logged</div><div class="card__value">${data.cyclesLogged}</div></div>
+    <div class="flex-1 flex flex-col w-full max-w-[26rem] mx-auto box-border py-flow-6 px-flow-5">
+      <h1 class="text-flow-title font-medium text-ink text-left mb-flow-4">Insights</h1>
+      <div class="flex-1 flex flex-col justify-center">
+        <div class="grid grid-cols-2 gap-flow-3">
+          <div class="bg-surface-card rounded-flow-card py-flow-3 px-flow-4"><div class="text-flow-micro text-ink-muted">Avg cycle</div><div class="text-flow-stat font-medium text-ink mt-flow-1">${data.avgCycleLength} days</div></div>
+          <div class="bg-surface-card rounded-flow-card py-flow-3 px-flow-4"><div class="text-flow-micro text-ink-muted">Avg period</div><div class="text-flow-stat font-medium text-ink mt-flow-1">${data.avgPeriodLength} days</div></div>
+          <div class="bg-surface-card rounded-flow-card py-flow-3 px-flow-4"><div class="text-flow-micro text-ink-muted">Variability</div><div class="text-flow-stat font-medium text-ink mt-flow-1">&plusmn;${data.variability} days</div></div>
+          <div class="bg-surface-card rounded-flow-card py-flow-3 px-flow-4"><div class="text-flow-micro text-ink-muted">Cycles logged</div><div class="text-flow-stat font-medium text-ink mt-flow-1">${data.cyclesLogged}</div></div>
         </div>
 
-        <div class="section-label">Cycle length, last ${data.recentCycleLengths.length} cycles</div>
-        <div class="bar-chart">
-          ${data.recentCycleLengths.map(len => `<div class="bar-chart__bar" style="height:${Math.max(8, (len - 20) * 4)}px"></div>`).join('')}
+        <div class="text-flow-caption text-ink-muted mt-flow-6 mb-flow-3">Cycle length, last ${data.recentCycleLengths.length} cycles</div>
+        <div class="flex items-end gap-flow-3 h-16">
+          ${data.recentCycleLengths.map(len => `<div class="bar-chart__bar flex-1 bg-accent-gold rounded-t-[0.25rem]" style="height:${Math.max(8, (len - 20) * 4)}px"></div>`).join('')}
         </div>
-        <div class="bar-chart__labels">${data.recentCycleLengths.map(len => `<span>${len}</span>`).join('')}</div>
+        <div class="flex gap-flow-3 mt-flow-1">${data.recentCycleLengths.map(len => `<span class="flex-1 text-center text-flow-micro text-ink-inactive">${len}</span>`).join('')}</div>
 
         ${data.topSymptoms.length ? `
-          <div class="section-label">Most logged symptoms</div>
+          <div class="text-flow-caption text-ink-muted mt-flow-6 mb-flow-3">Most logged symptoms</div>
           ${data.topSymptoms.map(s => `
-            <div class="freq-row">
-              <div class="freq-row__top"><span>${s.label}</span><span>${s.percent}%</span></div>
-              <div class="freq-row__track"><div class="freq-row__fill" style="width:${s.percent}%"></div></div>
+            <div class="mb-flow-3">
+              <div class="flex justify-between text-flow-caption text-ink-secondary mb-flow-1"><span>${s.label}</span><span>${s.percent}%</span></div>
+              <div class="bg-border-hairline rounded-[0.375rem] h-[0.375rem]"><div class="freq-row__fill bg-accent-blue rounded-[0.375rem] h-[0.375rem]" style="width:${s.percent}%"></div></div>
             </div>
           `).join('')}
         ` : ''}

@@ -91,24 +91,19 @@ export function renderHomeScreen(entries, settings, today = new Date()) {
   shouldAnimateMoonPhaseOnNextMount = !hasAnimatedMoonPhaseThisSession;
   hasAnimatedMoonPhaseThisSession = true;
 
-  // Tailwind migration (ADR-030): the classes below that are exclusive to
-  // this screen (moon-phase sizing, quick-actions layout) are now Tailwind
-  // utilities instead of components.css rules. `.screen`/`.screen__title`/
-  // `.screen__subtitle` are deliberately left alone — 4 other screens share
-  // that CSS, and forking it here would let Home silently drift from them
-  // the next time someone edits components.css. `.quick-action`/
-  // `.quick-action--flow` etc. class names are KEPT in the markup even
-  // though their own layout now comes from Tailwind utilities — the raw
-  // inlined SVG icons (icons.js) are styled via components.css descendant
-  // selectors (`.quick-action svg`, `.quick-action--flow svg`) that still
-  // need those class names to match, and touching icons.js is out of scope
-  // for a single-screen migration.
+  // Tailwind migration (ADR-030/031): every class on this screen is a
+  // Tailwind utility now. `.quick-action`/`.quick-action--flow` etc. class
+  // names are KEPT in the markup even though their own layout comes from
+  // Tailwind utilities — the raw inlined SVG icons (icons.js) are styled via
+  // components.css descendant selectors (`.quick-action svg`,
+  // `.quick-action--flow svg`) that still need those class names to match,
+  // and touching icons.js is out of scope for a screen-level migration.
   return `
-    <div class="screen screen--centered">
+    <div class="flex-1 flex flex-col w-full max-w-[26rem] mx-auto box-border py-flow-6 px-flow-5 justify-center">
       ${renderMoonPhaseSVG(status.moonPhase).replace('<svg ', '<svg class="moon-phase w-[9.375rem] h-[9.375rem] mx-auto block" ')}
-      <div style="text-align:center; margin-top: var(--space-4);">
-        <div class="screen__title" style="margin-bottom:0;">${dayLabel}</div>
-        <div class="screen__subtitle" style="margin-bottom:0;">${status.statusText}${status.isEstimated ? ' &middot; estimated' : ''}</div>
+      <div class="text-center mt-flow-4">
+        <div class="text-flow-title font-medium text-ink">${dayLabel}</div>
+        <div class="text-flow-caption text-ink-muted">${status.statusText}${status.isEstimated ? ' &middot; estimated' : ''}</div>
       </div>
       <div class="text-center text-flow-nav text-ink-inactive tracking-[0.05em] mt-flow-5">பிறை</div>
 
