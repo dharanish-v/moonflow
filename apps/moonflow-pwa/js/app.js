@@ -339,3 +339,13 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+
+// Sweep the hand-written pre-Workbox cache (ADR-029 switched service-worker.js
+// to vite-plugin-pwa's generateSW, which only manages its own `workbox-*`
+// cache names — a leftover `moonflow-vNN` entry from the old hand-rolled SW
+// is invisible to it and never gets deleted on its own). Cheap no-op once gone.
+if ('caches' in window) {
+  caches.keys().then(keys => {
+    keys.filter(key => !key.startsWith('workbox-')).forEach(key => caches.delete(key));
+  });
+}
