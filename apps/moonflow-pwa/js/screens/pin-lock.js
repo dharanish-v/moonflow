@@ -24,17 +24,17 @@ export function renderPinLockScreen({ mode, error }) {
 
   return `
     <div class="flex-1 flex flex-col w-full max-w-[26rem] mx-auto box-border py-flow-6 px-flow-5 justify-center">
-      <div class="screen__icon w-[2.75rem] h-[2.75rem] rounded-full bg-fertile-tint text-accent-gold flex items-center justify-center mx-auto mb-flow-4">${ICONS.lock}</div>
-      <h1 class="text-flow-title font-medium text-ink text-center mb-flow-1">${title}</h1>
-      <p class="screen__subtitle text-flow-caption text-center mb-flow-6 text-accent-rose${error ? '' : ' invisible'}">${error || ' '}</p>
+      <div class="screen__icon w-11 h-11 rounded-full bg-primary/15 text-primary flex items-center justify-center mx-auto mb-flow-4">${ICONS.lock.replace('<svg ', '<svg class="w-5 h-5" ')}</div>
+      <h1 class="text-flow-title font-medium text-base-content text-center mb-flow-1">${title}</h1>
+      <p class="screen__subtitle text-flow-caption text-center mb-flow-6 text-secondary${error ? '' : ' invisible'}">${error || ' '}</p>
 
       <div class="mb-flow-6">
-        <label class="block text-flow-caption text-ink-muted mb-flow-2" for="pin-input">${title}</label>
+        <label class="block text-flow-caption text-base-content/60 mb-flow-2" for="pin-input">${title}</label>
         <input type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
-          maxlength="${PIN_LENGTH}" id="pin-input" class="w-full box-border min-h-[2.75rem] bg-surface-card border-[0.5px] border-border-muted rounded-flow-pill py-flow-3 px-flow-4 text-ink font-[inherit] [color-scheme:dark] text-center tracking-[0.5em] text-flow-stat">
+          maxlength="${PIN_LENGTH}" id="pin-input" class="input w-full [color-scheme:dark] text-center tracking-[0.5em] text-flow-stat">
       </div>
 
-      ${mode !== 'unlock' ? `<button type="button" class="flex items-center justify-center w-full min-h-[2.75rem] box-border py-flow-3 px-flow-5 rounded-flow-card border-0 text-flow-nav font-medium text-center cursor-pointer font-[inherit] transition-transform duration-100 ease-[ease] active:scale-[0.97] bg-transparent text-ink-muted" id="pin-cancel">Cancel</button>` : ''}
+      ${mode !== 'unlock' ? `<button type="button" class="btn btn-ghost btn-block text-flow-nav" id="pin-cancel">Cancel</button>` : ''}
     </div>
   `;
 }

@@ -1,47 +1,87 @@
-/* tailwind-theme.css — exposes every existing tokens.css value as a Tailwind
-   utility, via reference (var()), never a duplicated/hardcoded value.
-   tokens.css stays the single source of truth (ADR-016) — this file adds
-   nothing new, it only makes those same values reachable as utility classes
-   for new/migrated markup. components.css keeps working untouched.
-
-   @theme inline (not plain @theme) is required here: it makes Tailwind
-   reference each variable at the point of use instead of also re-declaring
-   a competing global custom property of the same computed value — several
-   tokens.css names already sit inside Tailwind's own reserved prefixes
-   (--text-* for font sizes, --radius-*, --spacing-*), and a plain @theme
-   would create same-name self-references there, which CSS resolves to an
-   invalid value (silently breaking every one of those utilities). */
+/* tailwind-theme.css — daisyUI is now the entire component-styling system
+   (ADR-032): every screen uses daisyUI's semantic component classes (btn,
+   input, textarea, toggle, list, card, stat, dock, progress) instead of
+   bespoke Tailwind utility combinations. This file's only job is to feed
+   daisyUI's theming layer with Moonflow's existing palette from tokens.css
+   (ADR-016: tokens.css stays the one file allowed a hardcoded color), via
+   var() reference, so daisyUI's own components render in Moonflow's colors
+   instead of a stock daisyUI theme. Nothing here is itself a "custom style":
+   it's the same "expose an existing token to the build" role tokens.css and
+   this file have always played, just aimed at daisyUI's variables instead of
+   hand-rolled utility aliases. */
 @import "tailwindcss";
 
-@theme inline {
-  /* Colors — none of these names collide with tokens.css's own property
-     names or Tailwind's presets, so they mirror 1:1. */
-  --color-bg-screen: var(--bg-screen);
-  --color-bg-frame: var(--bg-frame);
-  --color-surface-card: var(--surface-card);
-  --color-border-hairline: var(--border-hairline);
-  --color-border-muted: var(--border-muted);
-  --color-ink: var(--text-primary);
-  --color-ink-secondary: var(--text-secondary);
-  --color-ink-muted: var(--text-muted);
-  --color-ink-inactive: var(--text-inactive);
-  --color-accent-rose: var(--accent-rose);
-  --color-accent-rose-text: var(--accent-rose-text);
-  --color-accent-gold: var(--accent-gold);
-  --color-accent-gold-text: var(--accent-gold-text);
-  --color-accent-blue: var(--accent-blue);
-  --color-moon-unlit: var(--moon-unlit);
-  --color-glass-fill: var(--glass-fill);
-  --color-glass-border: var(--glass-border);
-  --color-fertile-tint: var(--fertile-tint);
-  --color-fertile-tint-peak: var(--fertile-tint-peak);
+@plugin "daisyui" {
+  themes: false;
+}
 
-  /* Font sizes, radii, and spacing: tokens.css already names these inside
-     Tailwind's own reserved prefixes AND inside Tailwind's own default
-     numeric scale (p-4, rounded-lg, text-lg, etc. all ship built in). A
-     "flow-" segment keeps this project's scale as distinct, non-colliding
-     utility names, so Tailwind's own defaults stay exactly as any
-     Tailwind-familiar reader would expect them to, untouched. */
+@plugin "daisyui/theme" {
+  name: "moonflow";
+  default: true;
+  prefersdark: true;
+  color-scheme: dark;
+
+  /* Surfaces */
+  --color-base-100: var(--bg-screen);
+  --color-base-200: var(--surface-card);
+  --color-base-300: var(--border-muted);
+  --color-base-content: var(--text-primary);
+
+  /* Semantic accents — each keeps the single meaning it always owned
+     (design-system.md): gold = primary/positive, rose = secondary/error
+     (the app's only "something's wrong" color, e.g. the save-error text
+     and wrong-PIN message already used rose before this migration), blue
+     = accent/informational. */
+  --color-primary: var(--accent-gold);
+  --color-primary-content: var(--accent-gold-text);
+  --color-secondary: var(--accent-rose);
+  --color-secondary-content: var(--accent-rose-text);
+  --color-accent: var(--accent-blue);
+  --color-accent-content: var(--bg-frame);
+  --color-neutral: var(--surface-card);
+  --color-neutral-content: var(--text-secondary);
+  --color-info: var(--accent-blue);
+  --color-info-content: var(--bg-frame);
+  --color-success: var(--accent-gold);
+  --color-success-content: var(--accent-gold-text);
+  --color-warning: var(--accent-gold);
+  --color-warning-content: var(--accent-gold-text);
+  --color-error: var(--accent-rose);
+  --color-error-content: var(--accent-rose-text);
+
+  /* Shape — reuses tokens.css's existing two radii rather than daisyUI's
+     own defaults, so components render at the sizes this app already
+     settled on, not a value invented for this migration. */
+  --radius-selector: var(--radius-pill);
+  --radius-field: var(--radius-pill);
+  --radius-box: var(--radius-card);
+
+  /* --size-field tuned so a plain `btn`/`input` (no size modifier) lands
+     exactly at the 44px touch-target minimum (ADR-024) — 0.275rem * 10 =
+     2.75rem — instead of daisyUI's own default of 40px. --size-selector
+     left at daisyUI's default; the toggle switch is one of ADR-024's two
+     documented touch-target exceptions (Apple's UISwitch proportions),
+     so it doesn't need the same treatment. */
+  --size-selector: 0.25rem;
+  --size-field: 0.275rem;
+
+  --border: var(--border-width);
+  /* This app's whole aesthetic is flat, not skeuomorphic — no shadows,
+     no gradients, no texture anywhere today. depth/noise are daisyUI's own
+     documented opt-out for exactly that, not a style being fought against. */
+  --depth: 0;
+  --noise: 0;
+}
+
+@theme inline {
+  /* Illustration-only color with no daisyUI slot to reuse — moon-phase.js's
+     SVG needs the unlit lune's own color, not a semantic component role. */
+  --color-moon-unlit: var(--moon-unlit);
+
+  /* Type scale and spacing rhythm: daisyUI's theme layer covers color/shape/
+     size, not a custom type scale or spacing rhythm — this project's 8-step
+     scale and 6-step rhythm still need their own Tailwind utility names,
+     same as before this migration. */
   --text-flow-hero: var(--text-hero);
   --text-flow-stat: var(--text-stat);
   --text-flow-title: var(--text-title);
@@ -51,12 +91,15 @@
   --text-flow-small: var(--text-small);
   --text-flow-micro: var(--text-micro);
 
+  /* Radii for the handful of elements that aren't a daisyUI component and
+     so don't inherit radius-field/radius-box automatically: the log-entry
+     sheet's top corners, and the app-shell chrome in index.html/planner.html
+     (phone frame, tab-bar capsule) which stays outside this migration's
+     scope (see ADR-032). */
   --radius-flow-card: var(--radius-card);
   --radius-flow-pill: var(--radius-pill);
   --radius-flow-tabbar: var(--radius-tabbar);
   --radius-flow-frame: var(--radius-frame);
-  /* --radius-circle (50%) has no alias — Tailwind's built-in `rounded-full`
-     already does the identical job for circular elements. */
 
   --spacing-flow-1: var(--space-1);
   --spacing-flow-2: var(--space-2);

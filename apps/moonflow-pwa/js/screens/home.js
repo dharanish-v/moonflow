@@ -17,7 +17,7 @@ function toDateString(date) {
 
 // Tracks whether the moon-phase illustration has already played its one-time
 // fade-and-scale-in this session — it must animate on first load only, never
-// on every re-render (design-system.md edge-case rules). Now GSAP-driven
+// on every re-render (design-system.md edge-case rules). GSAP-driven
 // (mountHomeScreen), not a CSS class — see motion.js.
 let hasAnimatedMoonPhaseThisSession = false;
 
@@ -80,6 +80,8 @@ export function computeHomeStatus(entries, settings, today = new Date()) {
   };
 }
 
+const QUICK_ACTION = 'btn btn-ghost bg-base-200 border-base-300 flex-1 h-auto min-h-0 flex-col gap-flow-2 py-flow-4 px-flow-1';
+
 /**
  * @param {Array<{date: string, flow: string|null}>} entries
  * @param {{avgCycleLength: number, lastPeriodStart: string|null}} settings
@@ -91,34 +93,27 @@ export function renderHomeScreen(entries, settings, today = new Date()) {
   shouldAnimateMoonPhaseOnNextMount = !hasAnimatedMoonPhaseThisSession;
   hasAnimatedMoonPhaseThisSession = true;
 
-  // Tailwind migration (ADR-030/031): every class on this screen is a
-  // Tailwind utility now. `.quick-action`/`.quick-action--flow` etc. class
-  // names are KEPT in the markup even though their own layout comes from
-  // Tailwind utilities — the raw inlined SVG icons (icons.js) are styled via
-  // components.css descendant selectors (`.quick-action svg`,
-  // `.quick-action--flow svg`) that still need those class names to match,
-  // and touching icons.js is out of scope for a screen-level migration.
   return `
     <div class="flex-1 flex flex-col w-full max-w-[26rem] mx-auto box-border py-flow-6 px-flow-5 justify-center">
       ${renderMoonPhaseSVG(status.moonPhase).replace('<svg ', '<svg class="moon-phase w-[9.375rem] h-[9.375rem] mx-auto block" ')}
       <div class="text-center mt-flow-4">
-        <div class="text-flow-title font-medium text-ink">${dayLabel}</div>
-        <div class="text-flow-caption text-ink-muted">${status.statusText}${status.isEstimated ? ' &middot; estimated' : ''}</div>
+        <div class="text-flow-title font-medium text-base-content">${dayLabel}</div>
+        <div class="text-flow-caption text-base-content/60">${status.statusText}${status.isEstimated ? ' &middot; estimated' : ''}</div>
       </div>
-      <div class="text-center text-flow-nav text-ink-inactive tracking-[0.05em] mt-flow-5">பிறை</div>
+      <div class="text-center text-flow-nav text-base-content/40 tracking-[0.05em] mt-flow-5">பிறை</div>
 
       <div class="flex gap-flow-3 mt-flow-6">
-        <button type="button" class="quick-action quick-action--flow flex-1 bg-surface-card border-[0.5px] border-border-muted rounded-flow-card py-flow-4 px-flow-1 flex flex-col items-center gap-flow-2 cursor-pointer font-[inherit] transition-transform duration-100 ease-[ease] active:scale-[0.96]" data-action="flow">
-          ${ICONS.droplet}
-          <span class="text-flow-caption text-ink-secondary">Flow</span>
+        <button type="button" class="${QUICK_ACTION}" data-action="flow">
+          ${ICONS.droplet.replace('<svg ', '<svg class="w-[1.125rem] h-[1.125rem] text-secondary" ')}
+          <span class="text-flow-caption text-base-content/80 font-normal">Flow</span>
         </button>
-        <button type="button" class="quick-action quick-action--mood flex-1 bg-surface-card border-[0.5px] border-border-muted rounded-flow-card py-flow-4 px-flow-1 flex flex-col items-center gap-flow-2 cursor-pointer font-[inherit] transition-transform duration-100 ease-[ease] active:scale-[0.96]" data-action="mood">
-          ${ICONS['mood-smile']}
-          <span class="text-flow-caption text-ink-secondary">Mood</span>
+        <button type="button" class="${QUICK_ACTION}" data-action="mood">
+          ${ICONS['mood-smile'].replace('<svg ', '<svg class="w-[1.125rem] h-[1.125rem] text-primary" ')}
+          <span class="text-flow-caption text-base-content/80 font-normal">Mood</span>
         </button>
-        <button type="button" class="quick-action quick-action--symptom flex-1 bg-surface-card border-[0.5px] border-border-muted rounded-flow-card py-flow-4 px-flow-1 flex flex-col items-center gap-flow-2 cursor-pointer font-[inherit] transition-transform duration-100 ease-[ease] active:scale-[0.96]" data-action="symptom">
-          ${ICONS.notes}
-          <span class="text-flow-caption text-ink-secondary">Symptom</span>
+        <button type="button" class="${QUICK_ACTION}" data-action="symptom">
+          ${ICONS.notes.replace('<svg ', '<svg class="w-[1.125rem] h-[1.125rem] text-accent" ')}
+          <span class="text-flow-caption text-base-content/80 font-normal">Symptom</span>
         </button>
       </div>
     </div>

@@ -1,6 +1,11 @@
 // @ts-check
 // screens/calendar.js — see "Calendar" in moonflow-design-system.md. Tapping a past
 // date opens the log-entry sheet for that date; future dates are non-interactive.
+//
+// The day grid itself has no daisyUI equivalent (no component library ships a
+// cycle-tracking calendar) — it stays hand-built, using daisyUI's semantic
+// colors (secondary=period, primary=fertile) instead of the old bespoke
+// accent-rose/fertile-tint aliases (ADR-032).
 
 import { ICONS } from '../icons.js';
 import { derivePeriods, predictNextPeriod, estimateFertileWindow, diffDays, addDays } from '../cycle-math.js';
@@ -69,12 +74,12 @@ export function renderCalendarScreen(monthStr, entries, settings) {
     const isFuture = diffDays(todayStr, dateStr) > 0;
     const isToday = dateStr === todayStr;
     let stateClass = '';
-    if (loggedPeriodDates.has(dateStr)) stateClass = 'bg-accent-rose text-accent-rose-text';
-    else if (dateStr === fertilePeak) stateClass = 'bg-fertile-tint-peak border-[1.5px] border-accent-gold font-medium';
-    else if (fertileDates.has(dateStr)) stateClass = 'bg-fertile-tint text-ink';
-    else if (predictedDates.has(dateStr)) stateClass = 'border-[1.5px] border-dashed border-accent-rose text-accent-rose';
+    if (loggedPeriodDates.has(dateStr)) stateClass = 'bg-secondary text-secondary-content';
+    else if (dateStr === fertilePeak) stateClass = 'bg-primary/30 border-[1.5px] border-primary font-medium';
+    else if (fertileDates.has(dateStr)) stateClass = 'bg-primary/15 text-base-content';
+    else if (predictedDates.has(dateStr)) stateClass = 'border-[1.5px] border-dashed border-secondary text-secondary';
 
-    const todayClass = isToday ? ' border-[1.5px] border-ink' : '';
+    const todayClass = isToday ? ' border-[1.5px] border-base-content' : '';
     const futureClass = isFuture ? ' cursor-default' : '';
     const disabled = isFuture ? 'disabled' : '';
 
@@ -88,7 +93,7 @@ export function renderCalendarScreen(monthStr, entries, settings) {
     if (isToday) spokenParts.push('today');
     const spokenLabel = spokenParts.join(', ');
 
-    return `<div class="calendar-day aspect-square flex items-center justify-center"><button type="button" class="w-[2.5rem] h-[2.5rem] rounded-full flex items-center justify-center text-flow-small text-ink-secondary bg-transparent border-0 font-[inherit] cursor-pointer p-0 ${stateClass}${todayClass}${futureClass}" data-date="${dateStr}" aria-label="${spokenLabel}" ${disabled}>${dayNum}</button></div>`;
+    return `<div class="calendar-day aspect-square flex items-center justify-center"><button type="button" class="btn btn-ghost btn-circle w-[2.5rem] h-[2.5rem] min-h-0 text-flow-small text-base-content/80 ${stateClass}${todayClass}${futureClass}" data-date="${dateStr}" aria-label="${spokenLabel}" ${disabled}>${dayNum}</button></div>`;
   }).join('');
 
   const monthLabel = firstOfMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
@@ -96,16 +101,16 @@ export function renderCalendarScreen(monthStr, entries, settings) {
   return `
     <div class="flex-1 flex flex-col w-full max-w-[26rem] mx-auto box-border py-flow-6 px-flow-5">
       <div class="flex justify-between items-center mb-flow-4">
-        <button type="button" class="w-[2.75rem] h-[2.75rem] flex items-center justify-center bg-transparent border-0 text-ink-inactive cursor-pointer p-0" data-month-nav="prev" aria-label="Previous month">${ICONS['chevron-left'].replace('<svg ', '<svg class="w-[0.9rem] h-[0.9rem]" ')}</button>
-        <span class="text-flow-nav font-medium text-ink">${monthLabel}</span>
-        <button type="button" class="w-[2.75rem] h-[2.75rem] flex items-center justify-center bg-transparent border-0 text-ink-inactive cursor-pointer p-0" data-month-nav="next" aria-label="Next month">${ICONS['chevron-right'].replace('<svg ', '<svg class="w-[0.9rem] h-[0.9rem]" ')}</button>
+        <button type="button" class="btn btn-ghost btn-circle text-base-content/40" data-month-nav="prev" aria-label="Previous month">${ICONS['chevron-left'].replace('<svg ', '<svg class="w-[0.9rem] h-[0.9rem]" ')}</button>
+        <span class="text-flow-nav font-medium text-base-content">${monthLabel}</span>
+        <button type="button" class="btn btn-ghost btn-circle text-base-content/40" data-month-nav="next" aria-label="Next month">${ICONS['chevron-right'].replace('<svg ', '<svg class="w-[0.9rem] h-[0.9rem]" ')}</button>
       </div>
-      <div class="grid grid-cols-7">${WEEKDAY_LABELS.map(l => `<span class="text-center text-flow-micro text-ink-inactive pb-flow-2">${l}</span>`).join('')}</div>
+      <div class="grid grid-cols-7">${WEEKDAY_LABELS.map(l => `<span class="text-center text-flow-micro text-base-content/40 pb-flow-2">${l}</span>`).join('')}</div>
       <div class="grid grid-cols-7 gap-[0.375rem]">${dayCells}</div>
-      <div class="flex gap-flow-4 justify-center mt-flow-4 text-flow-micro text-ink-muted">
-        <span><span class="inline-block w-2 h-2 rounded-full mr-flow-1 align-middle bg-accent-rose"></span>Period</span>
-        <span><span class="inline-block w-2 h-2 rounded-full mr-flow-1 align-middle bg-fertile-tint-peak"></span>Fertile</span>
-        <span><span class="inline-block w-2 h-2 rounded-full mr-flow-1 align-middle border-[1.5px] border-dashed border-accent-rose"></span>Predicted</span>
+      <div class="flex gap-flow-4 justify-center mt-flow-4 text-flow-micro text-base-content/60">
+        <span><span class="inline-block w-2 h-2 rounded-full mr-flow-1 align-middle bg-secondary"></span>Period</span>
+        <span><span class="inline-block w-2 h-2 rounded-full mr-flow-1 align-middle bg-primary/30"></span>Fertile</span>
+        <span><span class="inline-block w-2 h-2 rounded-full mr-flow-1 align-middle border-[1.5px] border-dashed border-secondary"></span>Predicted</span>
       </div>
     </div>
   `;
