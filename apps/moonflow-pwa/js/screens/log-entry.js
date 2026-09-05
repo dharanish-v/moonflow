@@ -17,13 +17,22 @@ import { prefersReducedMotion } from '../motion.js';
 const PILL_BASE = 'pill btn flex-1 min-w-0 text-flow-small [--btn-p:0.375rem]';
 /** @param {boolean} selected */
 function pillClasses(selected) {
-  return selected ? `${PILL_BASE} pill--selected btn-secondary` : `${PILL_BASE} btn-outline font-normal`;
+  // Unselected reads calm/muted, not a bright outline (design-system.md's
+  // chip spec — "unselected = transparent + border-muted + text-muted" —
+  // applies the same way here; daisyUI's plain btn-outline defaults to
+  // full-strength base-content for both, which is louder than this app's
+  // "calm, private, quiet" tone actually wants).
+  return selected
+    ? `${PILL_BASE} pill--selected btn-secondary`
+    : `${PILL_BASE} btn-outline font-normal text-base-content/60 border-base-content/20`;
 }
 
 const CHIP_BASE = 'chip btn text-flow-small';
 /** @param {boolean} selected */
 function chipClasses(selected) {
-  return selected ? `${CHIP_BASE} chip--selected btn-soft btn-accent` : `${CHIP_BASE} btn-outline`;
+  return selected
+    ? `${CHIP_BASE} chip--selected btn-soft btn-accent`
+    : `${CHIP_BASE} btn-outline text-base-content/60 border-base-content/20`;
 }
 
 const MOOD_BASE = 'mood-option btn btn-circle';

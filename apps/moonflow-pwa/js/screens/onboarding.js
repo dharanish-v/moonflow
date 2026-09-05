@@ -11,7 +11,9 @@ const MAX_PERIOD_LENGTH = 14;
 const DEFAULT_CYCLE_LENGTH = 28;
 const DEFAULT_PERIOD_LENGTH = 5;
 
-const STEPPER_BUTTON = 'btn btn-circle btn-outline btn-sm';
+// text/border muted, not daisyUI's plain btn-outline default of full-strength
+// base-content — matches this app's calm/quiet tone (design-system.md).
+const STEPPER_BUTTON = 'btn btn-circle btn-outline btn-sm text-base-content/60 border-base-content/20';
 
 function todayString() {
   const d = new Date();
