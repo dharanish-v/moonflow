@@ -9,7 +9,12 @@ import { FLOW_OPTIONS, SYMPTOM_OPTIONS, MOOD_OPTIONS } from '../constants.js';
 import { shouldDismissSheet, DISMISS_DISTANCE_PX } from '../gestures.js';
 import { prefersReducedMotion } from '../motion.js';
 
-const PILL_BASE = 'pill btn flex-1 text-flow-small';
+// min-w-0 + a smaller --btn-p: flex-1 alone doesn't force 5 pills to equal
+// width here — a flex item's default min-width:auto refuses to shrink below
+// its own content, and daisyUI's default 1rem-per-side button padding pushes
+// "Spotting"/"Medium"'s natural width past what an equal 1/5 share leaves,
+// so widths silently tracked label length instead of matching.
+const PILL_BASE = 'pill btn flex-1 min-w-0 text-flow-small [--btn-p:0.375rem]';
 /** @param {boolean} selected */
 function pillClasses(selected) {
   return selected ? `${PILL_BASE} pill--selected btn-secondary` : `${PILL_BASE} btn-outline font-normal`;
