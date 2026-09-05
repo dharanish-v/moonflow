@@ -5,7 +5,10 @@
 // unit-testable without simulating real pointer events — see
 // tests/animation-tests.html.
 
-const DISMISS_DISTANCE_PX = 80;
+// Exported (not just used internally) so log-entry.js's drag handler can fire
+// a haptic tick at the exact same distance this decision itself uses, rather
+// than a second hand-copied magic number that could quietly drift out of sync.
+export const DISMISS_DISTANCE_PX = 80;
 const DISMISS_VELOCITY_PX_PER_MS = 0.5;
 
 /**

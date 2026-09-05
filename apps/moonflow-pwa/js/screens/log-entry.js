@@ -3,9 +3,11 @@
 // day (tapped from the calendar). See moonflow-design-system.md "Log entry" and the
 // data-safety edge-case rules (upsert by date, never append).
 
+import gsap from 'gsap';
 import { ICONS } from '../icons.js';
 import { FLOW_OPTIONS, SYMPTOM_OPTIONS, MOOD_OPTIONS } from '../constants.js';
-import { shouldDismissSheet } from '../gestures.js';
+import { shouldDismissSheet, DISMISS_DISTANCE_PX } from '../gestures.js';
+import { prefersReducedMotion } from '../motion.js';
 
 /**
  * Pure decision for what a log-entry screen should open pre-filled with —
@@ -170,27 +172,50 @@ export function mountLogEntryScreen(container, date, { onSave, onClear, onClose,
   const closeBtn = container.querySelector('#log-close');
   if (closeBtn) closeBtn.addEventListener('click', onClose);
 
-  // T22 swipe-to-dismiss (ADR-015: native Pointer Events, no gesture library).
-  // Scoped to the drag handle only, so normal taps/typing elsewhere in the
-  // sheet are never intercepted.
+  // Opening animation — GSAP replaces the old CSS `.log-sheet` keyframe so it
+  // shares easing/interruptibility with the drag interaction below (both
+  // animate the same element's `y`).
   const sheet = /** @type {HTMLElement} */ (container.querySelector('.log-sheet'));
+  if (sheet && !prefersReducedMotion()) {
+    gsap.from(sheet, { y: 24, opacity: 0, duration: 0.22, ease: 'power2.out' });
+  }
+
+  // T22 swipe-to-dismiss (still native Pointer Events, no gesture library —
+  // gestures.js's pure shouldDismissSheet() decision is unchanged; only what
+  // plays visually on each outcome is now GSAP instead of a raw style/transition
+  // toggle, which previously had zero animation on snap-back at all). Scoped to
+  // the drag handle only, so normal taps/typing elsewhere in the sheet are
+  // never intercepted.
   const handle = container.querySelector('.log-sheet__handle');
   if (handle && sheet) {
     let dragStartY = /** @type {number|null} */ (null);
     let dragStartTime = 0;
+    let hasCrossedDismissThreshold = false;
 
     handle.addEventListener('pointerdown', (e) => {
       const pe = /** @type {PointerEvent} */ (e);
+      // A fresh grab mid-release-tween would otherwise fight GSAP for the
+      // same `y` property — kill whatever's still animating first.
+      gsap.killTweensOf(sheet);
       dragStartY = pe.clientY;
       dragStartTime = performance.now();
-      sheet.style.transition = 'none';
+      hasCrossedDismissThreshold = false;
       /** @type {HTMLElement} */ (handle).setPointerCapture(pe.pointerId);
     });
 
     handle.addEventListener('pointermove', (e) => {
       if (dragStartY === null) return;
       const deltaY = /** @type {PointerEvent} */ (e).clientY - dragStartY;
-      if (deltaY > 0) sheet.style.transform = `translateY(${deltaY}px)`;
+      if (deltaY <= 0) return;
+      gsap.set(sheet, { y: deltaY });
+
+      // Haptic tick right as the drag crosses the distance threshold — felt
+      // before the eye confirms it, not after release. Fires once per
+      // crossing, resets if the drag retreats back below the threshold
+      // (matching the native pull-to-refresh convention this borrows from).
+      const nowCrossed = deltaY > DISMISS_DISTANCE_PX;
+      if (nowCrossed && !hasCrossedDismissThreshold) navigator.vibrate?.(10);
+      hasCrossedDismissThreshold = nowCrossed;
     });
 
     const endDrag = (/** @type {Event} */ e) => {
@@ -198,12 +223,14 @@ export function mountLogEntryScreen(container, date, { onSave, onClear, onClose,
       const deltaY = Math.max(0, /** @type {PointerEvent} */ (e).clientY - dragStartY);
       const elapsedMs = performance.now() - dragStartTime;
       const velocity = elapsedMs > 0 ? deltaY / elapsedMs : 0;
-      sheet.style.transition = '';
       dragStartY = null;
+
       if (shouldDismissSheet({ deltaY, velocity })) {
-        onClose();
+        gsap.to(sheet, { y: '100%', opacity: 0, duration: 0.2, ease: 'power1.in', onComplete: onClose });
+      } else if (prefersReducedMotion()) {
+        gsap.set(sheet, { y: 0 });
       } else {
-        sheet.style.transform = '';
+        gsap.to(sheet, { y: 0, duration: 0.5, ease: 'elastic.out(1, 0.6)' });
       }
     };
 
@@ -242,8 +269,7 @@ export function mountLogEntryScreen(container, date, { onSave, onClear, onClose,
   if (focusSection) {
     const sectionEl = container.querySelector(`#log-field-${focusSection}`);
     if (sectionEl) {
-      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      sectionEl.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+      sectionEl.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
       const firstControl = /** @type {HTMLElement|null} */ (sectionEl.querySelector('button, textarea, input'));
       firstControl?.focus();
     }

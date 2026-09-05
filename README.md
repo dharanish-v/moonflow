@@ -5,11 +5,11 @@ A private, local-only period tracker. No account, no server, no data leaving you
 ## Repo layout
 
 ```
-apps/moonflow-pwa/   the app — plain HTML/CSS/JS, no build step (see ADR-014)
+apps/moonflow-pwa/   the app — vanilla JS, built with Vite + Tailwind v4 + GSAP (see ADR-029)
 docs/                planning docs (this map, below)
 ```
 
-Structured as a monorepo (`apps/`) in case the V2 push-reminder relay (see `docs/task-board.md`'s backlog) ever gets built as a second app — nothing about the PWA's own no-build, no-Node approach changes either way (see ADR-028).
+Structured as a monorepo (`apps/`) in case the V2 push-reminder relay (see `docs/task-board.md`'s backlog) ever gets built as a second app (see ADR-028).
 
 ## Documentation map
 - `docs/prd.md` — what this solves, for whom, and what "done" looks like
@@ -19,21 +19,22 @@ Structured as a monorepo (`apps/`) in case the V2 push-reminder relay (see `docs
 - `docs/qa-checklist.md` — manual verification before calling V1 done
 - `docs/copy-deck.md` — every user-facing string, tone guide, privacy statement
 - `docs/task-board.md` — phase-by-phase build log, bugs found and fixed along the way
-- `apps/moonflow-pwa/tests/` — one plain HTML page per module, open directly in a browser (see ADR-014 — no test runner)
+- `apps/moonflow-pwa/tests/` — one plain HTML page per module, no test runner — open directly via the dev server (see below)
 
 ## Local development
 
-No build step — it's plain HTML/CSS/JS. Serve `apps/moonflow-pwa/` with any static file server. macOS/Linux already has Python installed, so no extra install is needed:
 ```
 cd apps/moonflow-pwa
-python3 -m http.server 8000
+npm install
+npm run dev
 ```
-(A local server is required, not optional — service workers and ES modules both refuse to work over a plain `file://` URL.)
-Open the printed `http://localhost:...` URL in a desktop browser for quick iteration. Native features (Add to Home Screen, the Share Sheet, PIN lock persistence) only behave correctly on an actual iPhone in Safari, so test those on-device.
+Open the printed `http://localhost:5173/` URL (`index.html`/`planner.html`) for quick iteration, or `http://localhost:5173/tests/whatever-tests.html` to run any test file directly — results render right on the page, no runner or reporter needed. Native features (Add to Home Screen, the Share Sheet, PIN lock persistence) only behave correctly on an actual iPhone in Safari, so test those on-device.
+
+`npm run build` produces a production build in `apps/moonflow-pwa/dist/`; `npm run preview` serves that build locally exactly as it will be deployed (useful for testing the service worker/offline behavior, which the dev server doesn't exercise the same way).
 
 ## Deploying
 
-Any static host works, since there's no server code (Vercel, Netlify, GitHub Pages, Cloudflare Pages — pick whichever is easiest). Deploy `apps/moonflow-pwa/` as-is; HTTPS is required for the service worker and install prompt to work at all.
+Any static host works (Vercel, Netlify, GitHub Pages, Cloudflare Pages — pick whichever is easiest), but a build step is now required first: run `npm run build` inside `apps/moonflow-pwa/` and deploy the resulting `dist/` folder, not the source tree. HTTPS is required for the service worker and install prompt to work at all.
 
 ## The two install links
 
@@ -56,9 +57,7 @@ The repo is public (GitHub Pages doesn't support private repos on the free plan 
 
 ## Shipping an update
 
-1. Make your changes.
-2. Bump the `CACHE_VERSION` constant at the top of `apps/moonflow-pwa/service-worker.js` (e.g. `v3` → `v4`) — this is what makes the old cached version actually get replaced instead of silently persisting.
-3. Redeploy. The next time the app is opened (even offline-first), the new service worker installs and takes over on the following launch.
+Just make your changes and redeploy — the service worker (`vite-plugin-pwa`, `apps/moonflow-pwa/vite.config.js`) is regenerated fresh on every `npm run build`, with a content-hashed precache manifest that changes automatically whenever any file's contents change, so there's no manual version constant to remember to bump anymore (see ADR-029; superseded the old hand-maintained `CACHE_VERSION`/`PRECACHE_FILES` approach in `service-worker.js`, which no longer exists as a source file). The next time the app is opened (even offline-first), the new service worker installs and takes over on the following launch.
 
 ## Data & backup
 

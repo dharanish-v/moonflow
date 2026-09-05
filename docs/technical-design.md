@@ -78,16 +78,22 @@ Repo-root layout (see ADR-028 — `apps/`/`docs/` split, monorepo-shaped in case
 /apps/moonflow-pwa/           (everything below is relative to here)
 ```
 
-The app itself, unchanged by the reorg:
+The app itself (ADR-029 added the build tooling — `package.json`, `vite.config.js`, `public/` — everything else kept its existing shape):
 
 ```
+/package.json  /package-lock.json  /vite.config.js
 /index.html                  (real icon manifest)
 /planner.html                (discreet-icon manifest — see ADR-011)
-/manifest.json  /manifest-discreet.json
-/service-worker.js
+/public/                     (copied as-is by Vite, not processed/hashed — Workbox's generateSW
+                               needs these named explicitly via includeAssets to precache them)
+  manifest.json  manifest-discreet.json
+  icons/                     (generated PNGs: real + discreet, all required sizes)
 /css/
   tokens.css                 (custom properties — palette, type scale, spacing; the ONLY place colors are defined)
   components.css             (BEM: .chip, .toggle, .moon-phase, .tab-bar, .card, .pill — references tokens only, never a hex value)
+  tailwind-theme.css         (Tailwind v4 entry point — @theme inline mirrors every tokens.css value
+                               into Tailwind's utility namespace by reference; tokens.css/components.css
+                               stay untouched, this file only makes new utility classes available)
 /js/
   app.js                     (boot sequence, routing, dynamic import per screen)
   store.js                   (state + subscribe — ADR-007)
@@ -98,13 +104,17 @@ The app itself, unchanged by the reorg:
   pin-auth.js                (PIN hashing + lockout decision — T19)
   export.js                  (export payload building — T21)
   gestures.js                (swipe-to-dismiss threshold decision — T22)
+  motion.js                  (shared prefers-reduced-motion gate for every GSAP animation — ADR-029)
   screens/
     onboarding.js  home.js  calendar.js  log-entry.js  insights.js  settings.js  pin-lock.js
   vendor/
     dexie.mjs                (real vendored library — see ADR-020 for why date-fns isn't here too)
-/icons/                       (generated PNGs: real + discreet, all required sizes)
-/tests/                       (one plain HTML page per module — see ADR-014, no test runner)
+/tests/                       (one plain HTML page per module — no test runner, open via the Vite dev
+                               server; unaffected by the build — Vite serves any .html file on request
+                               whether or not it's a configured build entry)
 ```
+
+No `service-worker.js` source file anymore — `vite-plugin-pwa` generates it fresh into `dist/` on every `npm run build` (Workbox `generateSW`, content-hashed precache manifest), which is also why there's no more hand-maintained `CACHE_VERSION` constant to remember to bump.
 
 Two directions from the original plan that never got built, worth naming so nobody goes looking for them: a `js/components/` shared-render-helper layer (`chip.js`/`toggle.js`/etc.) — screens ended up with their own inline template strings instead, which held up fine at this size; and a `sounds/` folder for a save-chime — never implemented, no code references it. Both empty scaffold folders were removed rather than left as clutter (ADR-028) — recreate either only once there's an actual reason to.
 

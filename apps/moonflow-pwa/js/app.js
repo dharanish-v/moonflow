@@ -3,11 +3,13 @@
 // dynamic import (T13). The tab bar in index.html is real static HTML (ADR-017)
 // and is wired here exactly once — it is never re-rendered on navigation.
 
+import gsap from 'gsap';
 import { state, setState, subscribe } from './store.js';
 import { loadAllEntries, loadAllSettings, saveEntry, deleteEntry, setSetting } from './db.js';
 import { hashPin, evaluatePinAttempt } from './pin-auth.js';
 import { buildExportPayload, exportFilename } from './export.js';
 import { PIN_RELOCK_AFTER_MINUTES } from './constants.js';
+import { prefersReducedMotion } from './motion.js';
 
 const content = document.getElementById('app-content');
 const tabBar = document.getElementById('tab-bar');
@@ -285,14 +287,14 @@ async function render() {
     }
   }
 
-  // ADR-015 screen transition — content.innerHTML above always produces a
-  // fresh element (ADR-007's full-re-render model), so this class re-triggers
-  // the CSS animation on every navigation without any JS-driven cleanup.
-  // The log sheet has its own more specific slide-up animation (.log-sheet)
-  // instead — applying both would just have one silently clobber the other,
-  // since `animation` is a single-value CSS property.
-  if (state.activeScreen !== 'log') {
-    content.firstElementChild?.classList.add('screen-enter');
+  // Screen transition — content.innerHTML above always produces a fresh
+  // element (ADR-007's full-re-render model), so this fires on every
+  // navigation with no JS-driven cleanup needed. The log sheet has its own
+  // more specific slide-up animation instead (see log-entry.js) — playing
+  // both would just have one visually clobber the other.
+  if (state.activeScreen !== 'log' && !prefersReducedMotion()) {
+    const el = content.firstElementChild;
+    if (el) gsap.from(el, { opacity: 0, y: 6, duration: 0.18, ease: 'power1.out' });
   }
 }
 

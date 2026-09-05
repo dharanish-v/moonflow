@@ -1,0 +1,67 @@
+/* tailwind-theme.css — exposes every existing tokens.css value as a Tailwind
+   utility, via reference (var()), never a duplicated/hardcoded value.
+   tokens.css stays the single source of truth (ADR-016) — this file adds
+   nothing new, it only makes those same values reachable as utility classes
+   for new/migrated markup. components.css keeps working untouched.
+
+   @theme inline (not plain @theme) is required here: it makes Tailwind
+   reference each variable at the point of use instead of also re-declaring
+   a competing global custom property of the same computed value — several
+   tokens.css names already sit inside Tailwind's own reserved prefixes
+   (--text-* for font sizes, --radius-*, --spacing-*), and a plain @theme
+   would create same-name self-references there, which CSS resolves to an
+   invalid value (silently breaking every one of those utilities). */
+@import "tailwindcss";
+
+@theme inline {
+  /* Colors — none of these names collide with tokens.css's own property
+     names or Tailwind's presets, so they mirror 1:1. */
+  --color-bg-screen: var(--bg-screen);
+  --color-bg-frame: var(--bg-frame);
+  --color-surface-card: var(--surface-card);
+  --color-border-hairline: var(--border-hairline);
+  --color-border-muted: var(--border-muted);
+  --color-ink: var(--text-primary);
+  --color-ink-secondary: var(--text-secondary);
+  --color-ink-muted: var(--text-muted);
+  --color-ink-inactive: var(--text-inactive);
+  --color-accent-rose: var(--accent-rose);
+  --color-accent-rose-text: var(--accent-rose-text);
+  --color-accent-gold: var(--accent-gold);
+  --color-accent-gold-text: var(--accent-gold-text);
+  --color-accent-blue: var(--accent-blue);
+  --color-moon-unlit: var(--moon-unlit);
+  --color-glass-fill: var(--glass-fill);
+  --color-glass-border: var(--glass-border);
+  --color-fertile-tint: var(--fertile-tint);
+  --color-fertile-tint-peak: var(--fertile-tint-peak);
+
+  /* Font sizes, radii, and spacing: tokens.css already names these inside
+     Tailwind's own reserved prefixes AND inside Tailwind's own default
+     numeric scale (p-4, rounded-lg, text-lg, etc. all ship built in). A
+     "flow-" segment keeps this project's scale as distinct, non-colliding
+     utility names, so Tailwind's own defaults stay exactly as any
+     Tailwind-familiar reader would expect them to, untouched. */
+  --text-flow-hero: var(--text-hero);
+  --text-flow-stat: var(--text-stat);
+  --text-flow-title: var(--text-title);
+  --text-flow-nav: var(--text-nav);
+  --text-flow-body: var(--text-body);
+  --text-flow-caption: var(--text-secondary-size);
+  --text-flow-small: var(--text-small);
+  --text-flow-micro: var(--text-micro);
+
+  --radius-flow-card: var(--radius-card);
+  --radius-flow-pill: var(--radius-pill);
+  --radius-flow-tabbar: var(--radius-tabbar);
+  --radius-flow-frame: var(--radius-frame);
+  /* --radius-circle (50%) has no alias — Tailwind's built-in `rounded-full`
+     already does the identical job for circular elements. */
+
+  --spacing-flow-1: var(--space-1);
+  --spacing-flow-2: var(--space-2);
+  --spacing-flow-3: var(--space-3);
+  --spacing-flow-4: var(--space-4);
+  --spacing-flow-5: var(--space-5);
+  --spacing-flow-6: var(--space-6);
+}

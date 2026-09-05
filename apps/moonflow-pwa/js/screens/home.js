@@ -1,9 +1,11 @@
 // @ts-check
 // screens/home.js — the main hub. See "Home" in moonflow-design-system.md and ADR-019.
 
+import gsap from 'gsap';
 import { ICONS } from '../icons.js';
 import { renderMoonPhaseSVG, getMoonPhase, moonPhaseLabel } from '../moon-phase.js';
 import { derivePeriods, predictNextPeriod, estimateFertileWindow, diffDays } from '../cycle-math.js';
+import { prefersReducedMotion } from '../motion.js';
 
 /** @param {Date} date */
 function toDateString(date) {
@@ -15,8 +17,15 @@ function toDateString(date) {
 
 // Tracks whether the moon-phase illustration has already played its one-time
 // fade-and-scale-in this session — it must animate on first load only, never
-// on every re-render (design-system.md edge-case rules, ADR-015).
+// on every re-render (design-system.md edge-case rules). Now GSAP-driven
+// (mountHomeScreen), not a CSS class — see motion.js.
 let hasAnimatedMoonPhaseThisSession = false;
+
+// Set by renderHomeScreen just before it flips the flag above, read once by
+// the very next mountHomeScreen call — this is what lets mount (the only
+// place with a real DOM node to hand GSAP) know whether *this* render is the
+// one that should animate, since the flag itself is always true afterward.
+let shouldAnimateMoonPhaseOnNextMount = false;
 
 /**
  * Pure: decides the animation class for a given prior-animated state — kept
@@ -79,12 +88,12 @@ export function computeHomeStatus(entries, settings, today = new Date()) {
 export function renderHomeScreen(entries, settings, today = new Date()) {
   const status = computeHomeStatus(entries, settings, today);
   const dayLabel = status.cycleDay !== null ? `Day ${status.cycleDay}` : moonPhaseLabel(status.moonPhase);
-  const animationClass = getMoonPhaseAnimationClass(hasAnimatedMoonPhaseThisSession);
+  shouldAnimateMoonPhaseOnNextMount = !hasAnimatedMoonPhaseThisSession;
   hasAnimatedMoonPhaseThisSession = true;
 
   return `
     <div class="screen screen--centered">
-      ${renderMoonPhaseSVG(status.moonPhase).replace('<svg ', `<svg class="moon-phase${animationClass}" `)}
+      ${renderMoonPhaseSVG(status.moonPhase).replace('<svg ', '<svg class="moon-phase" ')}
       <div style="text-align:center; margin-top: var(--space-4);">
         <div class="screen__title" style="margin-bottom:0;">${dayLabel}</div>
         <div class="screen__subtitle" style="margin-bottom:0;">${status.statusText}${status.isEstimated ? ' &middot; estimated' : ''}</div>
@@ -119,4 +128,10 @@ export function mountHomeScreen(container, { onQuickAction }) {
       onQuickAction(/** @type {'flow'|'mood'|'symptom'} */ (el.getAttribute('data-action')));
     });
   });
+
+  if (shouldAnimateMoonPhaseOnNextMount && !prefersReducedMotion()) {
+    const moonEl = container.querySelector('.moon-phase');
+    if (moonEl) gsap.from(moonEl, { opacity: 0, scale: 0.85, duration: 0.5, ease: 'power2.out' });
+  }
+  shouldAnimateMoonPhaseOnNextMount = false;
 }

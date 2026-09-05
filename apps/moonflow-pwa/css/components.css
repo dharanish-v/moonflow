@@ -41,32 +41,11 @@
   justify-content: center;
 }
 
-/* Screen-enter transition (ADR-015) — a fresh element every render (ADR-007's
-   full-re-render model), so re-adding this class always replays the animation
-   exactly once per navigation, never on every re-render of the same screen. */
-.screen-enter {
-  animation: screen-fade-in 180ms ease;
-}
-@keyframes screen-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Moon-phase illustration's one-time fade-and-scale-in (design-system.md:
-   "fades and scales in once on load, not on every re-render") — see
-   getMoonPhaseAnimationClass() in screens/home.js, which only applies this
-   class on the very first render of the session. */
-.moon-phase--animate-in {
-  animation: moon-phase-in 500ms ease-out;
-}
-@keyframes moon-phase-in {
-  from { opacity: 0; transform: scale(0.85); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .screen-enter, .moon-phase--animate-in { animation: none; }
-}
+/* Screen-enter, moon-phase entrance, and the log-sheet's open animation are
+   all GSAP-driven now (app.js's render(), screens/home.js's mountHomeScreen,
+   and screens/log-entry.js's mountLogEntryScreen respectively) — see
+   js/motion.js for the shared prefers-reduced-motion gate that replaces the
+   plain CSS media query these used to rely on. */
 
 .screen__icon {
   width: 2.75rem;
@@ -355,22 +334,16 @@
 .quick-action--symptom svg { color: var(--accent-blue); }
 
 /* Log-entry sheet — the design system's other deliberate glass exception
-   (design-system.md: "same glass treatment as the tab bar"). Slides up on
-   entry (T22, ADR-015); the handle bar is the swipe-to-dismiss drag target —
-   see gestures.js and mountLogEntryScreen(). */
+   (design-system.md: "same glass treatment as the tab bar"). Slide-up-on-open
+   and the drag-to-dismiss/snap-back interaction are both GSAP-driven now
+   (mountLogEntryScreen, js/motion.js's reduced-motion gate) — sharing one
+   engine for both means a fresh grab mid-close-animation doesn't fight a
+   still-running CSS animation the way two separate systems could. */
 .log-sheet {
   background: var(--glass-fill);
   border: var(--border-width) solid var(--glass-border);
   border-radius: var(--radius-card) var(--radius-card) 0 0;
-  animation: sheet-slide-up 220ms ease-out;
   flex: 0 1 auto; /* overrides .screen's flex:1 — a bottom sheet sized to its own content, not stretched to fill the remaining screen height, same deliberate partial-sheet look as before */
-}
-@keyframes sheet-slide-up {
-  from { transform: translateY(24px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .log-sheet { animation: none; }
 }
 
 .log-sheet__handle {
