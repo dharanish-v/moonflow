@@ -66,6 +66,7 @@ Single system sans-serif (SF Pro / `-apple-system`). Two weights only: 400 regul
 - Card / chip radius: **12px**
 - Pill radius: **10px** rectangular; fully round for circular icons and the tab bar (**22px**)
 - Device frame radius: **36px**
+- **The device frame is gated on input type, not just width** (ADR-027): it only ever appears for a mouse-driven desktop browser window (`hover: hover` and `pointer: fine`) above the content's own max-width — never for a real touchscreen, regardless of how wide that phone reports its CSS viewport (many real Android phones exceed the iPhone-width reference this app was first tested against). A width-only breakpoint can't tell a real large phone apart from a resized desktop window; input type can.
 - Spacing rhythm: 4 / 6 / 8px for tight clusters, 14–20px between sections
 - Borders are always **0.5px** — hairline-thin, never heavier
 - **Touch targets are 44×44px minimum** (WCAG/Apple HIG) on every interactive control — buttons, pills, chips, the mood picker, the stepper, calendar nav arrows, the tab bar, and full-row settings items. Two accepted exceptions, both matching real native conventions rather than one-off shortcuts: the **toggle switch** (51×31px, Apple's own UISwitch size — a binary control where an adjacent mis-tap costs nothing) and **calendar day cells** (40×40px — the largest size that fits a 7-column grid across the real iPhone width range alongside the screen's own padding; Apple's Calendar/Health apps make the same tradeoff for dense date grids, and a mis-tap there just lands on an adjacent day)

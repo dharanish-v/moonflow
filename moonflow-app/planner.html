@@ -62,8 +62,14 @@
      desktop/tablet breakpoint. Anything wider than that is already dead flat
      space around the phone-width content today; framing right at that edge
      means there's no awkward in-between zone where the content is capped
-     narrow but the backdrop hasn't kicked in to explain why yet. */
-  @media (min-width: 27rem) {
+     narrow but the backdrop hasn't kicked in to explain why yet.
+     (hover: hover) and (pointer: fine) is the actual condition being tested
+     for — "a mouse-driven desktop browser," not just "a wide viewport." Real
+     phones (many Android devices report 400-480px+ CSS width, well past
+     27rem) are touchscreens, so this guard keeps them edge-to-edge, never
+     framed — width alone can't tell a real large phone apart from a resized
+     desktop window, only pointer/hover capability can. */
+  @media (min-width: 27rem) and (hover: hover) and (pointer: fine) {
     #phone-frame {
       width: 24.5625rem;  /* 393px — a representative modern iPhone width */
       height: 53.25rem;   /* 852px */
