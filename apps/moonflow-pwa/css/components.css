@@ -289,46 +289,14 @@
 
 .notes-input::placeholder { color: var(--text-inactive); }
 
-/* Moon-phase illustration (home screen — ADR-019) */
-.moon-phase {
-  width: 9.375rem;
-  height: 9.375rem;
-  margin: 0 auto;
-  display: block;
-}
-
-.moon-phase__signature {
-  text-align: center;
-  font-size: var(--text-nav);
-  color: var(--text-inactive);
-  letter-spacing: 0.05em;
-  margin-top: var(--space-5);
-}
-
-/* Quick-action buttons (home screen) */
-.quick-actions {
-  display: flex;
-  gap: var(--space-3);
-}
-
-.quick-action {
-  flex: 1;
-  background: var(--surface-card);
-  border: var(--border-width) solid var(--border-muted);
-  border-radius: var(--radius-card);
-  padding: var(--space-4) var(--space-1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  cursor: pointer;
-  font-family: inherit;
-  transition: transform 0.1s ease;
-}
-
-.quick-action:active { transform: scale(0.96); }
+/* Moon-phase illustration and quick-action layout (home screen — ADR-019)
+   migrated to Tailwind utility classes directly in home.js (ADR-030) — this
+   file now only keeps the descendant-selector rules Tailwind can't reach:
+   the raw inlined SVG icons from icons.js have no class of their own to
+   target directly, so their sizing/color still routes through the
+   `.quick-action`/`.quick-action--flow` etc. class names, which stay
+   present in home.js's markup as selector hooks for exactly this. */
 .quick-action svg { width: 1.125rem; height: 1.125rem; }
-.quick-action__label { font-size: var(--text-secondary-size); color: var(--text-secondary); }
 .quick-action--flow svg { color: var(--accent-rose); }
 .quick-action--mood svg { color: var(--accent-gold); }
 .quick-action--symptom svg { color: var(--accent-blue); }

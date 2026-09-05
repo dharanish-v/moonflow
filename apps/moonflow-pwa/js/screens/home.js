@@ -91,27 +91,39 @@ export function renderHomeScreen(entries, settings, today = new Date()) {
   shouldAnimateMoonPhaseOnNextMount = !hasAnimatedMoonPhaseThisSession;
   hasAnimatedMoonPhaseThisSession = true;
 
+  // Tailwind migration (ADR-030): the classes below that are exclusive to
+  // this screen (moon-phase sizing, quick-actions layout) are now Tailwind
+  // utilities instead of components.css rules. `.screen`/`.screen__title`/
+  // `.screen__subtitle` are deliberately left alone — 4 other screens share
+  // that CSS, and forking it here would let Home silently drift from them
+  // the next time someone edits components.css. `.quick-action`/
+  // `.quick-action--flow` etc. class names are KEPT in the markup even
+  // though their own layout now comes from Tailwind utilities — the raw
+  // inlined SVG icons (icons.js) are styled via components.css descendant
+  // selectors (`.quick-action svg`, `.quick-action--flow svg`) that still
+  // need those class names to match, and touching icons.js is out of scope
+  // for a single-screen migration.
   return `
     <div class="screen screen--centered">
-      ${renderMoonPhaseSVG(status.moonPhase).replace('<svg ', '<svg class="moon-phase" ')}
+      ${renderMoonPhaseSVG(status.moonPhase).replace('<svg ', '<svg class="moon-phase w-[9.375rem] h-[9.375rem] mx-auto block" ')}
       <div style="text-align:center; margin-top: var(--space-4);">
         <div class="screen__title" style="margin-bottom:0;">${dayLabel}</div>
         <div class="screen__subtitle" style="margin-bottom:0;">${status.statusText}${status.isEstimated ? ' &middot; estimated' : ''}</div>
       </div>
-      <div class="moon-phase__signature">பிறை</div>
+      <div class="text-center text-flow-nav text-ink-inactive tracking-[0.05em] mt-flow-5">பிறை</div>
 
-      <div class="quick-actions" style="margin-top: var(--space-6);">
-        <button type="button" class="quick-action quick-action--flow" data-action="flow">
+      <div class="flex gap-flow-3 mt-flow-6">
+        <button type="button" class="quick-action quick-action--flow flex-1 bg-surface-card border-[0.5px] border-border-muted rounded-flow-card py-flow-4 px-flow-1 flex flex-col items-center gap-flow-2 cursor-pointer font-[inherit] transition-transform duration-100 ease-[ease] active:scale-[0.96]" data-action="flow">
           ${ICONS.droplet}
-          <span class="quick-action__label">Flow</span>
+          <span class="text-flow-caption text-ink-secondary">Flow</span>
         </button>
-        <button type="button" class="quick-action quick-action--mood" data-action="mood">
+        <button type="button" class="quick-action quick-action--mood flex-1 bg-surface-card border-[0.5px] border-border-muted rounded-flow-card py-flow-4 px-flow-1 flex flex-col items-center gap-flow-2 cursor-pointer font-[inherit] transition-transform duration-100 ease-[ease] active:scale-[0.96]" data-action="mood">
           ${ICONS['mood-smile']}
-          <span class="quick-action__label">Mood</span>
+          <span class="text-flow-caption text-ink-secondary">Mood</span>
         </button>
-        <button type="button" class="quick-action quick-action--symptom" data-action="symptom">
+        <button type="button" class="quick-action quick-action--symptom flex-1 bg-surface-card border-[0.5px] border-border-muted rounded-flow-card py-flow-4 px-flow-1 flex flex-col items-center gap-flow-2 cursor-pointer font-[inherit] transition-transform duration-100 ease-[ease] active:scale-[0.96]" data-action="symptom">
           ${ICONS.notes}
-          <span class="quick-action__label">Symptom</span>
+          <span class="text-flow-caption text-ink-secondary">Symptom</span>
         </button>
       </div>
     </div>
