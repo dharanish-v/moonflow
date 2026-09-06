@@ -4,6 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#14132B" />
+    <!-- Without this pair, iOS "Add to Home Screen" launches the installed
+         icon inside Safari's own chrome (address bar + toolbar) instead of
+         true standalone mode, despite manifest.json's "display": "standalone"
+         — that extra browser chrome is what shrank the effective viewport
+         and produced the reported "scrollbars / too small / have to zoom"
+         bug on an already-installed PWA. black-translucent matches this
+         entry's dark theme (content extends under the status bar, whose
+         text reads fine against #14132B). Both the apple- and unprefixed
+         mobile-web-app-capable tags are included — Chrome's own engine
+         flags the apple- one as deprecated in favor of the unprefixed
+         standard one (confirmed live), but iOS Safari's actual standalone
+         behavior is still documented against the apple- prefix, so both
+         stay, one per engine. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Moonflow</title>
 
     <link rel="manifest" href="manifest.json" />

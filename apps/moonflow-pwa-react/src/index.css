@@ -180,7 +180,13 @@
 #phone-frame {
   position: relative;
   width: 100%;
-  height: 100vh;
+  /* dvh, not vh: iOS Safari's address bar/toolbar show and hide as the page
+     scrolls, resizing the *dynamic* viewport without resizing the *large*
+     one 100vh is defined against — real-device symptom this produced: the
+     frame either overshoots under the toolbar (spurious scrollbar) or
+     leaves a gap once the toolbar hides, part of the reported "has
+     scrollbars it shouldn't" mobile bug. */
+  height: 100dvh;
   background: var(--bg-screen);
   overflow-x: hidden;
   overflow-y: auto;
