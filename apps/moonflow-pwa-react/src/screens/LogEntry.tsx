@@ -209,7 +209,7 @@ export function LogEntryScreen() {
         {saveError && <p className="mb-flow-3 text-flow-caption text-secondary">Couldn't save — try again</p>}
 
         <Button disabled={isSaving} onClick={() => void handleSave()} className="h-11 w-full text-flow-nav">
-          {isSaving ? 'Saved' : 'Save'}
+          {isSaving ? 'Saving…' : 'Save'}
         </Button>
       </DrawerContent>
     </Drawer>

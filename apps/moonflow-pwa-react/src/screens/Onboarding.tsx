@@ -6,17 +6,19 @@ import { useState } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { Stepper } from '../components/Stepper';
 import { MoonIcon } from '../components/icons';
+import {
+  DEFAULT_CYCLE_LENGTH,
+  DEFAULT_PERIOD_LENGTH,
+  MAX_CYCLE_LENGTH,
+  MAX_PERIOD_LENGTH,
+  MIN_CYCLE_LENGTH,
+  MIN_PERIOD_LENGTH,
+} from '../lib/constants';
 import { todayString } from '../lib/cycle-math';
 import { setSetting } from '../lib/db';
 import { useAppDispatch } from '../state/store';
-
-const MIN_CYCLE_LENGTH = 15;
-const MAX_CYCLE_LENGTH = 45;
-const MIN_PERIOD_LENGTH = 1;
-const MAX_PERIOD_LENGTH = 14;
-const DEFAULT_CYCLE_LENGTH = 28;
-const DEFAULT_PERIOD_LENGTH = 5;
 
 export function OnboardingScreen() {
   const dispatch = useAppDispatch();
@@ -66,69 +68,23 @@ export function OnboardingScreen() {
         label="Average cycle length"
         value={cycleLength}
         unit="days"
-        onDecrease={() => setCycleLength((n) => Math.max(MIN_CYCLE_LENGTH, n - 1))}
-        onIncrease={() => setCycleLength((n) => Math.min(MAX_CYCLE_LENGTH, n + 1))}
+        min={MIN_CYCLE_LENGTH}
+        max={MAX_CYCLE_LENGTH}
+        onChange={setCycleLength}
       />
 
       <Stepper
         label="Average period length"
         value={periodLength}
         unit="days"
-        onDecrease={() => setPeriodLength((n) => Math.max(MIN_PERIOD_LENGTH, n - 1))}
-        onIncrease={() => setPeriodLength((n) => Math.min(MAX_PERIOD_LENGTH, n + 1))}
+        min={MIN_PERIOD_LENGTH}
+        max={MAX_PERIOD_LENGTH}
+        onChange={setPeriodLength}
       />
 
       <Button disabled={!lastPeriodStart} onClick={() => void handleSubmit()} className="h-11 w-full text-flow-nav">
         Get started
       </Button>
-    </div>
-  );
-}
-
-function Stepper({
-  label,
-  value,
-  unit,
-  onDecrease,
-  onIncrease,
-}: {
-  label: string;
-  value: number;
-  unit: string;
-  onDecrease: () => void;
-  onIncrease: () => void;
-}) {
-  const labelId = `${label.replace(/\s+/g, '-').toLowerCase()}-label`;
-  return (
-    <div className="mb-flow-6">
-      <span id={labelId} className="mb-flow-2 block text-flow-caption text-muted-foreground">
-        {label}
-      </span>
-      <div role="group" aria-labelledby={labelId} className="flex items-center justify-between rounded-md bg-card px-flow-4 py-flow-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-touch"
-          className="rounded-full"
-          aria-label={`Decrease ${label.toLowerCase()}`}
-          onClick={onDecrease}
-        >
-          &minus;
-        </Button>
-        <span className="text-flow-body text-foreground">
-          {value} {unit}
-        </span>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-touch"
-          className="rounded-full"
-          aria-label={`Increase ${label.toLowerCase()}`}
-          onClick={onIncrease}
-        >
-          +
-        </Button>
-      </div>
     </div>
   );
 }

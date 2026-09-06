@@ -47,3 +47,12 @@ export const FERTILE_WINDOW_AFTER_OVULATION_DAYS = 1;
 export const PIN_LOCKOUT_AFTER_ATTEMPTS = 5;
 export const PIN_LOCKOUT_SECONDS = 30;
 export const PIN_RELOCK_AFTER_MINUTES = 2;
+
+// Average cycle/period length bounds — shared by Onboarding (first-run) and
+// Settings (editing later), so the two can't silently disagree on range.
+export const MIN_CYCLE_LENGTH = 15;
+export const MAX_CYCLE_LENGTH = 45;
+export const MIN_PERIOD_LENGTH = 1;
+export const MAX_PERIOD_LENGTH = 14;
+export const DEFAULT_CYCLE_LENGTH = 28;
+export const DEFAULT_PERIOD_LENGTH = 5;

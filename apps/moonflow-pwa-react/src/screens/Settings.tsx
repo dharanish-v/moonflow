@@ -7,15 +7,20 @@ import { Calendar, Monitor, Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
+import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from '../components/ui/drawer';
 import { Separator } from '../components/ui/separator';
+import { Stepper } from '../components/Stepper';
 import { Switch } from '../components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { BellIcon, ChevronRightIcon, DownloadIcon, DropletIcon, EyeOffIcon, LockIcon } from '../components/icons';
+import { MAX_CYCLE_LENGTH, MAX_PERIOD_LENGTH, MIN_CYCLE_LENGTH, MIN_PERIOD_LENGTH } from '../lib/constants';
 import { todayString } from '../lib/cycle-math';
 import { setSetting } from '../lib/db';
 import { buildExportPayload, exportFilename } from '../lib/export';
 import type { ThemeMode } from '../lib/types';
 import { useAppDispatch, useAppState } from '../state/store';
+
+type EditField = 'avgCycleLength' | 'avgPeriodLength' | null;
 
 const THEME_OPTIONS: ReadonlyArray<{ id: ThemeMode; label: string; Icon: typeof Sun }> = [
   { id: 'system', label: 'System', Icon: Monitor },
@@ -28,6 +33,8 @@ export function SettingsScreen() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [discreetOpen, setDiscreetOpen] = useState(false);
+  const [editField, setEditField] = useState<EditField>(null);
+  const [draftValue, setDraftValue] = useState(0);
 
   async function handleThemeChange(mode: ThemeMode) {
     await setSetting('themeMode', mode);
@@ -47,6 +54,21 @@ export function SettingsScreen() {
       return;
     }
     navigate('/settings/pin-setup');
+  }
+
+  function openEdit(field: EditField, currentValue: number) {
+    setDraftValue(currentValue);
+    setEditField(field);
+  }
+
+  async function handleSaveEdit() {
+    if (!editField) return;
+    await setSetting(editField, draftValue);
+    dispatch({
+      type: 'PATCH_SETTINGS',
+      patch: editField === 'avgCycleLength' ? { avgCycleLength: draftValue } : { avgPeriodLength: draftValue },
+    });
+    setEditField(null);
   }
 
   async function handleExport() {
@@ -73,9 +95,6 @@ export function SettingsScreen() {
     <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col px-flow-5 py-flow-6">
       <h1 className="mb-flow-4 text-left text-flow-title font-medium text-foreground">Settings</h1>
 
-      {/* ADR-034: the app's day/night world (moon+night-sky vs. sun+day-sky)
-          follows this choice, not just screen chrome — same signal, two
-          consumers (see useResolvedTheme.ts and WorldScene). */}
       <div className="mb-flow-4">
         <span id="theme-label" className="mb-flow-2 block text-flow-caption text-muted-foreground">
           Appearance
@@ -112,14 +131,14 @@ export function SettingsScreen() {
           icon={<Calendar className="size-4" aria-hidden="true" />}
           label="Average cycle length"
           value={`${settings.avgCycleLength} days`}
-          onClick={() => {}}
+          onClick={() => openEdit('avgCycleLength', settings.avgCycleLength)}
         />
         <Separator />
         <SettingsRowButton
           icon={<DropletIcon className="size-4" />}
           label="Average period length"
           value={`${settings.avgPeriodLength} days`}
-          onClick={() => {}}
+          onClick={() => openEdit('avgPeriodLength', settings.avgPeriodLength)}
         />
         <Separator />
         <SettingsRowButton
@@ -134,10 +153,43 @@ export function SettingsScreen() {
 
       {discreetOpen && (
         <p className="mt-flow-2 text-flow-micro text-muted-foreground">
-          To switch to a discreet home screen icon, remove Moonflow from your home screen and reinstall using the
-          alternate link.
+          To switch to a discreet home screen icon, remove Moonflow from your home screen, then open{' '}
+          <a href="planner.html" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+            the alternate install link
+          </a>{' '}
+          and add that to your home screen instead — same app, a neutral "Planner" icon.
         </p>
       )}
+
+      <Drawer open={editField !== null} onOpenChange={(open) => { if (!open) setEditField(null); }}>
+        <DrawerContent className="mx-auto max-w-[26rem] px-flow-5 pb-flow-6">
+          <DrawerHeader className="px-0">
+            <DrawerTitle>{editField === 'avgCycleLength' ? 'Average cycle length' : 'Average period length'}</DrawerTitle>
+          </DrawerHeader>
+
+          {editField && (
+            <Stepper
+              label={editField === 'avgCycleLength' ? 'Average cycle length' : 'Average period length'}
+              value={draftValue}
+              unit="days"
+              min={editField === 'avgCycleLength' ? MIN_CYCLE_LENGTH : MIN_PERIOD_LENGTH}
+              max={editField === 'avgCycleLength' ? MAX_CYCLE_LENGTH : MAX_PERIOD_LENGTH}
+              onChange={setDraftValue}
+            />
+          )}
+
+          <DrawerFooter className="px-0">
+            <Button onClick={() => void handleSaveEdit()} className="h-11 w-full text-flow-nav">
+              Save
+            </Button>
+            <DrawerClose asChild>
+              <Button variant="outline" className="h-11 w-full text-flow-nav">
+                Cancel
+              </Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

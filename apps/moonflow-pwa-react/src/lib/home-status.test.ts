@@ -14,6 +14,7 @@ describe('computeHomeStatus', () => {
     expect(status.statusText).toBe('on your period');
     expect(status.cycleDay).toBe(2);
     expect(status.cyclePhase).toBe('period');
+    expect(status.isEstimated).toBe(false);
   });
 
   it('reports days-to-next-period once a prediction is confirmed', () => {
