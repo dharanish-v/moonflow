@@ -39,7 +39,7 @@
 // transition is actually in flight (cheap: no per-frame re-render the rest
 // of the time, since cyclePhase changes at most a few times a day).
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Sky, Stars, useTexture } from '@react-three/drei';
+import { PerformanceMonitor, Sky, Stars, useTexture } from '@react-three/drei';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import moonTextureUrl from '../assets/moon-2k.jpg';
@@ -47,8 +47,29 @@ import type { ResolvedTheme } from '../hooks/useResolvedTheme';
 import { createCloudPuffTexture, createGlowTexture } from '../lib/cloud-texture';
 import type { CyclePhase } from '../lib/home-status';
 import { phaseToLightAngle } from '../lib/moon-phase';
+import { detectPerfTier, type PerfTier } from '../lib/perf-tier';
 import { lerpSkyMood, SKY_MOODS, type SkyMood } from '../lib/sky-mood';
 import { SUN_MOODS } from '../lib/sun-mood';
+
+// ADR-037's per-tier budget — only the settings that apply to content built
+// so far (dpr, star count, cloud count); ocean/rain/lightning join this same
+// table when those components land in later phases, reusing perfTier as-is.
+const DPR_BY_TIER: Record<PerfTier, [number, number]> = {
+  low: [1, 1],
+  medium: [1, 1.5],
+  high: [1, 2],
+};
+const STAR_COUNT_BY_TIER: Record<PerfTier, number> = { low: 400, medium: 1000, high: 1800 };
+const CLOUD_COUNT_BY_TIER: Record<PerfTier, number> = { low: 2, medium: 3, high: 4 };
+
+function stepTierDown(tier: PerfTier): PerfTier {
+  if (tier === 'high') return 'medium';
+  return 'low';
+}
+function stepTierUp(tier: PerfTier): PerfTier {
+  if (tier === 'low') return 'medium';
+  return 'high';
+}
 
 const LIGHT_DISTANCE = 4;
 const MOOD_TRANSITION_SECONDS = 2.5;
@@ -186,6 +207,17 @@ function Sun({ glowColor, glowIntensity }: { glowColor: string; glowIntensity: n
   );
 }
 
+// Base composition for up to 4 cloud puffs — CLOUD_COUNT_BY_TIER slices
+// this down to 2/3/4 per perf tier. Position/width/opacity/speed multipliers
+// continue the same hand-tuned depth-layering pattern the first 3 already
+// established (further back, smaller, dimmer, slower as puffs recede).
+const CLOUD_CONFIGS: ReadonlyArray<{ basePosition: [number, number, number]; width: number; opacityMult: number; speedMult: number }> = [
+  { basePosition: [-2.4, MOON_OFFSET_Y + 0.9, -3.5], width: 3.2, opacityMult: 1, speedMult: 1 },
+  { basePosition: [2.6, MOON_OFFSET_Y - 0.7, -4.8], width: 4, opacityMult: 0.85, speedMult: 0.7 },
+  { basePosition: [0.4, MOON_OFFSET_Y - 2.6, -6], width: 4.6, opacityMult: 0.6, speedMult: 0.5 },
+  { basePosition: [-1.8, MOON_OFFSET_Y - 1.8, -7.2], width: 5, opacityMult: 0.45, speedMult: 0.35 },
+];
+
 interface CloudSpriteProps {
   texture: THREE.Texture;
   color: string;
@@ -220,11 +252,13 @@ function Scene({
   cyclePhase,
   reducedMotion,
   theme,
+  perfTier,
 }: {
   phase: number;
   cyclePhase: CyclePhase;
   reducedMotion: boolean;
   theme: ResolvedTheme;
+  perfTier: PerfTier;
 }) {
   const moodTable = theme === 'light' ? SUN_MOODS : SKY_MOODS;
   const mood = useSkyMood(cyclePhase, reducedMotion, moodTable);
@@ -262,31 +296,20 @@ function Scene({
           fully off (unmounted, not just dimmed) for one that wants none —
           still correct for every current mood table (only exact-0 entries
           are SUN_MOODS' four states and SKY_MOODS.fertile). */}
-      {mood.starOpacity > 0 && <Stars radius={30} depth={25} count={1000} factor={3} fade material-transparent />}
-      <CloudSprite
-        texture={cloudTexture}
-        color={mood.cloudColor}
-        opacity={mood.cloudOpacity}
-        speed={mood.cloudSpeed}
-        basePosition={[-2.4, MOON_OFFSET_Y + 0.9, -3.5]}
-        width={3.2}
-      />
-      <CloudSprite
-        texture={cloudTexture}
-        color={mood.cloudColor}
-        opacity={mood.cloudOpacity * 0.85}
-        speed={mood.cloudSpeed * 0.7}
-        basePosition={[2.6, MOON_OFFSET_Y - 0.7, -4.8]}
-        width={4}
-      />
-      <CloudSprite
-        texture={cloudTexture}
-        color={mood.cloudColor}
-        opacity={mood.cloudOpacity * 0.6}
-        speed={mood.cloudSpeed * 0.5}
-        basePosition={[0.4, MOON_OFFSET_Y - 2.6, -6]}
-        width={4.6}
-      />
+      {mood.starOpacity > 0 && (
+        <Stars radius={30} depth={25} count={STAR_COUNT_BY_TIER[perfTier]} factor={3} fade material-transparent />
+      )}
+      {CLOUD_CONFIGS.slice(0, CLOUD_COUNT_BY_TIER[perfTier]).map((cfg, i) => (
+        <CloudSprite
+          key={i}
+          texture={cloudTexture}
+          color={mood.cloudColor}
+          opacity={mood.cloudOpacity * cfg.opacityMult}
+          speed={mood.cloudSpeed * cfg.speedMult}
+          basePosition={cfg.basePosition}
+          width={cfg.width}
+        />
+      ))}
     </>
   );
 }
@@ -299,6 +322,15 @@ export interface WorldSceneProps {
 
 function WorldScene({ phase, cyclePhase, theme }: WorldSceneProps) {
   const reducedMotion = useReducedMotionPref();
+  // detectPerfTier() only touches navigator/canvas, both stable for the
+  // life of a page load — a lazy initializer, not an effect, since there's
+  // nothing to react to after the first read.
+  const [perfTier, setPerfTier] = useState<PerfTier>(() => detectPerfTier());
+  // A hard fallback (drei's PerformanceMonitor.onFallback — sustained bad
+  // frames even at the lowest tier) drops to demand-rendering permanently,
+  // the same degraded-but-still-visible state prefers-reduced-motion
+  // already gets, rather than trying to render less content forever.
+  const [hardFallback, setHardFallback] = useState(false);
 
   return (
     <Canvas
@@ -313,19 +345,35 @@ function WorldScene({ phase, cyclePhase, theme }: WorldSceneProps) {
       // getComputedStyle reported position:relative and a 150px-tall
       // canvas, not the full-bleed background this needs to be).
       style={{ position: 'absolute', inset: 0 }}
-      dpr={[1, 1.5]}
-      frameloop={reducedMotion ? 'demand' : 'always'}
+      dpr={DPR_BY_TIER[perfTier]}
+      frameloop={reducedMotion || hardFallback ? 'demand' : 'always'}
       shadows={false}
       gl={{ antialias: true, alpha: true }}
       camera={{ position: [0, 0, CAMERA_DISTANCE], fov: 35, near: 0.1, far: 150 }}
     >
+      {/* The initial detectPerfTier() guess is local-heuristic only
+          (ADR-037) — this is the live, continuous correction: sustained
+          low fps steps the tier down (fewer stars/clouds, lower dpr),
+          sustained good fps steps back up, and a hard fallback (still bad
+          even at 'low') freezes the frame loop rather than degrading
+          content further. Not wrapped in the texture Suspense below — it
+          doesn't suspend and should keep monitoring even while Scene is
+          still loading its texture. */}
+      <PerformanceMonitor
+        onDecline={() => setPerfTier(stepTierDown)}
+        onIncline={() => setPerfTier(stepTierUp)}
+        onFallback={() => {
+          setPerfTier('low');
+          setHardFallback(true);
+        }}
+      />
       {/* A Suspense boundary *inside* the Canvas, not just an outer one —
           useTexture() suspends too, and without this the texture's
           suspend/resolve cycle unmounts the whole Canvas (tearing down and
           recreating the WebGL context), which reliably crashed it with
           "Context Lost" (caught live). */}
       <Suspense fallback={null}>
-        <Scene phase={phase} cyclePhase={cyclePhase} reducedMotion={reducedMotion} theme={theme} />
+        <Scene phase={phase} cyclePhase={cyclePhase} reducedMotion={reducedMotion} theme={theme} perfTier={perfTier} />
       </Suspense>
     </Canvas>
   );

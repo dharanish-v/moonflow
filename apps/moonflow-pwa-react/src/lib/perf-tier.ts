@@ -43,7 +43,15 @@ function getUnmaskedRenderer(): string | null {
   }
 }
 
+const VALID_TIERS: readonly PerfTier[] = ['low', 'medium', 'high'];
+
 export function detectPerfTier(): PerfTier {
+  // Dev-only escape hatch for live verification (?perfTier=low|medium|high)
+  // — lets Phase 6/7's "confirm visible differences at each tier" checks
+  // force a tier without needing to actually throttle a device to match it.
+  // Never affects a real user unless they hand-edit the URL.
+  const forced = new URLSearchParams(window.location.search).get('perfTier');
+  if (forced !== null && (VALID_TIERS as string[]).includes(forced)) return forced as PerfTier;
   // deviceMemory is a real, shipped Chrome/Android API with no official TS
   // lib.dom.d.ts entry (and no support at all in Safari/iOS) — undefined
   // there falls back to a middling default rather than assuming 'low'.
