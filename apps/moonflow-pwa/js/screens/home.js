@@ -97,7 +97,14 @@ export function renderHomeScreen(entries, settings, today = new Date()) {
     <div class="flex-1 flex flex-col w-full max-w-[26rem] mx-auto box-border py-flow-6 px-flow-5 justify-center">
       ${renderMoonPhaseSVG(status.moonPhase).replace('<svg ', '<svg class="moon-phase w-[9.375rem] h-[9.375rem] mx-auto block" ')}
       <div class="text-center mt-flow-4">
-        <div class="text-flow-title font-medium text-base-content">${dayLabel}</div>
+        <!-- design-system.md's own type scale calls this the "hero number
+             (cycle day)" at 32px — it had drifted down to the 15px
+             screen-title size somewhere along the way, rendering the one
+             number someone actually opens the app to check the same size
+             as a page header. font-bold (over the spec's plain medium)
+             matches the weight a hero metric actually carries elsewhere
+             now (Insights' stat-value, daisyUI's own default). -->
+        <div class="text-flow-hero font-bold text-base-content">${dayLabel}</div>
         <div class="text-flow-caption text-base-content/60">${status.statusText}${status.isEstimated ? ' &middot; estimated' : ''}</div>
       </div>
       <div class="text-center text-flow-nav text-base-content/40 tracking-[0.05em] mt-flow-5">பிறை</div>

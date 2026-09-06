@@ -66,10 +66,12 @@
   --size-field: 0.275rem;
 
   --border: var(--border-width);
-  /* This app's whole aesthetic is flat, not skeuomorphic — no shadows,
-     no gradients, no texture anywhere today. depth/noise are daisyUI's own
-     documented opt-out for exactly that, not a style being fought against. */
-  --depth: 0;
+  /* Real soft elevation (2026's "soft shadow" health-app direction, not the
+     old hairline-only flatness) — daisyUI's own built-in depth system,
+     rather than hand-rolled box-shadows per component. --noise stays 0: a
+     grain texture would fight the calm/quiet tone; depth alone adds
+     tactility without adding visual noise. */
+  --depth: 1;
   --noise: 0;
 }
 

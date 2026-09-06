@@ -89,11 +89,19 @@ export function renderInsightsScreen(entries) {
     <div class="flex-1 flex flex-col w-full max-w-[26rem] mx-auto box-border py-flow-6 px-flow-5">
       <h1 class="text-flow-title font-medium text-base-content text-left mb-flow-4">Insights</h1>
       <div class="flex-1 flex flex-col justify-center">
-        <div class="grid grid-cols-2 gap-flow-3">
-          ${stat('Avg cycle', `${data.avgCycleLength} days`)}
-          ${stat('Avg period', `${data.avgPeriodLength} days`)}
-          ${stat('Variability', `&plusmn;${data.variability} days`)}
-          ${stat('Cycles logged', data.cyclesLogged)}
+        <!-- Avg cycle gets its own larger row — the single number someone
+             actually glances at daily — instead of 4 identically-sized
+             tiles (the same-size-card grid every stats screen defaults to,
+             which flattens "the number I check" and "the number I don't"
+             to equal visual weight). -->
+        <div class="stat bg-base-200 rounded-box p-0 py-flow-4 px-flow-4 mb-flow-3">
+          <div class="stat-title text-flow-caption text-base-content/60">Avg cycle</div>
+          <div class="stat-value text-flow-hero font-bold text-primary mt-flow-1">${data.avgCycleLength} days</div>
+        </div>
+        <div class="grid grid-cols-3 gap-flow-3">
+          ${stat('Avg period', `${data.avgPeriodLength}d`)}
+          ${stat('Variability', `&plusmn;${data.variability}d`)}
+          ${stat('Logged', data.cyclesLogged)}
         </div>
 
         <div class="text-flow-caption text-base-content/60 mt-flow-6 mb-flow-3">Cycle length, last ${data.recentCycleLengths.length} cycles</div>

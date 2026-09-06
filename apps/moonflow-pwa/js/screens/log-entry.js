@@ -93,7 +93,7 @@ export function renderLogEntryScreen(date, existingEntry, draftEntry = null) {
   `).join('');
 
   return `
-    <div class="log-sheet flex flex-col w-full max-w-[26rem] mx-auto box-border py-flow-6 px-flow-5 flex-initial bg-base-200/80 border-[0.5px] border-base-300 rounded-t-flow-card">
+    <div class="log-sheet flex flex-col w-full max-w-[26rem] mx-auto box-border py-flow-6 px-flow-5 flex-initial mt-auto bg-base-200/80 backdrop-blur-[18px] border-[0.5px] border-base-300 rounded-t-flow-card">
       <div class="log-sheet__handle w-[2.25rem] h-[0.25rem] rounded-[0.125rem] bg-base-300 mx-auto mb-flow-4 [touch-action:none]" aria-hidden="true"></div>
       <div class="flex justify-between items-center mb-flow-6">
         <span class="text-flow-title font-medium text-base-content text-center">${formatHeaderDate(date)}</span>
