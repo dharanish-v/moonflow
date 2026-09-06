@@ -58,7 +58,7 @@ export function OnboardingScreen() {
           value={lastPeriodStart}
           max={todayString()}
           onChange={(e) => setLastPeriodStart(e.target.value)}
-          className="h-11 [color-scheme:dark]"
+          className="h-11"
         />
       </div>
 

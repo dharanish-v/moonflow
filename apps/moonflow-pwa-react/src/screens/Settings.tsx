@@ -3,23 +3,36 @@
 // for why.
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import { Calendar } from 'lucide-react';
+import { Calendar, Monitor, Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Separator } from '../components/ui/separator';
 import { Switch } from '../components/ui/switch';
+import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { BellIcon, ChevronRightIcon, DownloadIcon, DropletIcon, EyeOffIcon, LockIcon } from '../components/icons';
 import { todayString } from '../lib/cycle-math';
 import { setSetting } from '../lib/db';
 import { buildExportPayload, exportFilename } from '../lib/export';
+import type { ThemeMode } from '../lib/types';
 import { useAppDispatch, useAppState } from '../state/store';
+
+const THEME_OPTIONS: ReadonlyArray<{ id: ThemeMode; label: string; Icon: typeof Sun }> = [
+  { id: 'system', label: 'System', Icon: Monitor },
+  { id: 'light', label: 'Light', Icon: Sun },
+  { id: 'dark', label: 'Dark', Icon: Moon },
+];
 
 export function SettingsScreen() {
   const { settings, entries } = useAppState();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [discreetOpen, setDiscreetOpen] = useState(false);
+
+  async function handleThemeChange(mode: ThemeMode) {
+    await setSetting('themeMode', mode);
+    dispatch({ type: 'PATCH_SETTINGS', patch: { themeMode: mode } });
+  }
 
   async function handleTogglePinLock(enabled: boolean) {
     if (!enabled) {
@@ -59,6 +72,32 @@ export function SettingsScreen() {
   return (
     <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col px-flow-5 py-flow-6">
       <h1 className="mb-flow-4 text-left text-flow-title font-medium text-foreground">Settings</h1>
+
+      {/* ADR-034: the app's day/night world (moon+night-sky vs. sun+day-sky)
+          follows this choice, not just screen chrome — same signal, two
+          consumers (see useResolvedTheme.ts and WorldScene). */}
+      <div className="mb-flow-4">
+        <span id="theme-label" className="mb-flow-2 block text-flow-caption text-muted-foreground">
+          Appearance
+        </span>
+        <ToggleGroup
+          type="single"
+          value={settings.themeMode}
+          onValueChange={(value) => {
+            if (!value) return;
+            void handleThemeChange(value as ThemeMode);
+          }}
+          aria-labelledby="theme-label"
+          className="w-full gap-flow-2"
+        >
+          {THEME_OPTIONS.map(({ id, label, Icon }) => (
+            <ToggleGroupItem key={id} value={id} variant="pill" className="h-11 flex-1 gap-flow-1 px-2">
+              <Icon className="size-4" aria-hidden="true" />
+              {label}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      </div>
 
       <Card className="gap-0 p-0 ring-border/60">
         <SettingsRow icon={<LockIcon className="size-4" />} label="App lock">

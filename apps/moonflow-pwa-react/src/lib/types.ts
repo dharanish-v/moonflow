@@ -43,6 +43,10 @@ export interface FertileWindow {
   peak: string;
 }
 
+/** 'system' follows the OS/browser prefers-color-scheme; 'light'/'dark'
+ * force that world regardless of it. See useResolvedTheme.ts. */
+export type ThemeMode = 'system' | 'light' | 'dark';
+
 export interface Settings {
   onboardingComplete: boolean;
   lastPeriodStart: string | null;
@@ -54,6 +58,7 @@ export interface Settings {
   pinLockoutUntil: number | null;
   soundEnabled: boolean;
   draftEntry: LogEntryInput | null;
+  themeMode: ThemeMode;
 }
 
 export type SettingKey = keyof Settings;

@@ -12,6 +12,7 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CycleSky } from '../components/CycleSky';
+import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { PIN_RELOCK_AFTER_MINUTES } from '../lib/constants';
 import { computeHomeStatus } from '../lib/home-status';
 import { needsUnlock } from '../lib/pin-auth';
@@ -34,6 +35,10 @@ function RouteTracker({ onRouteChange }: { onRouteChange: (path: string) => void
 export function AppGate({ children }: { children: ReactNode }) {
   const { booted, entries, settings } = useAppState();
   const navigate = useNavigate();
+  // Applies the resolved .light class to <html> globally, regardless of
+  // boot/lock/route state — theme is not privacy-sensitive, unlike
+  // cyclePhase below, so it's fine to resolve before unlock.
+  useResolvedTheme(settings.themeMode);
 
   const [hasResolvedLock, setHasResolvedLock] = useState(false);
   const [isLocked, setIsLocked] = useState(false);

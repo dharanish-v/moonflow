@@ -1,10 +1,19 @@
 /* index.css — Moonflow's palette, ported verbatim from the vanilla app's
    tokens.css (the one file allowed a hardcoded color, per that app's own
    ADR-016 — same rule, just relocated here as this app's own single source).
-   Dark-mode-only by deliberate product truth (design-system.md: "flat and
-   opaque everywhere... a five-second daily glance, checked half-asleep in a
-   dark room"), not a placeholder pending a light theme — so there is no
-   `.dark` class variant here: :root *is* the only theme.
+   Dark-mode-only was this app's original deliberate product truth
+   (design-system.md: "flat and opaque everywhere... checked half-asleep in
+   a dark room") — ADR-034 supersedes that: a real manual light theme now
+   exists (Settings' Appearance control, useResolvedTheme.ts). :root stays
+   exactly the dark palette it always was — every current dark-mode user's
+   rendering is byte-for-byte unchanged — and a new `.light` class
+   (applied to <html>, not the more common `.dark` convention: this app's
+   *default* was already dark, so the override direction runs the other
+   way) redeclares only the ~16 base palette tokens below. Everything
+   downstream (shadcn semantic roles, the sky-mood gradients) is defined
+   only once, in :root, purely as var() references into these base
+   tokens — so it re-resolves correctly under `.light` for free, without
+   needing to be redeclared.
 
    shadcn/ui variable names, our own values — semantic accents keep the
    single meaning each has always owned: gold = primary/positive (moon,
@@ -14,8 +23,6 @@
    (symptoms). */
 @import "tailwindcss";
 @import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
 
 :root {
   --bg-screen: #14132b;
@@ -106,6 +113,35 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
 }
 
+/* ADR-034's day world — a soft daytime-sky palette (named references:
+   "Whispering Wind" #D2E3EF, a pale overcast-sky blue; deeper rose/gold
+   accents than the night palette's pastels, since they now sit on a light
+   background instead of a dark one and need the contrast the other
+   direction). Only base tokens redeclared here — see the file-header
+   comment for why everything else re-resolves for free. */
+.light {
+  --bg-screen: #d2e3ef;
+  --bg-frame: #b9cde0;
+  --surface-card: #fff8f0;
+  --border-hairline: #c9d6e0;
+  --border-muted: #b3c4d6;
+
+  --text-primary: #2c241c;
+  --text-secondary: #4a5a6a;
+  --text-muted: #7a8b9a;
+  --text-inactive: #aab8c4;
+
+  --accent-rose: #c97b95;
+  --accent-rose-text: #fff5f8;
+  --accent-gold: #d99a2b;
+  --accent-gold-text: #3a2b0a;
+  --accent-blue: #4a7fb5;
+  --moon-unlit: #c4b8a8;
+
+  --glass-fill: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(0, 0, 0, 0.08);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -164,6 +200,13 @@
   html {
     @apply font-sans;
     color-scheme: dark;
+  }
+  html.light {
+    /* Native form controls (date inputs, scrollbars) should match the
+       resolved theme, not just the OS's own preference — a plain
+       `color-scheme: light dark` hint would let the browser pick
+       independently of this app's own manual toggle. */
+    color-scheme: light;
   }
   body {
     @apply bg-background text-foreground;

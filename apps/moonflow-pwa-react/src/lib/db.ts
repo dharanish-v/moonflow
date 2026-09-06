@@ -39,6 +39,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   pinLockoutUntil: null,
   soundEnabled: false,
   draftEntry: null,
+  themeMode: 'system',
 };
 
 /** Read one setting, falling back to its documented default if never set. */

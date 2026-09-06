@@ -65,7 +65,7 @@ export function PinEntryForm({ title, error, onComplete, onCancel }: PinEntryFor
               onComplete(next);
             }
           }}
-          className="h-11 text-center text-flow-stat tracking-[0.5em] [color-scheme:dark]"
+          className="h-11 text-center text-flow-stat tracking-[0.5em]"
         />
       </div>
 
