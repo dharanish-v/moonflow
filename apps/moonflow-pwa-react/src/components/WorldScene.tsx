@@ -53,8 +53,10 @@ import { SUN_MOODS } from '../lib/sun-mood';
 import { WEATHER_MOODS } from '../lib/weather-mood';
 import { Boat } from './Boat';
 import { Island } from './Island';
+import { Lightning } from './Lightning';
 import { MountainBackdrop } from './MountainBackdrop';
 import { Ocean } from './Ocean';
+import { Rain } from './Rain';
 
 // ADR-037's per-tier budget — only the settings that apply to content built
 // so far (dpr, star count, cloud count); ocean/rain/lightning join this same
@@ -342,6 +344,8 @@ function Scene({
           sailColor={mood.cloudColor}
         />
       ))}
+      {weatherMood.rainIntensity > 0 && <Rain perfTier={perfTier} intensity={weatherMood.rainIntensity} />}
+      {weatherMood.lightningFrequency > 0 && <Lightning frequency={weatherMood.lightningFrequency} />}
     </>
   );
 }
