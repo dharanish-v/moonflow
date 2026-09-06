@@ -43,10 +43,12 @@ import { Sky, Stars, useTexture } from '@react-three/drei';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import moonTextureUrl from '../assets/moon-2k.jpg';
+import type { ResolvedTheme } from '../hooks/useResolvedTheme';
 import { createCloudPuffTexture, createGlowTexture } from '../lib/cloud-texture';
 import type { CyclePhase } from '../lib/home-status';
 import { phaseToLightAngle } from '../lib/moon-phase';
 import { lerpSkyMood, SKY_MOODS, type SkyMood } from '../lib/sky-mood';
+import { SUN_MOODS } from '../lib/sun-mood';
 
 const LIGHT_DISTANCE = 4;
 const MOOD_TRANSITION_SECONDS = 2.5;
@@ -74,10 +76,14 @@ function useReducedMotionPref(): boolean {
   return reduced;
 }
 
-/** Crossfades toward SKY_MOODS[cyclePhase] over MOOD_TRANSITION_SECONDS,
- * snapping instantly under prefers-reduced-motion instead of animating. */
-function useSkyMood(cyclePhase: CyclePhase, reducedMotion: boolean): SkyMood {
-  const [mood, setMood] = useState<SkyMood>(() => SKY_MOODS[cyclePhase]);
+/** Crossfades toward moodTable[cyclePhase] over MOOD_TRANSITION_SECONDS,
+ * snapping instantly under prefers-reduced-motion instead of animating.
+ * moodTable is SKY_MOODS (night) or SUN_MOODS (day) — the *shape* of the
+ * crossfade logic is identical for both, so it's a parameter here rather
+ * than importing SKY_MOODS directly, per the confirmed decision to keep
+ * the two tables data-separate while sharing all the rendering machinery. */
+function useSkyMood(cyclePhase: CyclePhase, reducedMotion: boolean, moodTable: Record<CyclePhase, SkyMood>): SkyMood {
+  const [mood, setMood] = useState<SkyMood>(() => moodTable[cyclePhase]);
   const moodRef = useRef(mood);
   moodRef.current = mood;
   const fromMoodRef = useRef<SkyMood>(mood);
@@ -85,7 +91,7 @@ function useSkyMood(cyclePhase: CyclePhase, reducedMotion: boolean): SkyMood {
   const transitionStartRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const target = SKY_MOODS[cyclePhase];
+    const target = moodTable[cyclePhase];
     if (reducedMotion) {
       transitionStartRef.current = null;
       setMood(target);
@@ -94,7 +100,7 @@ function useSkyMood(cyclePhase: CyclePhase, reducedMotion: boolean): SkyMood {
     fromMoodRef.current = moodRef.current;
     toMoodRef.current = target;
     transitionStartRef.current = performance.now();
-  }, [cyclePhase, reducedMotion]);
+  }, [cyclePhase, reducedMotion, moodTable]);
 
   useFrame(() => {
     if (transitionStartRef.current === null) return;
@@ -150,6 +156,36 @@ function Moon({ phase, glowColor, glowIntensity }: { phase: number; glowColor: s
   );
 }
 
+/** The day-world's sun — deliberately simpler than Moon: no photo texture
+ * (none needed or available), no phase/terminator (a sun doesn't have
+ * "phases" the way a moon does — ADR-035 explicitly avoids inventing a fake
+ * one), no external directional light shining on it (a sun is the light
+ * source, not a lit object, so it uses an unlit meshBasicMaterial — always
+ * fully bright regardless of scene lighting, the way a real sun looks).
+ * Same hero position/glow-bridge technique as Moon, just self-luminous. */
+function Sun({ glowColor, glowIntensity }: { glowColor: string; glowIntensity: number }) {
+  const glowTexture = useMemo(() => createGlowTexture(glowColor), [glowColor]);
+
+  return (
+    <group position={[0, MOON_OFFSET_Y, 0]}>
+      <ambientLight intensity={0.6} />
+      <sprite position={[0, 0, -0.15]} scale={[3.2, 3.2, 1]}>
+        <spriteMaterial
+          map={glowTexture}
+          transparent
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          opacity={glowIntensity}
+        />
+      </sprite>
+      <mesh>
+        <sphereGeometry args={[0.6, 32, 32]} />
+        <meshBasicMaterial color="#fff6d8" />
+      </mesh>
+    </group>
+  );
+}
+
 interface CloudSpriteProps {
   texture: THREE.Texture;
   color: string;
@@ -179,8 +215,19 @@ function CloudSprite({ texture, color, opacity, speed, basePosition, width }: Cl
   );
 }
 
-function Scene({ phase, cyclePhase, reducedMotion }: { phase: number; cyclePhase: CyclePhase; reducedMotion: boolean }) {
-  const mood = useSkyMood(cyclePhase, reducedMotion);
+function Scene({
+  phase,
+  cyclePhase,
+  reducedMotion,
+  theme,
+}: {
+  phase: number;
+  cyclePhase: CyclePhase;
+  reducedMotion: boolean;
+  theme: ResolvedTheme;
+}) {
+  const moodTable = theme === 'light' ? SUN_MOODS : SKY_MOODS;
+  const mood = useSkyMood(cyclePhase, reducedMotion, moodTable);
   // Computed once, not per mood change: the puff shape is neutral/white —
   // each sprite's own `color` below does the actual per-cloud tinting, so
   // regenerating this on every cyclePhase crossfade would be wasted work.
@@ -188,7 +235,11 @@ function Scene({ phase, cyclePhase, reducedMotion }: { phase: number; cyclePhase
 
   return (
     <>
-      <Moon phase={phase} glowColor={mood.glowColor} glowIntensity={mood.glowIntensity} />
+      {theme === 'light' ? (
+        <Sun glowColor={mood.glowColor} glowIntensity={mood.glowIntensity} />
+      ) : (
+        <Moon phase={phase} glowColor={mood.glowColor} glowIntensity={mood.glowIntensity} />
+      )}
       <Sky
         distance={SKY_DISTANCE}
         inclination={mood.inclination}
@@ -198,7 +249,20 @@ function Scene({ phase, cyclePhase, reducedMotion }: { phase: number; cyclePhase
         mieCoefficient={mood.mieCoefficient}
         mieDirectionalG={mood.mieDirectionalG}
       />
-      <Stars radius={30} depth={25} count={1000} factor={3} fade material-opacity={mood.starOpacity} material-transparent />
+      {/* drei's <Stars> uses its own hand-written StarfieldMaterial
+          (@react-three/drei/core/Stars.js) whose fragment shader computes
+          per-point alpha itself from `fade`/point-distance only — it never
+          reads the material's own `opacity` property, so the
+          `material-opacity` prop below is silently inert (verified against
+          drei's real shipped source, not assumed — the same category of
+          mistake this app already paid for once with drei's <Clouds>).
+          Faking it as a real per-mood fade isn't possible without patching
+          drei's shader, so this falls back to the coarser boolean the
+          shader *can* honor: fully on for any mood that wants stars at all,
+          fully off (unmounted, not just dimmed) for one that wants none —
+          still correct for every current mood table (only exact-0 entries
+          are SUN_MOODS' four states and SKY_MOODS.fertile). */}
+      {mood.starOpacity > 0 && <Stars radius={30} depth={25} count={1000} factor={3} fade material-transparent />}
       <CloudSprite
         texture={cloudTexture}
         color={mood.cloudColor}
@@ -230,9 +294,10 @@ function Scene({ phase, cyclePhase, reducedMotion }: { phase: number; cyclePhase
 export interface WorldSceneProps {
   phase: number;
   cyclePhase: CyclePhase;
+  theme: ResolvedTheme;
 }
 
-function WorldScene({ phase, cyclePhase }: WorldSceneProps) {
+function WorldScene({ phase, cyclePhase, theme }: WorldSceneProps) {
   const reducedMotion = useReducedMotionPref();
 
   return (
@@ -260,7 +325,7 @@ function WorldScene({ phase, cyclePhase }: WorldSceneProps) {
           recreating the WebGL context), which reliably crashed it with
           "Context Lost" (caught live). */}
       <Suspense fallback={null}>
-        <Scene phase={phase} cyclePhase={cyclePhase} reducedMotion={reducedMotion} />
+        <Scene phase={phase} cyclePhase={cyclePhase} reducedMotion={reducedMotion} theme={theme} />
       </Suspense>
     </Canvas>
   );

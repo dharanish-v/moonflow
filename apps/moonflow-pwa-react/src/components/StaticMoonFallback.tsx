@@ -17,9 +17,11 @@
 // whichever one renders, the accessible phase description always comes
 // from Home's own single sr-only label, never duplicated between the two.
 import { motion } from 'framer-motion';
+import type { ResolvedTheme } from '../hooks/useResolvedTheme';
 import type { CyclePhase } from '../lib/home-status';
 import { illuminationFraction } from '../lib/moon-phase';
 import { SKY_MOODS } from '../lib/sky-mood';
+import { SUN_MOODS } from '../lib/sun-mood';
 
 // Plays its one-time fade-and-scale-in on first mount of the session only,
 // never on every remount (e.g. tab-switching back to Home) — same rule
@@ -58,9 +60,10 @@ const MOON_R = 64;
 export interface StaticMoonFallbackProps {
   phase: number;
   cyclePhase: CyclePhase;
+  theme: ResolvedTheme;
 }
 
-export function StaticMoonFallback({ phase, cyclePhase }: StaticMoonFallbackProps) {
+export function StaticMoonFallback({ phase, cyclePhase, theme }: StaticMoonFallbackProps) {
   const cx = VIEW_W / 2;
   const cy = MOON_CY;
   const r = MOON_R;
@@ -68,7 +71,8 @@ export function StaticMoonFallback({ phase, cyclePhase }: StaticMoonFallbackProp
   const maxOffset = r * 2.1;
   const offset = phase < 0.5 ? -maxOffset * k : maxOffset * k;
   const clipId = `moon-clip-${Math.round(phase * 1000)}`;
-  const mood = SKY_MOODS[cyclePhase];
+  const isDay = theme === 'light';
+  const mood = isDay ? SUN_MOODS[cyclePhase] : SKY_MOODS[cyclePhase];
 
   const shouldAnimate = !hasAnimatedThisSession;
   hasAnimatedThisSession = true;
@@ -97,17 +101,29 @@ export function StaticMoonFallback({ phase, cyclePhase }: StaticMoonFallbackProp
         </linearGradient>
       </defs>
       <rect x={0} y={0} width={VIEW_W} height={VIEW_H} fill="url(#sky-gradient)" />
-      {STAR_POSITIONS.map(([sx, sy], i) => (
-        <circle key={i} cx={sx * VIEW_W} cy={sy * VIEW_H} r={2} fill="#ffffff" opacity={mood.starOpacity} />
-      ))}
+      {/* Stars only at night — SUN_MOODS' own starOpacity is always 0
+          anyway (a day-world never shows stars), but skipping the map
+          entirely for isDay avoids rendering a dozen invisible circles. */}
+      {!isDay &&
+        STAR_POSITIONS.map(([sx, sy], i) => (
+          <circle key={i} cx={sx * VIEW_W} cy={sy * VIEW_H} r={2} fill="#ffffff" opacity={mood.starOpacity} />
+        ))}
       <ellipse cx={VIEW_W * 0.18} cy={VIEW_H * 0.16} rx={54} ry={16} fill={mood.cloudColor} opacity={mood.cloudOpacity * 0.7} />
       <ellipse cx={VIEW_W * 0.82} cy={VIEW_H * 0.24} rx={46} ry={14} fill={mood.cloudColor} opacity={mood.cloudOpacity * 0.6} />
       <ellipse cx={VIEW_W * 0.28} cy={VIEW_H * 0.4} rx={62} ry={15} fill={mood.cloudColor} opacity={mood.cloudOpacity * 0.45} />
-      <circle cx={cx} cy={cy} r={r} fill="var(--moon-unlit)" />
-      <g clipPath={`url(#${clipId})`}>
-        <circle cx={cx + offset} cy={cy} r={r} fill="var(--accent-gold)" />
-        <circle cx={cx + offset} cy={cy} r={r} fill="url(#moon-grain)" />
-      </g>
+      {isDay ? (
+        // The sun doesn't have "phases" (WorldScene's own Sun.tsx avoids
+        // inventing a fake one too) — just a plain, fully-lit disc.
+        <circle cx={cx} cy={cy} r={r} fill="var(--accent-gold)" />
+      ) : (
+        <>
+          <circle cx={cx} cy={cy} r={r} fill="var(--moon-unlit)" />
+          <g clipPath={`url(#${clipId})`}>
+            <circle cx={cx + offset} cy={cy} r={r} fill="var(--accent-gold)" />
+            <circle cx={cx + offset} cy={cy} r={r} fill="url(#moon-grain)" />
+          </g>
+        </>
+      )}
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--border-muted)" strokeWidth={1} />
     </motion.svg>
   );

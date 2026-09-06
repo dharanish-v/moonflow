@@ -73,8 +73,10 @@ export function AppGate({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   // Applies the resolved .light class to <html> globally, regardless of
   // boot/lock/route state — theme is not privacy-sensitive, unlike
-  // cyclePhase below, so it's fine to resolve before unlock.
-  useResolvedTheme(settings.themeMode);
+  // cyclePhase below, so it's fine to resolve before unlock. The return
+  // value also picks moon+SKY_MOODS (night) vs sun+SUN_MOODS (day) for
+  // WorldScene — one signal, two consumers.
+  const theme = useResolvedTheme(settings.themeMode);
   // Gates WorldScene on real WebGL2 support, same as HomeScene always was —
   // not just a fallback-content decision (Phase 4 adds the real
   // StaticMoonFallback for this branch): jsdom has no ResizeObserver, which
@@ -174,11 +176,11 @@ export function AppGate({ children }: { children: ReactNode }) {
   return (
     <>
       {renderMode === 'canvas3d' ? (
-        <Suspense fallback={<StaticMoonFallback phase={worldMoonPhase} cyclePhase={worldCyclePhase} />}>
-          <WorldScene phase={worldMoonPhase} cyclePhase={worldCyclePhase} />
+        <Suspense fallback={<StaticMoonFallback phase={worldMoonPhase} cyclePhase={worldCyclePhase} theme={theme} />}>
+          <WorldScene phase={worldMoonPhase} cyclePhase={worldCyclePhase} theme={theme} />
         </Suspense>
       ) : (
-        <StaticMoonFallback phase={worldMoonPhase} cyclePhase={worldCyclePhase} />
+        <StaticMoonFallback phase={worldMoonPhase} cyclePhase={worldCyclePhase} theme={theme} />
       )}
       {gatedContent}
     </>
