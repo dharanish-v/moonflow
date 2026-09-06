@@ -5,7 +5,7 @@
 // as the vanilla app's own SCREENS_WITH_TAB_BAR excluding 'pin-lock'. Never
 // touches AppGate.isLocked — this only ever runs while already unlocked.
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { PinEntryForm } from '../components/PinEntryForm';
 import { setSetting } from '../lib/db';
 import { hashPin } from '../lib/pin-auth';
@@ -32,7 +32,7 @@ export function PinSetupScreen() {
       await setSetting('pinHash', hash);
       await setSetting('pinLockEnabled', true);
       dispatch({ type: 'PATCH_SETTINGS', patch: { pinHash: hash, pinLockEnabled: true } });
-      navigate('/settings', { replace: true });
+      navigate({ to: '/settings', replace: true });
     } else {
       setMode('create-1');
       setFirstPinHash(null);
@@ -45,7 +45,7 @@ export function PinSetupScreen() {
       title={mode === 'create-2' ? 'Confirm your PIN' : 'Set a PIN'}
       error={error}
       onComplete={(pin) => void handleComplete(pin)}
-      onCancel={() => navigate('/settings', { replace: true })}
+      onCancel={() => navigate({ to: '/settings', replace: true })}
     />
   );
 }

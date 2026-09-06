@@ -16,7 +16,7 @@
 import { useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Button } from '../components/ui/button';
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerTitle } from '../components/ui/drawer';
 import { Label } from '../components/ui/label';
@@ -31,18 +31,16 @@ import type { FlowId, LogEntryInput, MoodId, SymptomId } from '../lib/types';
 import { useDraftAutosave } from '../hooks/useDraftAutosave';
 import { useAppDispatch, useAppState } from '../state/store';
 
-type FocusSection = 'flow' | 'symptom' | 'mood' | null;
-
 export function LogEntryScreen() {
   const { entries, settings } = useAppState();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
+  const search = useSearch({ from: '/log' });
   const prefersReducedMotion = useReducedMotion();
   const { reportDraft, clearDraft } = useDraftAutosave();
 
-  const date = params.get('date') || todayString();
-  const focusSection = (params.get('focus') as FocusSection) || null;
+  const date = search.date || todayString();
+  const focusSection = search.focus ?? null;
   const existingEntry = entries.find((e) => e.date === date) ?? null;
 
   const initial = resolveInitialDraft(date, existingEntry, settings.draftEntry);
@@ -72,7 +70,7 @@ export function LogEntryScreen() {
     clearDraft();
     await setSetting('draftEntry', null);
     dispatch({ type: 'PATCH_SETTINGS', patch: { draftEntry: null } });
-    navigate(existingEntry ? '/calendar' : '/', { replace: true });
+    navigate({ to: existingEntry ? '/calendar' : '/', replace: true });
   }
 
   async function handleSave() {
@@ -89,7 +87,7 @@ export function LogEntryScreen() {
     const freshEntries = await loadAllEntries();
     dispatch({ type: 'SET_ENTRIES', entries: freshEntries });
     dispatch({ type: 'PATCH_SETTINGS', patch: { draftEntry: null } });
-    navigate(existingEntry ? '/calendar' : '/', { replace: true });
+    navigate({ to: existingEntry ? '/calendar' : '/', replace: true });
   }
 
   async function handleClear() {
@@ -99,7 +97,7 @@ export function LogEntryScreen() {
     const freshEntries = await loadAllEntries();
     dispatch({ type: 'SET_ENTRIES', entries: freshEntries });
     dispatch({ type: 'PATCH_SETTINGS', patch: { draftEntry: null } });
-    navigate('/calendar', { replace: true });
+    navigate({ to: '/calendar', replace: true });
   }
 
   return (

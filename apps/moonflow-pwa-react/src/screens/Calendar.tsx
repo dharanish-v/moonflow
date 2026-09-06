@@ -3,7 +3,7 @@
 // cycle-tracking calendar) — stays hand-built, same as the vanilla app.
 import { motion } from 'framer-motion';
 import { useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '../components/ui/button';
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
 import {
@@ -75,7 +75,7 @@ export function CalendarScreen() {
   for (let day = 1; day <= daysInMonth; day++) cells.push(formatDate(new Date(year, month - 1, day)));
 
   function handleSelectDate(dateStr: string) {
-    navigate(`/log?date=${dateStr}`);
+    navigate({ to: '/log', search: { date: dateStr } });
   }
 
   function handleChangeMonth(direction: 'prev' | 'next') {

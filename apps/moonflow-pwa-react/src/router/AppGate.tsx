@@ -10,7 +10,7 @@
 // every back/forward press even after a correct unlock).
 
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useRouter } from '@tanstack/react-router';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { PIN_RELOCK_AFTER_MINUTES } from '../lib/constants';
 import { needsUnlock } from '../lib/pin-auth';
@@ -22,17 +22,17 @@ import { SplashScreen } from './placeholders';
 /** Mounted only once unlocked+onboarded — records the last real route so a
  * later re-lock (backgrounding) can return here, not just to the original
  * deep link. */
-function RouteTracker({ onRouteChange }: { onRouteChange: (path: string) => void }) {
+function RouteTracker({ onRouteChange }: { onRouteChange: (href: string) => void }) {
   const location = useLocation();
   useEffect(() => {
-    onRouteChange(`${location.pathname}${location.search}`);
+    onRouteChange(location.href);
   }, [location, onRouteChange]);
   return null;
 }
 
 export function AppGate({ children }: { children: ReactNode }) {
   const { booted, settings } = useAppState();
-  const navigate = useNavigate();
+  const router = useRouter();
   // Applies the resolved .light/.dark class to <html> — shadcn's theme
   // system reads these tokens; this is the only thing deciding which set
   // is active.
@@ -84,7 +84,11 @@ export function AppGate({ children }: { children: ReactNode }) {
     const target = deepLinkTargetRef.current ?? lastRouteRef.current;
     deepLinkTargetRef.current = null;
     setIsLocked(false);
-    navigate(target, { replace: true });
+    // A raw href string (possibly with a query string) restored from either
+    // a pre-unlock deep link or the last route visited before locking —
+    // not a type-safe `to`+`search` pair, so this goes through the history
+    // adapter directly rather than useNavigate().
+    router.history.replace(target);
   }
 
   if (!booted || !hasResolvedLock) return <SplashScreen />;
@@ -94,8 +98,8 @@ export function AppGate({ children }: { children: ReactNode }) {
   return (
     <>
       <RouteTracker
-        onRouteChange={(path) => {
-          lastRouteRef.current = path;
+        onRouteChange={(href) => {
+          lastRouteRef.current = href;
         }}
       />
       {children}

@@ -7,13 +7,13 @@
 // growing blacklist.
 //
 // Each tab is a shadcn Button (variant="ghost", size="icon-touch") via
-// asChild wrapping the real NavLink — real Button focus/hover states, still
-// a real link for routing. NavLink's own function-as-className API doesn't
+// asChild wrapping TanStack Router's real Link — real Button focus/hover
+// states, still a real link for routing. Link's own activeProps API doesn't
 // compose with Radix Slot's prop-merge, so active state is computed here
 // instead (trivial: TabBar only ever renders on one of these 4 exact paths,
 // see the guard below, so an exact string match is all "active" needs).
 import { BarChart3, Calendar, Home, Settings as SettingsIcon } from 'lucide-react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { Link, useLocation } from '@tanstack/react-router';
 import { Button } from './ui/button';
 
 const TABS = [
@@ -44,9 +44,9 @@ export function TabBar() {
             size="icon-touch"
             className={`rounded-full ${isActive ? 'text-primary' : 'text-muted-foreground/60'}`}
           >
-            <NavLink to={to} aria-label={label}>
+            <Link to={to} aria-label={label}>
               <Icon aria-hidden="true" className="size-5" />
-            </NavLink>
+            </Link>
           </Button>
         );
       })}

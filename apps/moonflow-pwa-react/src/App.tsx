@@ -1,33 +1,23 @@
-import { HashRouter } from 'react-router-dom';
-import { TabBar } from './components/TabBar';
-import { AppGate } from './router/AppGate';
-import { AppRoutes } from './router/routes';
+import { useState } from 'react';
+import { RouterProvider } from '@tanstack/react-router';
+import { createAppRouter } from './router/router';
 import { StateProvider } from './state/store';
 
-// AppGate decides lock/onboarding vs. real routes; TabBar decides its own
-// visibility per-route (see its SCREENS_WITH_TAB_BAR allow-list).
-function AppShell() {
-  return (
-    <>
-      <AppRoutes />
-      <TabBar />
-    </>
-  );
-}
-
+// #phone-frame/#app-content are static chrome, unrelated to routing.
+// RouterProvider renders the route tree starting at the root route — see
+// router/router.tsx's RootLayout for what actually sits "inside" here
+// (AppGate deciding splash/lock/onboarding vs. the real screens + TabBar).
 function App() {
+  const [router] = useState(() => createAppRouter());
+
   return (
-    <HashRouter>
-      <StateProvider>
-        <div id="phone-frame">
-          <main id="app-content">
-            <AppGate>
-              <AppShell />
-            </AppGate>
-          </main>
-        </div>
-      </StateProvider>
-    </HashRouter>
+    <StateProvider>
+      <div id="phone-frame">
+        <main id="app-content">
+          <RouterProvider router={router} />
+        </main>
+      </div>
+    </StateProvider>
   );
 }
 

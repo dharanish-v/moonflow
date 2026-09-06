@@ -1,6 +1,6 @@
 // src/screens/Home.tsx — the main hub. Ported from screens/home.js.
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { DropletIcon, MoodSmileIcon, NotesIcon } from '../components/icons';
@@ -39,7 +39,7 @@ export function HomeScreen() {
             <Button
               key={kind}
               variant="outline"
-              onClick={() => navigate(`/log?date=${todayString()}&focus=${kind}`)}
+              onClick={() => navigate({ to: '/log', search: { date: todayString(), focus: kind } })}
               className="h-auto flex-1 flex-col gap-flow-2 bg-card py-flow-4"
             >
               <Icon className={`size-[1.125rem] ${colorClass}`} />

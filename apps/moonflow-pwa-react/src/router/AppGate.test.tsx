@@ -4,26 +4,32 @@
 // *can* verify — chrome-devtools MCP stays required for everything it can't
 // (touch targets, real device emulation), but this property doesn't need a
 // browser to prove.
+//
+// Builds the REAL routeTree (not a throwaway single-route stub like other
+// screen tests use) with its own fresh createHashHistory() per render —
+// this test is specifically exercising route-to-route + lock-state
+// behavior, so it needs the actual app composition (RootLayout -> AppGate
+// -> Outlet), not an isolated component.
 import 'fake-indexeddb/auto';
+import { RouterProvider, createHashHistory, createRouter } from '@tanstack/react-router';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { HashRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { SETTINGS_DEFAULTS } from '../lib/db';
 import type { Settings } from '../lib/types';
-import { AppGate } from './AppGate';
-import { AppRoutes } from './routes';
+import { routeTree } from './router';
 import { StateProvider } from '../state/store';
 
-function renderGated(hash: string, settings: Partial<Settings>) {
+async function renderGated(hash: string, settings: Partial<Settings>) {
   window.location.hash = hash;
+  const router = createRouter({ routeTree, history: createHashHistory() });
+  // Route matching resolves a tick after mount — without this, render()
+  // returns before the matched route commits, and a synchronous
+  // getByRole() right after sees an empty tree.
+  await router.load();
   return render(
-    <HashRouter>
-      <StateProvider testState={{ settings: { ...SETTINGS_DEFAULTS, ...settings } }}>
-        <AppGate>
-          <AppRoutes />
-        </AppGate>
-      </StateProvider>
-    </HashRouter>,
+    <StateProvider testState={{ settings: { ...SETTINGS_DEFAULTS, ...settings } }}>
+      <RouterProvider router={router} />
+    </StateProvider>,
   );
 }
 
@@ -37,21 +43,21 @@ const LOCKED_SETTINGS: Partial<Settings> = {
 };
 
 describe('AppGate — PIN lock', () => {
-  it('shows the PIN lock screen instead of any route when locked, regardless of the URL', () => {
-    renderGated('#/settings', LOCKED_SETTINGS);
+  it('shows the PIN lock screen instead of any route when locked, regardless of the URL', async () => {
+    await renderGated('#/settings', LOCKED_SETTINGS);
     expect(screen.getByRole('heading', { name: /enter your pin/i })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Settings' })).not.toBeInTheDocument();
   });
 
-  it('back/forward while locked cannot reveal a route — Routes is simply not mounted', () => {
-    renderGated('#/settings', LOCKED_SETTINGS);
+  it('back/forward while locked cannot reveal a route — Routes is simply not mounted', async () => {
+    await renderGated('#/settings', LOCKED_SETTINGS);
     fireEvent(window, new PopStateEvent('popstate'));
     expect(screen.getByRole('heading', { name: /enter your pin/i })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Settings' })).not.toBeInTheDocument();
   });
 
   it('unlocking with the correct PIN navigates to the deep-linked screen the URL pointed to at boot', async () => {
-    renderGated('#/settings', LOCKED_SETTINGS);
+    await renderGated('#/settings', LOCKED_SETTINGS);
     const input = screen.getByLabelText('Enter your PIN');
     fireEvent.change(input, { target: { value: '1234' } });
     expect(await screen.findByRole('heading', { name: 'Settings' })).toBeInTheDocument();
@@ -59,15 +65,15 @@ describe('AppGate — PIN lock', () => {
   });
 
   it('a wrong PIN shows an error and stays locked', async () => {
-    renderGated('#/', LOCKED_SETTINGS);
+    await renderGated('#/', LOCKED_SETTINGS);
     const input = screen.getByLabelText('Enter your PIN');
     fireEvent.change(input, { target: { value: '0000' } });
     expect(await screen.findByText('Wrong PIN')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /enter your pin/i })).toBeInTheDocument();
   });
 
-  it('does not lock when the PIN feature is disabled, even mid-navigation', () => {
-    renderGated('#/calendar', {
+  it('does not lock when the PIN feature is disabled, even mid-navigation', async () => {
+    await renderGated('#/calendar', {
       onboardingComplete: true,
       pinLockEnabled: false,
       pinHash: null,
@@ -78,14 +84,18 @@ describe('AppGate — PIN lock', () => {
 });
 
 describe('AppGate — onboarding', () => {
-  it('shows onboarding when not yet onboarded, skipping the lock entirely', () => {
-    renderGated('#/settings', { onboardingComplete: false });
+  it('shows onboarding when not yet onboarded, skipping the lock entirely', async () => {
+    await renderGated('#/settings', { onboardingComplete: false });
     expect(screen.getByRole('heading', { name: "Let's set up Moonflow" })).toBeInTheDocument();
   });
 
   it('completing onboarding reveals the app without requiring a separate unlock step', async () => {
-    renderGated('#/', { onboardingComplete: false });
-    fireEvent.change(screen.getByLabelText('When did your last period start?'), { target: { value: '2026-08-01' } });
+    await renderGated('#/', { onboardingComplete: false });
+    // The date picker is shadcn's Popover+Calendar (react-day-picker), not a
+    // native input — open it and pick today, the one day always enabled
+    // and locatable without depending on the real wall-clock date's value.
+    fireEvent.click(screen.getByRole('button', { name: /when did your last period start/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /^today,/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Get started' }));
     expect(await screen.findByText('Flow')).toBeInTheDocument();
   });

@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Calendar, Monitor, Moon, Sun } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from '../components/ui/drawer';
@@ -53,7 +53,7 @@ export function SettingsScreen() {
       dispatch({ type: 'PATCH_SETTINGS', patch: { pinLockEnabled: true } });
       return;
     }
-    navigate('/settings/pin-setup');
+    navigate({ to: '/settings/pin-setup' });
   }
 
   function openEdit(field: EditField, currentValue: number) {
