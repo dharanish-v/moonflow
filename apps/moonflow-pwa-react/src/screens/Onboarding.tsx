@@ -3,9 +3,11 @@
 // AppGate.tsx and router.js's original reasoning for why onboarding/pin-lock
 // never get a URL.
 import { useState } from 'react';
+import { CalendarIcon } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
+import { Calendar } from '../components/ui/calendar';
 import { Label } from '../components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Stepper } from '../components/Stepper';
 import { MoonIcon } from '../components/icons';
 import {
@@ -16,13 +18,14 @@ import {
   MIN_CYCLE_LENGTH,
   MIN_PERIOD_LENGTH,
 } from '../lib/constants';
-import { todayString } from '../lib/cycle-math';
+import { formatDate, parseDate } from '../lib/cycle-math';
 import { setSetting } from '../lib/db';
 import { useAppDispatch } from '../state/store';
 
 export function OnboardingScreen() {
   const dispatch = useAppDispatch();
   const [lastPeriodStart, setLastPeriodStart] = useState('');
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [cycleLength, setCycleLength] = useState(DEFAULT_CYCLE_LENGTH);
   const [periodLength, setPeriodLength] = useState(DEFAULT_PERIOD_LENGTH);
 
@@ -51,17 +54,35 @@ export function OnboardingScreen() {
       </p>
 
       <div className="mb-flow-6">
-        <Label htmlFor="onboarding-date" className="mb-flow-2 block text-flow-caption text-muted-foreground">
+        <Label id="onboarding-date-label" className="mb-flow-2 block text-flow-caption text-muted-foreground">
           When did your last period start?
         </Label>
-        <Input
-          type="date"
-          id="onboarding-date"
-          value={lastPeriodStart}
-          max={todayString()}
-          onChange={(e) => setLastPeriodStart(e.target.value)}
-          className="h-11"
-        />
+        <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              aria-labelledby="onboarding-date-label onboarding-date-value"
+              className="h-11 w-full justify-start gap-flow-2 font-normal"
+            >
+              <CalendarIcon className="size-4 text-muted-foreground" aria-hidden="true" />
+              <span id="onboarding-date-value" className={lastPeriodStart ? 'text-foreground' : 'text-muted-foreground'}>
+                {lastPeriodStart ? parseDate(lastPeriodStart).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : 'Select a date'}
+              </span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start">
+            <Calendar
+              mode="single"
+              selected={lastPeriodStart ? parseDate(lastPeriodStart) : undefined}
+              onSelect={(date) => {
+                if (!date) return;
+                setLastPeriodStart(formatDate(date));
+                setDatePickerOpen(false);
+              }}
+              disabled={{ after: new Date() }}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       <Stepper
