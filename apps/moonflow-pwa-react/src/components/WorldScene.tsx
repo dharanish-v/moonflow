@@ -52,6 +52,8 @@ import { lerpSkyMood, SKY_MOODS, type SkyMood } from '../lib/sky-mood';
 import { SUN_MOODS } from '../lib/sun-mood';
 import { WEATHER_MOODS } from '../lib/weather-mood';
 import { Boat } from './Boat';
+import { Island } from './Island';
+import { MountainBackdrop } from './MountainBackdrop';
 import { Ocean } from './Ocean';
 
 // ADR-037's per-tier budget — only the settings that apply to content built
@@ -326,7 +328,9 @@ function Scene({
           width={cfg.width}
         />
       ))}
+      <MountainBackdrop theme={theme} />
       <Ocean perfTier={perfTier} chop={weatherMood.oceanChop} speed={weatherMood.windSpeed} glowColor={mood.glowColor} />
+      <Island x={-4} z={-11} scale={1.7} />
       {BOAT_ANCHORS.map((anchor, i) => (
         <Boat
           key={i}

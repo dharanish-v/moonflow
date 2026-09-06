@@ -70,3 +70,52 @@ export function createCloudPuffTexture(size = 256): THREE.CanvasTexture {
   texture.needsUpdate = true;
   return texture;
 }
+
+/** A jagged, painterly mountain-ridge silhouette for MountainBackdrop's
+ * billboarded sprites — a wide, short canvas (not the square puffs above):
+ * random peak heights smoothed through quadratic curves (a dead-straight
+ * ridgeline reads as a mountain *chart*, not a mountain), filled solid,
+ * then a soft top-edge fade (via destination-in) so peaks blend into the
+ * sky instead of cutting off hard. Always drawn white — tinted per-layer
+ * via spriteMaterial's own `color`, same convention as the cloud puff. */
+export function createMountainRidgeTexture(width = 512, height = 256): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    const peakCount = 6;
+    const baseline = height * 0.55;
+    const points: Array<[number, number]> = [[0, baseline + (Math.random() - 0.5) * height * 0.1]];
+    for (let i = 1; i < peakCount - 1; i++) {
+      points.push([(i / (peakCount - 1)) * width, baseline - Math.random() * height * 0.4]);
+    }
+    points.push([width, baseline + (Math.random() - 0.5) * height * 0.1]);
+
+    ctx.beginPath();
+    ctx.moveTo(0, height);
+    ctx.lineTo(points[0][0], points[0][1]);
+    for (let i = 1; i < points.length; i++) {
+      const [prevX, prevY] = points[i - 1];
+      const [curX, curY] = points[i];
+      ctx.quadraticCurveTo(prevX, prevY, (prevX + curX) / 2, (prevY + curY) / 2);
+    }
+    ctx.lineTo(points[points.length - 1][0], points[points.length - 1][1]);
+    ctx.lineTo(width, height);
+    ctx.closePath();
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+
+    const fade = ctx.createLinearGradient(0, 0, 0, height);
+    fade.addColorStop(0, 'rgba(255,255,255,0)');
+    fade.addColorStop(0.35, 'rgba(255,255,255,1)');
+    fade.addColorStop(1, 'rgba(255,255,255,1)');
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.fillStyle = fade;
+    ctx.fillRect(0, 0, width, height);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
