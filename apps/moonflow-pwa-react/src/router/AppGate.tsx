@@ -9,53 +9,15 @@
 // rewrite's vanilla-JS predecessor shipped and had to fix (re-locking on
 // every back/forward press even after a correct unlock).
 
-import { lazy, type ReactNode, Suspense, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { StaticMoonFallback } from '../components/StaticMoonFallback';
-import { useRenderMode } from '../hooks/useRenderMode';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { PIN_RELOCK_AFTER_MINUTES } from '../lib/constants';
-import { resolveMoonPhase } from '../lib/cycle-moon-phase';
-import { computeHomeStatus, type CyclePhase } from '../lib/home-status';
-import { getMoonPhase } from '../lib/moon-phase';
 import { needsUnlock } from '../lib/pin-auth';
 import { OnboardingScreen } from '../screens/Onboarding';
 import { PinUnlockScreen } from '../screens/PinUnlock';
 import { useAppState } from '../state/store';
 import { SplashScreen } from './placeholders';
-
-const WorldScene = lazy(() => import('../components/WorldScene'));
-
-/** The privacy-gate logic itself, pulled out as a pure function so it's
- * directly unit-testable — WorldScene only ever mounts when renderMode is
- * 'canvas3d', which jsdom can never be (no real WebGL2), so a component-
- * level test could never observe this by rendering AppGate and inspecting
- * WorldScene's props. */
-export function resolveWorldCyclePhase(
-  ready: boolean,
-  entries: Parameters<typeof computeHomeStatus>[0],
-  settings: Parameters<typeof computeHomeStatus>[1],
-  today?: Date,
-): CyclePhase {
-  if (!ready || !settings.lastPeriodStart) return 'unknown';
-  return computeHomeStatus(entries, settings, today).cyclePhase;
-}
-
-/** The moon's own phase is never privacy-sensitive by itself (real
- * astronomy is just tonight's actual sky, same for everyone) — only the
- * *cycle-synced* variant reveals anything personal, so this only switches
- * to it once `ready`, falling back to real astronomy otherwise. Shares
- * resolveMoonPhase with Home.tsx's own sr-only label so the rendered moon
- * and its accessible description can never disagree once unlocked. */
-export function resolveWorldMoonPhase(
-  ready: boolean,
-  entries: Parameters<typeof resolveMoonPhase>[0],
-  settings: Parameters<typeof resolveMoonPhase>[1],
-  today?: Date,
-): number {
-  if (!ready) return getMoonPhase(today ?? new Date());
-  return resolveMoonPhase(entries, settings, today);
-}
 
 /** Mounted only once unlocked+onboarded — records the last real route so a
  * later re-lock (backgrounding) can return here, not just to the original
@@ -69,23 +31,12 @@ function RouteTracker({ onRouteChange }: { onRouteChange: (path: string) => void
 }
 
 export function AppGate({ children }: { children: ReactNode }) {
-  const { booted, entries, settings } = useAppState();
+  const { booted, settings } = useAppState();
   const navigate = useNavigate();
-  // Applies the resolved .light class to <html> globally, regardless of
-  // boot/lock/route state — theme is not privacy-sensitive, unlike
-  // cyclePhase below, so it's fine to resolve before unlock. The return
-  // value also picks moon+SKY_MOODS (night) vs sun+SUN_MOODS (day) for
-  // WorldScene — one signal, two consumers.
-  const theme = useResolvedTheme(settings.themeMode);
-  // Gates WorldScene on real WebGL2 support, same as HomeScene always was —
-  // not just a fallback-content decision (Phase 4 adds the real
-  // StaticMoonFallback for this branch): jsdom has no ResizeObserver, which
-  // R3F's Canvas needs internally, so mounting it unconditionally crashed
-  // *every* test that renders AppGate, including ones with nothing to do
-  // with the 3D scene (PIN lock, onboarding) — caught live by the existing
-  // test suite, not assumed. useRenderMode() already resolves to 'fallback'
-  // under jsdom for exactly this reason, so gating on it fixes both at once.
-  const renderMode = useRenderMode();
+  // Applies the resolved .light/.dark class to <html> — shadcn's theme
+  // system reads these tokens; this is the only thing deciding which set
+  // is active.
+  useResolvedTheme(settings.themeMode);
 
   const [hasResolvedLock, setHasResolvedLock] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
@@ -136,53 +87,18 @@ export function AppGate({ children }: { children: ReactNode }) {
     navigate(target, { replace: true });
   }
 
-  // A single return, not four early returns: WorldScene must render on
-  // every one of these branches (splash/lock/onboarding/real app) — "every
-  // screen is part of the world," including the lock screen — so it can't
-  // live only in the last branch the way the old CycleSky did. Four
-  // disjoint early-return trees would unmount/remount WorldScene's whole
-  // WebGL context on every splash→lock→unlock→onboarding transition, the
-  // same "Context Lost" failure this app already hit once from a Suspense
-  // unmount (HomeScene.tsx's own file header). gatedContent is the part
-  // that *does* still vary per branch, layered on top of WorldScene.
-  const gatedContent =
-    !booted || !hasResolvedLock ? (
-      <SplashScreen />
-    ) : isLocked ? (
-      <PinUnlockScreen onUnlock={handleUnlock} />
-    ) : !settings.onboardingComplete ? (
-      <OnboardingScreen />
-    ) : (
-      <>
-        <RouteTracker
-          onRouteChange={(path) => {
-            lastRouteRef.current = path;
-          }}
-        />
-        {children}
-      </>
-    );
-
-  // Privacy gate moves from *where* WorldScene mounts (impossible now — it
-  // must render behind the lock screen too) to *what data* it's fed: real
-  // cyclePhase only once actually unlocked, onboarded, and real period data
-  // exists; 'unknown' otherwise (booting, locked, or onboarding
-  // incomplete) — the same honest "no signal to show yet" state
-  // computeHomeStatus itself already falls back to.
-  const ready = hasResolvedLock && !isLocked && settings.onboardingComplete;
-  const worldCyclePhase = resolveWorldCyclePhase(ready, entries, settings);
-  const worldMoonPhase = resolveWorldMoonPhase(ready, entries, settings);
+  if (!booted || !hasResolvedLock) return <SplashScreen />;
+  if (isLocked) return <PinUnlockScreen onUnlock={handleUnlock} />;
+  if (!settings.onboardingComplete) return <OnboardingScreen />;
 
   return (
     <>
-      {renderMode === 'canvas3d' ? (
-        <Suspense fallback={<StaticMoonFallback phase={worldMoonPhase} cyclePhase={worldCyclePhase} theme={theme} />}>
-          <WorldScene phase={worldMoonPhase} cyclePhase={worldCyclePhase} theme={theme} />
-        </Suspense>
-      ) : (
-        <StaticMoonFallback phase={worldMoonPhase} cyclePhase={worldCyclePhase} theme={theme} />
-      )}
-      {gatedContent}
+      <RouteTracker
+        onRouteChange={(path) => {
+          lastRouteRef.current = path;
+        }}
+      />
+      {children}
     </>
   );
 }
