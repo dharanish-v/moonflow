@@ -11,7 +11,9 @@
 
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { CycleSky } from '../components/CycleSky';
 import { PIN_RELOCK_AFTER_MINUTES } from '../lib/constants';
+import { computeHomeStatus } from '../lib/home-status';
 import { needsUnlock } from '../lib/pin-auth';
 import { OnboardingScreen } from '../screens/Onboarding';
 import { PinUnlockScreen } from '../screens/PinUnlock';
@@ -30,7 +32,7 @@ function RouteTracker({ onRouteChange }: { onRouteChange: (path: string) => void
 }
 
 export function AppGate({ children }: { children: ReactNode }) {
-  const { booted, settings } = useAppState();
+  const { booted, entries, settings } = useAppState();
   const navigate = useNavigate();
 
   const [hasResolvedLock, setHasResolvedLock] = useState(false);
@@ -86,8 +88,13 @@ export function AppGate({ children }: { children: ReactNode }) {
   if (isLocked) return <PinUnlockScreen onUnlock={handleUnlock} />;
   if (!settings.onboardingComplete) return <OnboardingScreen />;
 
+  // CycleSky renders only here, past the lock/onboarding gate — not in
+  // App.tsx above AppGate, where it would paint the cycle-phase glow behind
+  // the PIN screen itself and leak period/fertile status before unlock,
+  // defeating the point of App lock.
   return (
     <>
+      <CycleSky phase={settings.lastPeriodStart ? computeHomeStatus(entries, settings).cyclePhase : 'unknown'} />
       <RouteTracker
         onRouteChange={(path) => {
           lastRouteRef.current = path;

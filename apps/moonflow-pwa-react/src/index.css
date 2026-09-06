@@ -39,6 +39,19 @@
   --glass-fill: rgba(72, 68, 120, 0.45);
   --glass-border: rgba(255, 255, 255, 0.14);
 
+  /* CycleSky — an ambient background wash keyed to computeHomeStatus's
+     cyclePhase, reusing this file's existing semantic colors rather than
+     inventing new ones (gold already means "ovulation" here, rose already
+     means "flow" — see this file's own top-of-file comment). Low-alpha
+     radial glow over --bg-screen, not a color swap: stays "flat and
+     opaque," never fights foreground text contrast. 'unknown' shows no
+     glow at all — no cycle-phase signal to show yet is a real, honest state. */
+  --sky-period: radial-gradient(120% 70% at 50% -10%, color-mix(in oklab, var(--accent-rose) 20%, transparent), transparent 65%), var(--bg-screen);
+  --sky-follicular: radial-gradient(120% 70% at 50% -10%, color-mix(in oklab, var(--accent-blue) 14%, transparent), transparent 65%), var(--bg-screen);
+  --sky-fertile: radial-gradient(120% 70% at 50% -10%, color-mix(in oklab, var(--accent-gold) 24%, transparent), transparent 65%), var(--bg-screen);
+  --sky-luteal: radial-gradient(120% 70% at 50% -10%, color-mix(in oklab, var(--accent-rose) 10%, transparent), transparent 65%), var(--bg-screen);
+  --sky-unknown: var(--bg-screen);
+
   /* shadcn semantic roles */
   --background: var(--bg-screen);
   --foreground: var(--text-primary);

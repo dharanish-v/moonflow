@@ -6,12 +6,23 @@ import { derivePeriods, diffDays, estimateFertileWindow, formatDate, predictNext
 import { getMoonPhase } from './moon-phase';
 import type { Entry, Settings } from './types';
 
+/**
+ * Ambient sky background signal (CycleSky.tsx) — deliberately separate from
+ * `moonPhase` (real astronomy, ADR-019, untouched by cycle data). 'unknown'
+ * is a real state, not a loading placeholder: shown whenever prediction
+ * confidence is 'wide', same case that already yields
+ * "predictions need a bit more history" — no cycle-phase signal to show
+ * honestly beats guessing one.
+ */
+export type CyclePhase = 'period' | 'follicular' | 'fertile' | 'luteal' | 'unknown';
+
 export interface HomeStatus {
   cycleDay: number | null;
   statusText: string;
   isFertile: boolean;
   isEstimated: boolean;
   moonPhase: number;
+  cyclePhase: CyclePhase;
 }
 
 export function computeHomeStatus(
@@ -36,9 +47,11 @@ export function computeHomeStatus(
 
   let statusText: string;
   let isFertile = false;
+  let cyclePhase: CyclePhase;
 
   if (isOnPeriod) {
     statusText = 'on your period';
+    cyclePhase = 'period';
   } else if (prediction.confidence !== 'wide' && prediction.date) {
     const fertile = estimateFertileWindow(prediction.date);
     isFertile = diffDays(fertile.start, todayStr) >= 0 && diffDays(todayStr, fertile.end) >= 0;
@@ -48,8 +61,10 @@ export function computeHomeStatus(
       : daysToNext >= 0
         ? `${daysToNext} day${daysToNext === 1 ? '' : 's'} to next period`
         : 'period may be starting soon';
+    cyclePhase = isFertile ? 'fertile' : diffDays(todayStr, fertile.start) > 0 ? 'follicular' : 'luteal';
   } else {
     statusText = 'predictions need a bit more history';
+    cyclePhase = 'unknown';
   }
 
   return {
@@ -58,5 +73,6 @@ export function computeHomeStatus(
     isFertile,
     isEstimated: prediction.confidence === 'estimated',
     moonPhase: getMoonPhase(today),
+    cyclePhase,
   };
 }

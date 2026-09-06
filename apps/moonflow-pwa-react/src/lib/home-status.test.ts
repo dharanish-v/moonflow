@@ -13,6 +13,7 @@ describe('computeHomeStatus', () => {
     );
     expect(status.statusText).toBe('on your period');
     expect(status.cycleDay).toBe(2);
+    expect(status.cyclePhase).toBe('period');
   });
 
   it('reports days-to-next-period once a prediction is confirmed', () => {
@@ -27,6 +28,34 @@ describe('computeHomeStatus', () => {
     );
     expect(status.statusText).toMatch(/day.*to next period/);
     expect(status.isEstimated).toBe(false);
+    expect(status.cyclePhase).toBe('luteal');
+  });
+
+  it('reports the follicular phase between a period ending and the fertile window opening', () => {
+    const status = computeHomeStatus(
+      [
+        { date: '2026-01-01', flow: 'medium' },
+        { date: '2026-01-29', flow: 'medium' },
+      ],
+      { avgCycleLength: 28, lastPeriodStart: null },
+      new Date(2026, 1, 1),
+    );
+    expect(status.isFertile).toBe(false);
+    expect(status.cyclePhase).toBe('follicular');
+  });
+
+  it('reports the unknown cycle phase when predictions are too wide to place a phase', () => {
+    const status = computeHomeStatus(
+      [
+        { date: '2026-01-01', flow: 'medium' },
+        { date: '2026-01-15', flow: 'medium' },
+        { date: '2026-02-20', flow: 'medium' },
+      ],
+      { avgCycleLength: 28, lastPeriodStart: null },
+      new Date(2026, 2, 1),
+    );
+    expect(status.statusText).toBe('predictions need a bit more history');
+    expect(status.cyclePhase).toBe('unknown');
   });
 
   it('falls back to an estimate from the onboarding date with no logged periods yet', () => {

@@ -4,8 +4,10 @@ import { AppGate } from './router/AppGate';
 import { AppRoutes } from './router/routes';
 import { StateProvider } from './state/store';
 
-// AppGate decides lock/onboarding vs. real routes; TabBar decides its own
-// visibility per-route (see its SCREENS_WITH_TAB_BAR allow-list).
+// AppGate decides lock/onboarding vs. real routes (and, past that gate,
+// mounts CycleSky — see AppGate.tsx for why it isn't mounted here instead);
+// TabBar decides its own visibility per-route (see its
+// SCREENS_WITH_TAB_BAR allow-list).
 function AppShell() {
   return (
     <>
