@@ -26,14 +26,18 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: apps/moonflow-pwa/package-lock.json
+          cache-dependency-path: apps/moonflow-pwa-react/package-lock.json
       - run: npm ci
-        working-directory: apps/moonflow-pwa
+        working-directory: apps/moonflow-pwa-react
+      # No CI existed for this app until the React rewrite — a real test
+      # gate before the deploy step, not just a build check.
+      - run: npm test
+        working-directory: apps/moonflow-pwa-react
       - run: npm run build
-        working-directory: apps/moonflow-pwa
+        working-directory: apps/moonflow-pwa-react
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./apps/moonflow-pwa/dist
+          path: ./apps/moonflow-pwa-react/dist
       - id: deployment
         uses: actions/deploy-pages@v4
