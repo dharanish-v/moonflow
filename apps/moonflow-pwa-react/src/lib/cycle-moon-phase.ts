@@ -20,6 +20,7 @@
 // already used for the privacy gate (AppGate.tsx) pre-unlock.
 import { LUTEAL_PHASE_DAYS } from './constants';
 import { derivePeriods, diffDays, formatDate, predictNextPeriod } from './cycle-math';
+import { getMoonPhase } from './moon-phase';
 import type { Entry, Settings } from './types';
 
 export function computeCycleMoonPhase(
@@ -50,4 +51,21 @@ export function computeCycleMoonPhase(
     return (0.5 * (cycleDay - 1)) / (ovulationDay - 1);
   }
   return 0.5 + (0.5 * (cycleDay - ovulationDay)) / (effectiveCycleLength - ovulationDay);
+}
+
+/**
+ * The single shared "what should the moon actually show" answer: the
+ * cycle-synced phase when there's enough real history to place one, real
+ * astronomy otherwise. Not privacy-gated itself (real astronomy is never
+ * privacy-sensitive — it's just tonight's actual sky) — callers that DO
+ * need a privacy gate (AppGate.tsx, pre-unlock) wrap this rather than
+ * duplicating the fallback logic, so the rendered moon and any accessible
+ * text describing it (Home.tsx's sr-only label) can never disagree.
+ */
+export function resolveMoonPhase(
+  entries: Array<Pick<Entry, 'date' | 'flow'>>,
+  settings: Pick<Settings, 'avgCycleLength' | 'lastPeriodStart'>,
+  today: Date = new Date(),
+): number {
+  return computeCycleMoonPhase(entries, settings, today) ?? getMoonPhase(today);
 }

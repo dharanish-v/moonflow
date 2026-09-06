@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { computeCycleMoonPhase } from './cycle-moon-phase';
+import { computeCycleMoonPhase, resolveMoonPhase } from './cycle-moon-phase';
+import { getMoonPhase } from './moon-phase';
 
 describe('computeCycleMoonPhase', () => {
   it('returns null with no period history at all', () => {
@@ -76,5 +77,26 @@ describe('computeCycleMoonPhase', () => {
     expect(phase).not.toBeNull();
     expect(phase as number).toBeGreaterThan(0.5);
     expect(phase as number).toBeLessThan(1);
+  });
+});
+
+describe('resolveMoonPhase', () => {
+  it('falls back to real astronomy when there is no period history at all', () => {
+    const today = new Date(2026, 8, 6);
+    const phase = resolveMoonPhase([], { avgCycleLength: 28, lastPeriodStart: null }, today);
+    expect(phase).toBeCloseTo(getMoonPhase(today));
+  });
+
+  it('uses the cycle-synced phase when real history exists', () => {
+    const today = new Date(2026, 0, 29); // day 1 of the logged cycle
+    const phase = resolveMoonPhase(
+      [
+        { date: '2026-01-01', flow: 'medium' },
+        { date: '2026-01-29', flow: 'medium' },
+      ],
+      { avgCycleLength: 28, lastPeriodStart: null },
+      today,
+    );
+    expect(phase).toBeCloseTo(0); // new moon, not whatever the real sky looks like tonight
   });
 });

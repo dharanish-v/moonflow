@@ -11,10 +11,13 @@
 
 import { lazy, type ReactNode, Suspense, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { StaticMoonFallback } from '../components/StaticMoonFallback';
 import { useRenderMode } from '../hooks/useRenderMode';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { PIN_RELOCK_AFTER_MINUTES } from '../lib/constants';
+import { resolveMoonPhase } from '../lib/cycle-moon-phase';
 import { computeHomeStatus, type CyclePhase } from '../lib/home-status';
+import { getMoonPhase } from '../lib/moon-phase';
 import { needsUnlock } from '../lib/pin-auth';
 import { OnboardingScreen } from '../screens/Onboarding';
 import { PinUnlockScreen } from '../screens/PinUnlock';
@@ -36,6 +39,22 @@ export function resolveWorldCyclePhase(
 ): CyclePhase {
   if (!ready || !settings.lastPeriodStart) return 'unknown';
   return computeHomeStatus(entries, settings, today).cyclePhase;
+}
+
+/** The moon's own phase is never privacy-sensitive by itself (real
+ * astronomy is just tonight's actual sky, same for everyone) — only the
+ * *cycle-synced* variant reveals anything personal, so this only switches
+ * to it once `ready`, falling back to real astronomy otherwise. Shares
+ * resolveMoonPhase with Home.tsx's own sr-only label so the rendered moon
+ * and its accessible description can never disagree once unlocked. */
+export function resolveWorldMoonPhase(
+  ready: boolean,
+  entries: Parameters<typeof resolveMoonPhase>[0],
+  settings: Parameters<typeof resolveMoonPhase>[1],
+  today?: Date,
+): number {
+  if (!ready) return getMoonPhase(today ?? new Date());
+  return resolveMoonPhase(entries, settings, today);
 }
 
 /** Mounted only once unlocked+onboarded — records the last real route so a
@@ -148,18 +167,18 @@ export function AppGate({ children }: { children: ReactNode }) {
   // exists; 'unknown' otherwise (booting, locked, or onboarding
   // incomplete) — the same honest "no signal to show yet" state
   // computeHomeStatus itself already falls back to.
-  const worldCyclePhase = resolveWorldCyclePhase(
-    hasResolvedLock && !isLocked && settings.onboardingComplete,
-    entries,
-    settings,
-  );
+  const ready = hasResolvedLock && !isLocked && settings.onboardingComplete;
+  const worldCyclePhase = resolveWorldCyclePhase(ready, entries, settings);
+  const worldMoonPhase = resolveWorldMoonPhase(ready, entries, settings);
 
   return (
     <>
-      {renderMode === 'canvas3d' && (
-        <Suspense fallback={null}>
-          <WorldScene cyclePhase={worldCyclePhase} />
+      {renderMode === 'canvas3d' ? (
+        <Suspense fallback={<StaticMoonFallback phase={worldMoonPhase} cyclePhase={worldCyclePhase} />}>
+          <WorldScene phase={worldMoonPhase} cyclePhase={worldCyclePhase} />
         </Suspense>
+      ) : (
+        <StaticMoonFallback phase={worldMoonPhase} cyclePhase={worldCyclePhase} />
       )}
       {gatedContent}
     </>
