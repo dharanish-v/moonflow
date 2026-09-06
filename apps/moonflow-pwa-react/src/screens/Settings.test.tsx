@@ -1,19 +1,16 @@
 import 'fake-indexeddb/auto';
-import { render } from '@testing-library/react';
 import { axe } from 'jest-axe';
-import { HashRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
+import { renderRouted } from '../test/render-with-router';
 import { StateProvider } from '../state/store';
 import { SettingsScreen } from './Settings';
 
 describe('SettingsScreen', () => {
   it('has no accessibility violations', async () => {
-    const { container } = render(
-      <HashRouter>
-        <StateProvider testState={{}}>
-          <SettingsScreen />
-        </StateProvider>
-      </HashRouter>,
+    const { container } = await renderRouted(
+      <StateProvider testState={{}}>
+        <SettingsScreen />
+      </StateProvider>,
     );
     expect(await axe(container)).toHaveNoViolations();
   });
