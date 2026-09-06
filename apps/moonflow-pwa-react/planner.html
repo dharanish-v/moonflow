@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#F0EEE8" />
+    <title>Planner</title>
+
+    <!-- ADR-011's discreet install identity: a second front door to the
+         exact same app (same src/main.tsx, same React tree, same data) —
+         only the manifest/icon/title differ, so installing from this link
+         puts a neutral "Planner" icon on the home screen instead of
+         Moonflow's own. The app itself (App.tsx's #phone-frame chrome
+         included) doesn't know or care which entry loaded it. -->
+    <link rel="manifest" href="manifest-discreet.json" />
+    <link rel="apple-touch-icon" href="icons/icon-discreet-180.png" />
+    <link rel="icon" href="icons/icon-discreet-192.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

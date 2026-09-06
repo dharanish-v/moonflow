@@ -1,0 +1,62 @@
+// src/lib/home-status.ts — everything Home needs to display, computed from
+// raw entries + settings. Ported from home.js's computeHomeStatus. Kept
+// separate from the Home screen component so it's independently unit-tested,
+// same split cycle-math.ts itself draws.
+import { derivePeriods, diffDays, estimateFertileWindow, formatDate, predictNextPeriod } from './cycle-math';
+import { getMoonPhase } from './moon-phase';
+import type { Entry, Settings } from './types';
+
+export interface HomeStatus {
+  cycleDay: number | null;
+  statusText: string;
+  isFertile: boolean;
+  isEstimated: boolean;
+  moonPhase: number;
+}
+
+export function computeHomeStatus(
+  entries: Array<Pick<Entry, 'date' | 'flow'>>,
+  settings: Pick<Settings, 'avgCycleLength' | 'lastPeriodStart'>,
+  today: Date = new Date(),
+): HomeStatus {
+  const todayStr = formatDate(today);
+  const periods = derivePeriods(entries);
+  const mostRecent = periods.length > 0 ? periods[periods.length - 1] : null;
+  const mostRecentStart = mostRecent ? mostRecent.start : settings.lastPeriodStart;
+  const mostRecentEnd = mostRecent ? mostRecent.end : null;
+
+  const cycleDay = mostRecentStart ? diffDays(mostRecentStart, todayStr) + 1 : null;
+  const prediction = predictNextPeriod(periods, settings);
+  const isOnPeriod = !!(
+    mostRecentEnd &&
+    mostRecentStart &&
+    diffDays(mostRecentStart, todayStr) >= 0 &&
+    diffDays(todayStr, mostRecentEnd) >= 0
+  );
+
+  let statusText: string;
+  let isFertile = false;
+
+  if (isOnPeriod) {
+    statusText = 'on your period';
+  } else if (prediction.confidence !== 'wide' && prediction.date) {
+    const fertile = estimateFertileWindow(prediction.date);
+    isFertile = diffDays(fertile.start, todayStr) >= 0 && diffDays(todayStr, fertile.end) >= 0;
+    const daysToNext = diffDays(todayStr, prediction.date);
+    statusText = isFertile
+      ? 'fertile window'
+      : daysToNext >= 0
+        ? `${daysToNext} day${daysToNext === 1 ? '' : 's'} to next period`
+        : 'period may be starting soon';
+  } else {
+    statusText = 'predictions need a bit more history';
+  }
+
+  return {
+    cycleDay,
+    statusText,
+    isFertile,
+    isEstimated: prediction.confidence === 'estimated',
+    moonPhase: getMoonPhase(today),
+  };
+}

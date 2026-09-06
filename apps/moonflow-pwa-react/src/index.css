@@ -1,0 +1,205 @@
+/* index.css — Moonflow's palette, ported verbatim from the vanilla app's
+   tokens.css (the one file allowed a hardcoded color, per that app's own
+   ADR-016 — same rule, just relocated here as this app's own single source).
+   Dark-mode-only by deliberate product truth (design-system.md: "flat and
+   opaque everywhere... a five-second daily glance, checked half-asleep in a
+   dark room"), not a placeholder pending a light theme — so there is no
+   `.dark` class variant here: :root *is* the only theme.
+
+   shadcn/ui variable names, our own values — semantic accents keep the
+   single meaning each has always owned: gold = primary/positive (moon,
+   mood, ovulation), rose = secondary *and* destructive (this app's only
+   "something's wrong" color — the save-error text and wrong-PIN message
+   already used rose before this rewrite), blue = accent/informational
+   (symptoms). */
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --bg-screen: #14132b;
+  --bg-frame: #0a0918;
+  --surface-card: #1e1c3b;
+  --border-hairline: #252346;
+  --border-muted: #302e56;
+
+  --text-primary: #f5f3ec;
+  --text-secondary: #cbc9e8;
+  --text-muted: #8f8db8;
+  --text-inactive: #5f5d85;
+
+  --accent-rose: #d99fc0;
+  --accent-rose-text: #4a2233;
+  --accent-gold: #e8c874;
+  --accent-gold-text: #3a2b0a;
+  --accent-blue: #9fb8e8;
+  --moon-unlit: #2a2850;
+
+  --glass-fill: rgba(72, 68, 120, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.14);
+
+  /* shadcn semantic roles */
+  --background: var(--bg-screen);
+  --foreground: var(--text-primary);
+  --card: var(--surface-card);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface-card);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--accent-gold);
+  --primary-foreground: var(--accent-gold-text);
+  --secondary: var(--accent-rose);
+  --secondary-foreground: var(--accent-rose-text);
+  --muted: var(--border-muted);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--accent-blue);
+  --accent-foreground: var(--bg-frame);
+  --destructive: var(--accent-rose);
+  --destructive-foreground: var(--accent-rose-text);
+  --border: var(--border-muted);
+  --input: var(--border-muted);
+  --ring: var(--accent-gold);
+
+  /* Shape & spacing — same values as the vanilla app's tokens.css */
+  --radius: 0.75rem; /* card radius — shadcn derives sm/md/lg from this */
+  --radius-pill: 0.625rem;
+  --radius-tabbar: 1.375rem;
+  --radius-frame: 2.25rem;
+  --border-width: 0.5px;
+
+  --space-1: 0.25rem;
+  --space-2: 0.375rem;
+  --space-3: 0.5rem;
+  --space-4: 0.875rem;
+  --space-5: 1rem;
+  --space-6: 1.25rem;
+
+  /* Type scale */
+  --text-hero: 2rem;
+  --text-stat: 1.25rem;
+  --text-title: 0.9375rem;
+  --text-nav: 0.8125rem;
+  --text-body: 0.75rem;
+  --text-caption: 0.6875rem;
+  --text-small: 0.625rem;
+  --text-micro: 0.5625rem;
+
+  /* System sans-serif, not a custom webfont — an Operate-mode utility app
+     (task completion, five-second glance) is well served by a workhorse
+     system stack; a distinctive display face is for Persuade/Experience
+     surfaces trying to earn attention, which this app deliberately isn't
+     (design-system.md's own "quiet, private, calm" tone, and the explicit
+     "no streaks/gamification" edge-case rule). */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-moon-unlit: var(--moon-unlit);
+  --color-glass-fill: var(--glass-fill);
+  --color-glass-border: var(--glass-border);
+
+  --radius-sm: calc(var(--radius) - 0.25rem);
+  --radius-md: calc(var(--radius) - 0.125rem);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 0.25rem);
+  --radius-flow-pill: var(--radius-pill);
+  --radius-flow-tabbar: var(--radius-tabbar);
+  --radius-flow-frame: var(--radius-frame);
+
+  --text-flow-hero: var(--text-hero);
+  --text-flow-stat: var(--text-stat);
+  --text-flow-title: var(--text-title);
+  --text-flow-nav: var(--text-nav);
+  --text-flow-body: var(--text-body);
+  --text-flow-caption: var(--text-caption);
+  --text-flow-small: var(--text-small);
+  --text-flow-micro: var(--text-micro);
+
+  --spacing-flow-1: var(--space-1);
+  --spacing-flow-2: var(--space-2);
+  --spacing-flow-3: var(--space-3);
+  --spacing-flow-4: var(--space-4);
+  --spacing-flow-5: var(--space-5);
+  --spacing-flow-6: var(--space-6);
+
+  --font-sans: var(--font-sans);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    overscroll-behavior: none;
+  }
+}
+
+/* #phone-frame / #app-content — ADR-025's real device-frame presentation for
+   any viewport wider than the app's own content, ported verbatim from the
+   vanilla app's index.html. No component library ships this (nor the tab
+   bar's floating-glass-capsule positioning in TabBar.tsx) — real CSS, same
+   documented exception the vanilla app's own ADR-032 already drew. */
+#phone-frame {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background: var(--bg-screen);
+  overflow-x: hidden;
+  overflow-y: auto;
+  transform: translateZ(0);
+}
+
+/* (hover:hover) and (pointer:fine) — "a mouse-driven desktop browser," not
+   just "a wide viewport." Real large-screen phones are touchscreens, so this
+   guard keeps them edge-to-edge, never framed. */
+@media (min-width: 27rem) and (hover: hover) and (pointer: fine) {
+  #phone-frame {
+    width: 24.5625rem; /* 393px — a representative modern iPhone width */
+    height: 53.25rem; /* 852px */
+    max-height: 92vh;
+    margin: 4vh auto;
+    border-radius: var(--radius-frame);
+    box-shadow:
+      0 1.5rem 4rem rgba(0, 0, 0, 0.55),
+      0 0 0 0.5px var(--border-muted);
+  }
+}
+
+#app-content {
+  /* Clears the fixed tab bar below (its own padding/border/button-height
+     math, plus its bottom offset and a small gap) so content is never
+     hidden behind it — reserved unconditionally, since screens without a
+     tab bar (onboarding, the log sheet, PIN lock) just get a bit of
+     harmless extra space at the bottom rather than any risk of clipped
+     content on the screens that do show it. */
+  padding-bottom: calc(2 * var(--space-2) + 2 * var(--border-width) + 2.75rem + var(--space-3) + env(safe-area-inset-bottom, 0.5rem));
+  min-height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
