@@ -46,6 +46,20 @@ export default defineConfig({
         // navigation, breaking the discreet-icon identity entirely. Same
         // reasoning as the vanilla app's own two-entry setup.
         navigateFallback: undefined,
+        // registerType: 'autoUpdate' above is a no-op without these:
+        // injectRegister:false means the virtual:pwa-register module (the
+        // thing that would normally read registerType and act on it) never
+        // runs — register-sw.ts's own bare register() call is all there
+        // is. Without skipWaiting/clientsClaim, a real installed user who
+        // never fully closes every open tab of the app (the common case
+        // for a PWA on a home screen) stays on the OLD service worker,
+        // and therefore the old cached build, forever — caught live: a
+        // real deploy 404'd on an asset the new build no longer ships,
+        // and reloading alone never picked up the fix. clientsClaim also
+        // needs register-sw.ts's controllerchange listener (see there) to
+        // actually get the new code into an already-open tab.
+        skipWaiting: true,
+        clientsClaim: true,
       },
     }),
   ],
