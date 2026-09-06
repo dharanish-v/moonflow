@@ -24,7 +24,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # jsdom@30/vitest@5 (this app's deps, unlike the vanilla app's)
+          # require Node ^22.22.2 || ^24.15.0 || >=26 — Node 20 (copied from
+          # the vanilla app's own workflow without checking) fails at
+          # `webidl.util.markAsUncloneable is not a function` inside
+          # undici's CacheStorage, a real CI failure caught live.
+          node-version: 26
           cache: npm
           cache-dependency-path: apps/moonflow-pwa-react/package-lock.json
       - run: npm ci
