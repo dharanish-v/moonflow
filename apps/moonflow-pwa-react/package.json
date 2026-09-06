@@ -26,7 +26,8 @@
     "react-router-dom": "^7.18.3",
     "shadcn": "^4.21.0",
     "tailwindcss": "^4.3.3",
-    "three": "^0.185.1"
+    "three": "^0.185.1",
+    "vaul": "^1.1.2"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",

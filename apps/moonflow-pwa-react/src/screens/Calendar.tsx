@@ -4,6 +4,7 @@
 import { motion } from 'framer-motion';
 import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/button';
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
 import {
   addDays,
@@ -90,23 +91,25 @@ export function CalendarScreen() {
   return (
     <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col px-flow-5 py-flow-6">
       <div className="mb-flow-4 flex items-center justify-between">
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon-touch"
           onClick={() => handleChangeMonth('prev')}
           aria-label="Previous month"
-          className="inline-flex size-11 items-center justify-center rounded-full text-muted-foreground/60 hover:text-foreground"
+          className="rounded-full text-muted-foreground/60"
         >
           <ChevronLeftIcon className="size-[0.9rem]" />
-        </button>
+        </Button>
         <span className="text-flow-nav font-medium text-foreground">{monthLabel}</span>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon-touch"
           onClick={() => handleChangeMonth('next')}
           aria-label="Next month"
-          className="inline-flex size-11 items-center justify-center rounded-full text-muted-foreground/60 hover:text-foreground"
+          className="rounded-full text-muted-foreground/60"
         >
           <ChevronRightIcon className="size-[0.9rem]" />
-        </button>
+        </Button>
       </div>
 
       <motion.div

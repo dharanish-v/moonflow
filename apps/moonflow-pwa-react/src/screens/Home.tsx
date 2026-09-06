@@ -7,6 +7,7 @@
 import { lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StaticMoonFallback } from '../components/StaticMoonFallback';
+import { Button } from '../components/ui/button';
 import { DropletIcon, MoodSmileIcon, NotesIcon } from '../components/icons';
 import { useRenderMode } from '../hooks/useRenderMode';
 import { todayString } from '../lib/cycle-math';
@@ -55,15 +56,15 @@ export function HomeScreen() {
 
       <div className="mt-flow-6 flex gap-flow-3">
         {QUICK_ACTIONS.map(({ kind, label, Icon, colorClass }) => (
-          <button
+          <Button
             key={kind}
-            type="button"
+            variant="outline"
             onClick={() => navigate(`/log?date=${todayString()}&focus=${kind}`)}
-            className="flex min-h-11 flex-1 flex-col items-center gap-flow-2 rounded-lg border border-border bg-card py-flow-4"
+            className="h-auto flex-1 flex-col gap-flow-2 bg-card py-flow-4"
           >
             <Icon className={`size-[1.125rem] ${colorClass}`} />
             <span className="text-flow-caption font-normal text-foreground/80">{label}</span>
-          </button>
+          </Button>
         ))}
       </div>
     </div>

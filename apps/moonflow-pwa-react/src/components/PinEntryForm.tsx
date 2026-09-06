@@ -5,6 +5,9 @@
 // imperative animate() against the real input node.
 import { animate, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 import { LockIcon } from './icons';
 
 const PIN_LENGTH = 4;
@@ -42,10 +45,10 @@ export function PinEntryForm({ title, error, onComplete, onCancel }: PinEntryFor
       </p>
 
       <div className="mb-flow-6">
-        <label htmlFor="pin-input" className="mb-flow-2 block text-flow-caption text-muted-foreground">
+        <Label htmlFor="pin-input" className="mb-flow-2 block text-flow-caption text-muted-foreground">
           {title}
-        </label>
-        <input
+        </Label>
+        <Input
           ref={inputRef}
           type="password"
           inputMode="numeric"
@@ -62,14 +65,14 @@ export function PinEntryForm({ title, error, onComplete, onCancel }: PinEntryFor
               onComplete(next);
             }
           }}
-          className="w-full rounded-md border border-border bg-input/30 px-3 py-2 text-center text-flow-stat tracking-[0.5em] text-foreground [color-scheme:dark]"
+          className="h-11 text-center text-flow-stat tracking-[0.5em] [color-scheme:dark]"
         />
       </div>
 
       {onCancel && (
-        <button type="button" onClick={onCancel} className="min-h-11 w-full text-flow-nav text-muted-foreground">
+        <Button variant="ghost" onClick={onCancel} className="h-11 w-full text-flow-nav text-muted-foreground">
           Cancel
-        </button>
+        </Button>
       )}
     </div>
   );

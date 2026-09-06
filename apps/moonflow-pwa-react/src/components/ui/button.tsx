@@ -31,6 +31,10 @@ const buttonVariants = cva(
         "icon-sm":
           "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
         "icon-lg": "size-9",
+        // ADR-024: real 44×44px touch targets — shadcn's own "icon" size
+        // (size-8) is 32px, below the minimum for anything actually tapped
+        // on a touchscreen (tab bar, sheet close button, calendar nav).
+        "icon-touch": "size-11",
       },
     },
     defaultVariants: {

@@ -3,6 +3,9 @@
 // AppGate.tsx and router.js's original reasoning for why onboarding/pin-lock
 // never get a URL.
 import { useState } from 'react';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 import { MoonIcon } from '../components/icons';
 import { todayString } from '../lib/cycle-math';
 import { setSetting } from '../lib/db';
@@ -14,9 +17,6 @@ const MIN_PERIOD_LENGTH = 1;
 const MAX_PERIOD_LENGTH = 14;
 const DEFAULT_CYCLE_LENGTH = 28;
 const DEFAULT_PERIOD_LENGTH = 5;
-
-const STEPPER_BUTTON =
-  'inline-flex size-11 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-colors hover:border-border hover:text-foreground disabled:pointer-events-none disabled:opacity-50';
 
 export function OnboardingScreen() {
   const dispatch = useAppDispatch();
@@ -49,85 +49,86 @@ export function OnboardingScreen() {
       </p>
 
       <div className="mb-flow-6">
-        <label htmlFor="onboarding-date" className="mb-flow-2 block text-flow-caption text-muted-foreground">
+        <Label htmlFor="onboarding-date" className="mb-flow-2 block text-flow-caption text-muted-foreground">
           When did your last period start?
-        </label>
-        <input
+        </Label>
+        <Input
           type="date"
           id="onboarding-date"
           value={lastPeriodStart}
           max={todayString()}
           onChange={(e) => setLastPeriodStart(e.target.value)}
-          className="w-full rounded-md border border-border bg-input/30 px-3 py-2 text-flow-body text-foreground [color-scheme:dark]"
+          className="h-11 [color-scheme:dark]"
         />
       </div>
 
-      <div className="mb-flow-6">
-        <span id="cycle-length-label" className="mb-flow-2 block text-flow-caption text-muted-foreground">
-          Average cycle length
-        </span>
-        <div
-          role="group"
-          aria-labelledby="cycle-length-label"
-          className="flex items-center justify-between rounded-md bg-card px-flow-4 py-flow-3"
-        >
-          <button
-            type="button"
-            className={STEPPER_BUTTON}
-            aria-label="Decrease average cycle length"
-            onClick={() => setCycleLength((n) => Math.max(MIN_CYCLE_LENGTH, n - 1))}
-          >
-            &minus;
-          </button>
-          <span className="text-flow-body text-foreground">{cycleLength} days</span>
-          <button
-            type="button"
-            className={STEPPER_BUTTON}
-            aria-label="Increase average cycle length"
-            onClick={() => setCycleLength((n) => Math.min(MAX_CYCLE_LENGTH, n + 1))}
-          >
-            +
-          </button>
-        </div>
-      </div>
+      <Stepper
+        label="Average cycle length"
+        value={cycleLength}
+        unit="days"
+        onDecrease={() => setCycleLength((n) => Math.max(MIN_CYCLE_LENGTH, n - 1))}
+        onIncrease={() => setCycleLength((n) => Math.min(MAX_CYCLE_LENGTH, n + 1))}
+      />
 
-      <div className="mb-flow-6">
-        <span id="period-length-label" className="mb-flow-2 block text-flow-caption text-muted-foreground">
-          Average period length
-        </span>
-        <div
-          role="group"
-          aria-labelledby="period-length-label"
-          className="flex items-center justify-between rounded-md bg-card px-flow-4 py-flow-3"
-        >
-          <button
-            type="button"
-            className={STEPPER_BUTTON}
-            aria-label="Decrease average period length"
-            onClick={() => setPeriodLength((n) => Math.max(MIN_PERIOD_LENGTH, n - 1))}
-          >
-            &minus;
-          </button>
-          <span className="text-flow-body text-foreground">{periodLength} days</span>
-          <button
-            type="button"
-            className={STEPPER_BUTTON}
-            aria-label="Increase average period length"
-            onClick={() => setPeriodLength((n) => Math.min(MAX_PERIOD_LENGTH, n + 1))}
-          >
-            +
-          </button>
-        </div>
-      </div>
+      <Stepper
+        label="Average period length"
+        value={periodLength}
+        unit="days"
+        onDecrease={() => setPeriodLength((n) => Math.max(MIN_PERIOD_LENGTH, n - 1))}
+        onIncrease={() => setPeriodLength((n) => Math.min(MAX_PERIOD_LENGTH, n + 1))}
+      />
 
-      <button
-        type="button"
-        disabled={!lastPeriodStart}
-        onClick={handleSubmit}
-        className="min-h-11 w-full rounded-lg bg-primary text-flow-nav font-medium text-primary-foreground transition-colors disabled:pointer-events-none disabled:opacity-50"
-      >
+      <Button disabled={!lastPeriodStart} onClick={() => void handleSubmit()} className="h-11 w-full text-flow-nav">
         Get started
-      </button>
+      </Button>
+    </div>
+  );
+}
+
+function Stepper({
+  label,
+  value,
+  unit,
+  onDecrease,
+  onIncrease,
+}: {
+  label: string;
+  value: number;
+  unit: string;
+  onDecrease: () => void;
+  onIncrease: () => void;
+}) {
+  const labelId = `${label.replace(/\s+/g, '-').toLowerCase()}-label`;
+  return (
+    <div className="mb-flow-6">
+      <span id={labelId} className="mb-flow-2 block text-flow-caption text-muted-foreground">
+        {label}
+      </span>
+      <div role="group" aria-labelledby={labelId} className="flex items-center justify-between rounded-md bg-card px-flow-4 py-flow-3">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-touch"
+          className="rounded-full"
+          aria-label={`Decrease ${label.toLowerCase()}`}
+          onClick={onDecrease}
+        >
+          &minus;
+        </Button>
+        <span className="text-flow-body text-foreground">
+          {value} {unit}
+        </span>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-touch"
+          className="rounded-full"
+          aria-label={`Increase ${label.toLowerCase()}`}
+          onClick={onIncrease}
+        >
+          +
+        </Button>
+      </div>
     </div>
   );
 }
