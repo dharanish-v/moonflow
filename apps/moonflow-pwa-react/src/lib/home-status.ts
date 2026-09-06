@@ -7,9 +7,11 @@ import { getMoonPhase } from './moon-phase';
 import type { Entry, Settings } from './types';
 
 /**
- * Ambient sky background signal (CycleSky.tsx) — deliberately separate from
- * `moonPhase` (real astronomy, ADR-019, untouched by cycle data). 'unknown'
- * is a real state, not a loading placeholder: shown whenever prediction
+ * Ambient sky/weather mood signal (sky-mood.ts/sun-mood.ts/weather-mood.ts,
+ * rendered by WorldScene) — deliberately separate from `moonPhase` (real
+ * astronomy, ADR-019) and from cycle-moon-phase.ts's cycle-synced moon
+ * phase (ADR-036) — three independent signals, not one. 'unknown' is a
+ * real state, not a loading placeholder: shown whenever prediction
  * confidence is 'wide', same case that already yields
  * "predictions need a bit more history" — no cycle-phase signal to show
  * honestly beats guessing one.

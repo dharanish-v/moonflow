@@ -10,7 +10,7 @@ import { HashRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { SETTINGS_DEFAULTS } from '../lib/db';
 import type { Settings } from '../lib/types';
-import { AppGate } from './AppGate';
+import { AppGate, resolveWorldCyclePhase } from './AppGate';
 import { AppRoutes } from './routes';
 import { StateProvider } from '../state/store';
 
@@ -74,6 +74,38 @@ describe('AppGate — PIN lock', () => {
       lastPeriodStart: '2026-08-01',
     });
     expect(screen.getByText(/january|february|march|april|may|june|july|august|september|october|november|december/i)).toBeInTheDocument();
+  });
+});
+
+describe('resolveWorldCyclePhase — WorldScene privacy gate', () => {
+  it('is "unknown" while not ready, even with real period data', () => {
+    const phase = resolveWorldCyclePhase(false, [{ date: '2026-08-01', flow: 'medium' }], {
+      avgCycleLength: 28,
+      lastPeriodStart: '2026-08-01',
+    });
+    expect(phase).toBe('unknown');
+  });
+
+  it('is "unknown" once ready but with no real period data yet', () => {
+    const phase = resolveWorldCyclePhase(true, [], { avgCycleLength: 28, lastPeriodStart: null });
+    expect(phase).toBe('unknown');
+  });
+
+  it('reflects the real cyclePhase once ready and real data exists', () => {
+    const phase = resolveWorldCyclePhase(
+      true,
+      [
+        { date: '2026-08-01', flow: 'medium' },
+        { date: '2026-08-02', flow: 'medium' },
+      ],
+      // lastPeriodStart set, as it always is post-onboarding in real usage
+      // (onboarding requires entering a date, and nothing ever clears it
+      // back to null) — this gate specifically checks *that*, not just
+      // "do periods exist in entries."
+      { avgCycleLength: 28, lastPeriodStart: '2026-08-01' },
+      new Date(2026, 7, 2), // still on the logged period itself
+    );
+    expect(phase).toBe('period');
   });
 });
 
