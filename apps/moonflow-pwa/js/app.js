@@ -10,6 +10,7 @@ import { hashPin, evaluatePinAttempt } from './pin-auth.js';
 import { buildExportPayload, exportFilename } from './export.js';
 import { PIN_RELOCK_AFTER_MINUTES } from './constants.js';
 import { prefersReducedMotion } from './motion.js';
+import { buildHash, parseHash } from './router.js';
 
 const content = document.getElementById('app-content');
 const tabBar = document.getElementById('tab-bar');
@@ -49,15 +50,98 @@ function needsUnlock(settings) {
 async function boot() {
   const [entries, settings] = await Promise.all([loadAllEntries(), loadAllSettings()]);
   const locked = needsUnlock(settings);
-  if (locked) pinFlow = { mode: 'unlock', firstPinHash: null, error: null, returnScreen: 'home' };
+
+  // A deep-linked URL (a bookmark, a shared link, a browser-restored tab)
+  // only ever resolves once onboarding is done and the app isn't locked —
+  // never lets a URL skip either gate. Still remembered as pinFlow's
+  // returnScreen though, so unlocking lands you where the link pointed
+  // instead of always falling back to Home.
+  const { screen: hashScreen, params: hashParams } = parseHash();
+  const deepLinkScreen = settings.onboardingComplete && hashScreen && hashScreen !== 'home' ? hashScreen : 'home';
+
+  if (locked) pinFlow = { mode: 'unlock', firstPinHash: null, error: null, returnScreen: deepLinkScreen };
+
+  let initialScreen;
+  let initialExtra = {};
+  if (locked) {
+    initialScreen = 'pin-lock';
+  } else if (!settings.onboardingComplete) {
+    initialScreen = 'onboarding';
+  } else {
+    initialScreen = deepLinkScreen;
+    if (deepLinkScreen === 'log') {
+      initialExtra = { editingDate: hashParams.date || todayString(), logFocusSection: hashParams.focus || null };
+    }
+  }
+
   setState({
     entries,
     settings,
     isOnboarded: settings.onboardingComplete,
-    activeScreen: locked ? 'pin-lock' : (settings.onboardingComplete ? 'home' : 'onboarding'),
-    calendarMonth: todayString().slice(0, 7)
+    activeScreen: initialScreen,
+    calendarMonth: todayString().slice(0, 7),
+    ...initialExtra
   });
 }
+
+// The URL is a reflection of state.activeScreen, never its driver — every
+// setState({ activeScreen }) call already exists for its own reason (a tab
+// tap, Save, Close, the PIN unlock flow...); this just mirrors the result
+// into the address bar afterward, once per render. pin-lock and onboarding
+// are excluded on purpose (see router.js) — they never touch the URL.
+let lastSyncedHash = /** @type {string|null} */ (null);
+let hasReplacedInitialHistoryEntry = false;
+let isApplyingPopstate = false;
+
+function syncUrlToState() {
+  if (state.activeScreen === 'pin-lock' || state.activeScreen === 'onboarding') return;
+
+  const hash = buildHash(state.activeScreen, {
+    date: state.activeScreen === 'log' ? (state.editingDate || todayString()) : null,
+    focus: state.activeScreen === 'log' ? state.logFocusSection : null
+  });
+  if (hash === lastSyncedHash) return;
+  lastSyncedHash = hash;
+
+  // A back/forward tap already moved the browser's own history pointer —
+  // reflecting that same change again here would double up on it.
+  if (isApplyingPopstate) return;
+
+  if (!hasReplacedInitialHistoryEntry) {
+    // The very first routable screen (right after boot, or right after
+    // clearing the pin-lock/onboarding gate) replaces the initial blank
+    // entry rather than pushing a new one — otherwise the first thing
+    // "back" ever does is bounce between two entries for the same screen.
+    hasReplacedInitialHistoryEntry = true;
+    history.replaceState(null, '', hash);
+  } else {
+    history.pushState(null, '', hash);
+  }
+}
+
+window.addEventListener('popstate', () => {
+  // Security gates always win over whatever the URL asks for. Note this
+  // checks activeScreen, never needsUnlock(state.settings) — that only
+  // says the PIN *feature* is on, true for the entire session regardless of
+  // whether the user already unlocked; checking it here would force a
+  // re-lock on every single back/forward press even mid-session. Whether
+  // the app is *currently* locked is exactly what activeScreen already
+  // tracks: still 'pin-lock' means still locked, so back/forward is
+  // ignored outright rather than able to render anything behind it — no
+  // real navigation happened here for the app to honor, and unlocking
+  // itself (unrelated to popstate) is what decides pinFlow.returnScreen.
+  if (state.activeScreen === 'pin-lock') return;
+  if (!state.settings.onboardingComplete) return;
+
+  const { screen, params } = parseHash();
+  isApplyingPopstate = true;
+  if (screen === 'log') {
+    setState({ activeScreen: 'log', editingDate: params.date || todayString(), logFocusSection: params.focus || null });
+  } else {
+    setState({ activeScreen: screen, editingDate: null, logFocusSection: null });
+  }
+  isApplyingPopstate = false;
+});
 
 // Page Visibility API drives both T19 (re-lock after being backgrounded past
 // the timeout) and T20 (autosave a draft so an iOS-killed tab doesn't lose
@@ -320,6 +404,8 @@ async function render() {
     const el = content.firstElementChild;
     if (el) gsap.from(el, { opacity: 0, y: 6, duration: 0.18, ease: 'power1.out' });
   }
+
+  syncUrlToState();
 }
 
 // Wire the static tab bar exactly once — it is real HTML in index.html, never
