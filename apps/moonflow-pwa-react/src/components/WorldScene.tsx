@@ -50,6 +50,9 @@ import { phaseToLightAngle } from '../lib/moon-phase';
 import { detectPerfTier, type PerfTier } from '../lib/perf-tier';
 import { lerpSkyMood, SKY_MOODS, type SkyMood } from '../lib/sky-mood';
 import { SUN_MOODS } from '../lib/sun-mood';
+import { WEATHER_MOODS } from '../lib/weather-mood';
+import { Boat } from './Boat';
+import { Ocean } from './Ocean';
 
 // ADR-037's per-tier budget — only the settings that apply to content built
 // so far (dpr, star count, cloud count); ocean/rain/lightning join this same
@@ -218,6 +221,14 @@ const CLOUD_CONFIGS: ReadonlyArray<{ basePosition: [number, number, number]; wid
   { basePosition: [-1.8, MOON_OFFSET_Y - 1.8, -7.2], width: 5, opacityMult: 0.45, speedMult: 0.35 },
 ];
 
+// Two boats anchored within Ocean's visible surface (world Z between -10
+// and -40, see Ocean.tsx) — fixed hull colors, sail color ties into the
+// current mood's own cloudColor so they read as part of the same weather.
+const BOAT_ANCHORS: ReadonlyArray<{ x: number; z: number; hullColor: string }> = [
+  { x: -2.2, z: -8, hullColor: '#6b4a35' },
+  { x: 2.6, z: -14, hullColor: '#8a5a3c' },
+];
+
 interface CloudSpriteProps {
   texture: THREE.Texture;
   color: string;
@@ -262,6 +273,11 @@ function Scene({
 }) {
   const moodTable = theme === 'light' ? SUN_MOODS : SKY_MOODS;
   const mood = useSkyMood(cyclePhase, reducedMotion, moodTable);
+  // WEATHER_MOODS is the third, shared table (rain/lightning/ocean-chop/
+  // wind) — the same values drive both worlds' cloud drift and the ocean's
+  // wave chop/speed, so "is it stormy" reads consistently across every
+  // weather-bearing element regardless of day or night.
+  const weatherMood = WEATHER_MOODS[cyclePhase];
   // Computed once, not per mood change: the puff shape is neutral/white —
   // each sprite's own `color` below does the actual per-cloud tinting, so
   // regenerating this on every cyclePhase crossfade would be wasted work.
@@ -305,9 +321,21 @@ function Scene({
           texture={cloudTexture}
           color={mood.cloudColor}
           opacity={mood.cloudOpacity * cfg.opacityMult}
-          speed={mood.cloudSpeed * cfg.speedMult}
+          speed={mood.cloudSpeed * cfg.speedMult * weatherMood.windSpeed}
           basePosition={cfg.basePosition}
           width={cfg.width}
+        />
+      ))}
+      <Ocean perfTier={perfTier} chop={weatherMood.oceanChop} speed={weatherMood.windSpeed} glowColor={mood.glowColor} />
+      {BOAT_ANCHORS.map((anchor, i) => (
+        <Boat
+          key={i}
+          x={anchor.x}
+          z={anchor.z}
+          chop={weatherMood.oceanChop}
+          speed={weatherMood.windSpeed}
+          hullColor={anchor.hullColor}
+          sailColor={mood.cloudColor}
         />
       ))}
     </>
