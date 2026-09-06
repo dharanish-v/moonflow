@@ -1,8 +1,10 @@
 // src/components/HomeScene.tsx — Home's moon + sky, one shared scene
 // (ADR-033). Formerly MoonPhase3D.tsx (Phase 5's real 3D moon) — grown into
-// a full cinematic scene: drei's Sky/Stars/Cloud layered with the existing
-// moon sphere+light, mood-graded per cyclePhase via sky-mood.ts. The moon's
-// own real-astronomy phase (moon-phase.ts, ADR-019) is untouched and
+// a full cinematic scene: drei's Sky/Stars layered with the existing moon
+// sphere+light, plus hand-rolled cloud sprites (see CloudSprite below — not
+// drei's <Clouds>/<Cloud>, which reliably blanked the entire scene in live
+// testing), mood-graded per cyclePhase via sky-mood.ts. The moon's own
+// real-astronomy phase (moon-phase.ts, ADR-019) is untouched and
 // independent — phase and cyclePhase are two separate inputs driving two
 // separate things in the same scene, not one system.
 //
@@ -32,7 +34,7 @@
 // transition is actually in flight (cheap: no per-frame re-render the rest
 // of the time, since cyclePhase changes at most a few times a day).
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Cloud, Sky, Stars, useTexture } from '@react-three/drei';
+import { Sky, Stars, useTexture } from '@react-three/drei';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import moonTextureUrl from '../assets/moon-2k.jpg';
@@ -142,9 +144,41 @@ function Moon({ phase, glowColor, glowIntensity }: { phase: number; glowColor: s
   );
 }
 
+interface CloudSpriteProps {
+  texture: THREE.Texture;
+  color: string;
+  opacity: number;
+  speed: number;
+  basePosition: [number, number, number];
+  width: number;
+}
+
+/** A single drifting cloud puff — a plain alpha-blended sprite (the same
+ * primitive already proven correct for the moon's own glow sprite), not
+ * drei's volumetric <Cloud>. Drift is a slow sideways sine oscillation
+ * driven by the clock, not React state — cheap, and naturally freezes under
+ * prefers-reduced-motion since useFrame simply stops firing once the
+ * Canvas drops to frameloop="demand". */
+function CloudSprite({ texture, color, opacity, speed, basePosition, width }: CloudSpriteProps) {
+  const ref = useRef<THREE.Sprite>(null);
+  const driftRange = width * 0.18;
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    ref.current.position.x = basePosition[0] + Math.sin(clock.elapsedTime * speed) * driftRange;
+  });
+  return (
+    <sprite ref={ref} position={basePosition} scale={[width, width * 0.45, 1]}>
+      <spriteMaterial map={texture} color={color} transparent opacity={opacity} depthWrite={false} />
+    </sprite>
+  );
+}
+
 function Scene({ phase, cyclePhase, reducedMotion }: { phase: number; cyclePhase: CyclePhase; reducedMotion: boolean }) {
   const mood = useSkyMood(cyclePhase, reducedMotion);
-  const cloudTexture = useMemo(() => createCloudPuffTexture(mood.cloudColor), [mood.cloudColor]);
+  // Computed once, not per mood change: the puff shape is neutral/white —
+  // each sprite's own `color` below does the actual per-cloud tinting, so
+  // regenerating this on every cyclePhase crossfade would be wasted work.
+  const cloudTexture = useMemo(() => createCloudPuffTexture(), []);
 
   return (
     <>
@@ -159,29 +193,29 @@ function Scene({ phase, cyclePhase, reducedMotion }: { phase: number; cyclePhase
         mieDirectionalG={mood.mieDirectionalG}
       />
       <Stars radius={30} depth={25} count={1000} factor={3} fade material-opacity={mood.starOpacity} material-transparent />
-      <Cloud
+      <CloudSprite
         texture={cloudTexture}
         color={mood.cloudColor}
         opacity={mood.cloudOpacity}
         speed={mood.cloudSpeed}
-        position={[-2.4, MOON_OFFSET_Y + 0.9, -3.5]}
-        scale={2.2}
+        basePosition={[-2.4, MOON_OFFSET_Y + 0.9, -3.5]}
+        width={3.2}
       />
-      <Cloud
+      <CloudSprite
         texture={cloudTexture}
         color={mood.cloudColor}
         opacity={mood.cloudOpacity * 0.85}
         speed={mood.cloudSpeed * 0.7}
-        position={[2.6, MOON_OFFSET_Y - 0.7, -4.8]}
-        scale={2.8}
+        basePosition={[2.6, MOON_OFFSET_Y - 0.7, -4.8]}
+        width={4}
       />
-      <Cloud
+      <CloudSprite
         texture={cloudTexture}
         color={mood.cloudColor}
         opacity={mood.cloudOpacity * 0.6}
         speed={mood.cloudSpeed * 0.5}
-        position={[0.4, MOON_OFFSET_Y - 2.6, -6]}
-        scale={3.2}
+        basePosition={[0.4, MOON_OFFSET_Y - 2.6, -6]}
+        width={4.6}
       />
     </>
   );
