@@ -17,6 +17,18 @@ import { useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
 import { Button } from '../components/ui/button';
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerTitle } from '../components/ui/drawer';
 import { Label } from '../components/ui/label';
@@ -195,16 +207,36 @@ export function LogEntryScreen() {
         </div>
 
         {existingEntry && (
-          <Button
-            variant="link"
-            onClick={() => void handleClear()}
-            className="mb-flow-2 h-11 justify-start px-0 text-flow-caption text-secondary no-underline"
-          >
-            Clear this day's log
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="link"
+                className="mb-flow-2 h-11 justify-start px-0 text-flow-caption text-secondary no-underline"
+              >
+                Clear this day's log
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear this day's log?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This removes everything logged for {formatHeaderDate(date)} — flow, symptoms, mood, and notes. This
+                  can't be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction onClick={() => void handleClear()}>Clear log</AlertDialogAction>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
 
-        {saveError && <p className="mb-flow-3 text-flow-caption text-secondary">Couldn't save — try again</p>}
+        {saveError && (
+          <Alert className="mb-flow-3">
+            <AlertDescription>Couldn't save — try again</AlertDescription>
+          </Alert>
+        )}
 
         <Button disabled={isSaving} onClick={() => void handleSave()} className="h-11 w-full text-flow-nav">
           {isSaving ? 'Saving…' : 'Save'}

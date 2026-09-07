@@ -5,6 +5,7 @@
 // imperative animate() against the real input node.
 import { animate, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
+import { Alert, AlertDescription } from './ui/alert';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -40,9 +41,9 @@ export function PinEntryForm({ title, error, onComplete, onCancel }: PinEntryFor
         <LockIcon className="size-5" />
       </div>
       <h1 className="mb-flow-1 text-center text-flow-title font-medium text-foreground">{title}</h1>
-      <p className={`mb-flow-6 text-center text-flow-caption text-secondary ${error ? '' : 'invisible'}`}>
-        {error || ' '}
-      </p>
+      <Alert className={`mb-flow-6 justify-center ${error ? '' : 'invisible'}`}>
+        <AlertDescription>{error || ' '}</AlertDescription>
+      </Alert>
 
       <div className="mb-flow-6">
         <Label htmlFor="pin-input" className="mb-flow-2 block text-flow-caption text-muted-foreground">

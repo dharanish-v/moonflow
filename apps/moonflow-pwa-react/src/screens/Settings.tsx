@@ -1,12 +1,13 @@
 // src/screens/Settings.tsx — ported from screens/settings.js. Setting a new
 // PIN (create-1/create-2) is its own route (PinSetup.tsx) — see that file
 // for why.
-import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { forwardRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { Calendar, Monitor, Moon, Sun } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
+import { cn } from 'cn';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from '../components/ui/drawer';
 import { Separator } from '../components/ui/separator';
 import { Stepper } from '../components/Stepper';
@@ -141,25 +142,23 @@ export function SettingsScreen() {
           onClick={() => openEdit('avgPeriodLength', settings.avgPeriodLength)}
         />
         <Separator />
-        <SettingsRowButton
-          icon={<EyeOffIcon className="size-4" />}
-          label="Discreet icon"
-          onClick={() => setDiscreetOpen((v) => !v)}
-          expanded={discreetOpen}
-        />
+        <Collapsible open={discreetOpen} onOpenChange={setDiscreetOpen}>
+          <CollapsibleTrigger asChild>
+            <SettingsRowButton icon={<EyeOffIcon className="size-4" />} label="Discreet icon" />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <p className="px-flow-4 pb-flow-3 text-flow-micro text-muted-foreground">
+              To switch to a discreet home screen icon, remove Moonflow from your home screen, then open{' '}
+              <a href="planner.html" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                the alternate install link
+              </a>{' '}
+              and add that to your home screen instead — same app, a neutral "Planner" icon.
+            </p>
+          </CollapsibleContent>
+        </Collapsible>
         <Separator />
         <SettingsRowButton icon={<DownloadIcon className="size-4" />} label="Export data" onClick={() => void handleExport()} />
       </Card>
-
-      {discreetOpen && (
-        <p className="mt-flow-2 text-flow-micro text-muted-foreground">
-          To switch to a discreet home screen icon, remove Moonflow from your home screen, then open{' '}
-          <a href="planner.html" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-            the alternate install link
-          </a>{' '}
-          and add that to your home screen instead — same app, a neutral "Planner" icon.
-        </p>
-      )}
 
       <Drawer open={editField !== null} onOpenChange={(open) => { if (!open) setEditField(null); }}>
         <DrawerContent className="mx-auto max-w-[26rem] px-flow-5 pb-flow-6">
@@ -206,26 +205,25 @@ function SettingsRow({ icon, label, children }: { icon: ReactNode; label: string
   );
 }
 
-function SettingsRowButton({
-  icon,
-  label,
-  value,
-  expanded,
-  onClick,
-}: {
-  icon: ReactNode;
-  label: string;
-  value?: string;
-  expanded?: boolean;
-  onClick: () => void;
-}) {
+// forwardRef + a full props spread, not just the icon/label/value/onClick
+// this needs on its own — it's also used as a Radix asChild trigger target
+// (Settings' Discreet-icon row, via CollapsibleTrigger), which clones its
+// own aria-expanded/aria-controls/data-state/ref onto whatever element sits
+// here. A component that only destructures its own known props silently
+// drops all of that — caught live: the row toggled open correctly (onClick
+// made it through, since that was one of the destructured props) but
+// aria-expanded stayed permanently absent from the DOM until this fix.
+const SettingsRowButton = forwardRef<
+  HTMLButtonElement,
+  { icon: ReactNode; label: string; value?: string } & ComponentProps<typeof Button>
+>(function SettingsRowButton({ icon, label, value, className, ...props }, ref) {
   return (
     <Button
+      ref={ref}
       variant="ghost"
-      onClick={onClick}
       aria-label={value ? `${label}, ${value}` : label}
-      aria-expanded={expanded}
-      className="h-11 w-full justify-between rounded-none px-flow-4 text-left"
+      className={cn('h-11 w-full justify-between rounded-none px-flow-4 text-left', className)}
+      {...props}
     >
       <span className="flex items-center gap-flow-3 text-muted-foreground">
         {icon}
@@ -237,4 +235,4 @@ function SettingsRowButton({
       </span>
     </Button>
   );
-}
+});

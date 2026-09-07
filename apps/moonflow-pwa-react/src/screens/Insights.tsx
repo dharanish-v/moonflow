@@ -1,13 +1,15 @@
 // src/screens/Insights.tsx — ported from screens/insights.js, including its
 // "not enough history yet" empty state. The bar-chart/symptom-frequency
 // grow-in uses framer-motion's imperative `animate()` against plain DOM refs.
-// Symptom-frequency rows are a plain styled div track+fill (role="progressbar"),
-// not a native <progress> element — verified live that Chromium's native
+// Symptom-frequency rows use shadcn's Progress (Radix, a div-based
+// aria-valuenow progressbar) — verified live that Chromium's native
 // <progress> here ignores accent-color entirely and renders its default
 // green, a real cross-browser risk this app's own "every color comes from
 // our tokens" rule can't accept.
 import { animate, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef } from 'react';
+import { Card, CardContent } from '../components/ui/card';
+import { Progress } from '../components/ui/progress';
 import { ChartBarIcon } from '../components/icons';
 import { computeInsights } from '../lib/insights';
 import { useAppState } from '../state/store';
@@ -22,7 +24,8 @@ export function InsightsScreen() {
   useEffect(() => {
     if (prefersReducedMotion) {
       fillRefs.current.forEach((el, i) => {
-        if (el) el.style.width = `${data.topSymptoms[i]?.percent ?? 0}%`;
+        const percent = data.topSymptoms[i]?.percent ?? 0;
+        if (el) el.style.transform = `translateX(-${100 - percent}%)`;
       });
       return;
     }
@@ -54,7 +57,7 @@ export function InsightsScreen() {
           ease: 'easeOut',
           delay: barsDuration + i * 0.08,
           onUpdate: (v) => {
-            el.style.width = `${v}%`;
+            el.style.transform = `translateX(-${100 - v}%)`;
           },
         }),
       );
@@ -82,10 +85,12 @@ export function InsightsScreen() {
     <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col px-flow-5 py-flow-6">
       <h1 className="mb-flow-4 text-left text-flow-title font-medium text-foreground">Insights</h1>
       <div className="flex flex-1 flex-col justify-center">
-        <div className="mb-flow-3 rounded-lg bg-card px-flow-4 py-flow-4">
-          <div className="text-flow-caption text-muted-foreground">Avg cycle</div>
-          <div className="mt-flow-1 text-flow-hero font-bold text-primary">{data.avgCycleLength} days</div>
-        </div>
+        <Card className="mb-flow-3">
+          <CardContent>
+            <div className="text-flow-caption text-muted-foreground">Avg cycle</div>
+            <div className="mt-flow-1 text-flow-hero font-bold text-primary">{data.avgCycleLength} days</div>
+          </CardContent>
+        </Card>
         <div className="grid grid-cols-3 gap-flow-3">
           <Stat title="Avg period" value={`${data.avgPeriodLength}d`} />
           <Stat title="Variability" value={`±${data.variability}d`} />
@@ -124,22 +129,14 @@ export function InsightsScreen() {
                   <span>{s.label}</span>
                   <span>{s.percent}%</span>
                 </div>
-                <div
-                  role="progressbar"
+                <Progress
+                  value={s.percent}
+                  animated={!prefersReducedMotion}
                   aria-label={s.label}
-                  aria-valuenow={s.percent}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  className="h-[0.375rem] w-full overflow-hidden rounded-full bg-border/40"
-                >
-                  <div
-                    ref={(el) => {
-                      fillRefs.current[i] = el;
-                    }}
-                    className="h-full rounded-full bg-accent"
-                    style={{ width: prefersReducedMotion ? `${s.percent}%` : '0%' }}
-                  />
-                </div>
+                  indicatorRef={(el) => {
+                    fillRefs.current[i] = el;
+                  }}
+                />
               </div>
             ))}
           </>
@@ -151,9 +148,11 @@ export function InsightsScreen() {
 
 function Stat({ title, value }: { title: string; value: string | number }) {
   return (
-    <div className="rounded-lg bg-card px-flow-4 py-flow-3">
-      <div className="text-flow-micro text-muted-foreground">{title}</div>
-      <div className="mt-flow-1 text-flow-stat font-medium text-foreground">{value}</div>
-    </div>
+    <Card size="sm">
+      <CardContent>
+        <div className="text-flow-micro text-muted-foreground">{title}</div>
+        <div className="mt-flow-1 text-flow-stat font-medium text-foreground">{value}</div>
+      </CardContent>
+    </Card>
   );
 }
