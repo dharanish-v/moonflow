@@ -22,7 +22,7 @@ export function PhaseMotif({ cyclePhase }: { cyclePhase: CyclePhase }) {
   const colorClass = PHASE_COLOR_CLASS[cyclePhase];
 
   return (
-    <div className={`relative mx-auto mb-flow-6 flex size-32 items-center justify-center ${colorClass}`} aria-hidden="true">
+    <div className={`relative mx-auto mb-5 flex size-32 items-center justify-center ${colorClass}`} aria-hidden="true">
       {/* Two glow layers, not one — a single flat blur read as a small
           badge behind the moon; a wider, softer outer layer plus a
           tighter inner one gives the "surrounded by light" feel instead. */}

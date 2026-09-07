@@ -100,9 +100,9 @@ export function LogEntryScreen() {
 
   return (
     <Drawer open onOpenChange={(open) => { if (!open) void goBack(); }}>
-      <DrawerContent className="mx-auto max-w-[26rem] px-flow-5 pb-flow-6">
-        <div className="mb-flow-6 flex items-center justify-between px-0 pt-2">
-          <DrawerTitle className="text-flow-title font-medium text-foreground">{formatHeaderDate(date)}</DrawerTitle>
+      <DrawerContent className="mx-auto max-w-[26rem] px-4 pb-5">
+        <div className="mb-5 flex items-center justify-between px-0 pt-2">
+          <DrawerTitle className="text-base font-medium text-foreground">{formatHeaderDate(date)}</DrawerTitle>
           <DrawerDescription className="sr-only">Log flow, symptoms, mood, and notes for this day</DrawerDescription>
           <DrawerClose asChild>
             <Button variant="ghost" size="icon-touch" aria-label="Close" className="rounded-full text-muted-foreground/60">
@@ -111,8 +111,8 @@ export function LogEntryScreen() {
           </DrawerClose>
         </div>
 
-        <div className="mb-flow-6">
-          <span className="mb-flow-2 block text-flow-caption text-muted-foreground">Flow</span>
+        <div className="mb-5">
+          <span className="mb-1.5 block text-xs text-muted-foreground">Flow</span>
           <ToggleGroup
             type="single"
             value={flow ?? ''}
@@ -122,7 +122,7 @@ export function LogEntryScreen() {
               setFlow(id);
               reportDraft(currentDraft({ flow: id }));
             }}
-            className="w-full gap-flow-2"
+            className="w-full gap-1.5"
           >
             {FLOW_OPTIONS.map((opt) => (
               <ToggleGroupItem key={opt.id} value={opt.id} variant="pill" className="min-h-11 flex-1 px-2">
@@ -132,8 +132,8 @@ export function LogEntryScreen() {
           </ToggleGroup>
         </div>
 
-        <div className="mb-flow-6">
-          <span className="mb-flow-2 block text-flow-caption text-muted-foreground">Symptoms</span>
+        <div className="mb-5">
+          <span className="mb-1.5 block text-xs text-muted-foreground">Symptoms</span>
           <ToggleGroup
             type="multiple"
             value={symptoms}
@@ -142,7 +142,7 @@ export function LogEntryScreen() {
               setSymptoms(next);
               reportDraft(currentDraft({ symptoms: next }));
             }}
-            className="flex-wrap justify-start gap-flow-2"
+            className="flex-wrap justify-start gap-1.5"
           >
             {SYMPTOM_OPTIONS.map((opt) => (
               <ToggleGroupItem key={opt.id} value={opt.id} variant="chip" className="min-h-11 px-3">
@@ -152,8 +152,8 @@ export function LogEntryScreen() {
           </ToggleGroup>
         </div>
 
-        <div className="mb-flow-6">
-          <span className="mb-flow-2 block text-flow-caption text-muted-foreground">Mood</span>
+        <div className="mb-5">
+          <span className="mb-1.5 block text-xs text-muted-foreground">Mood</span>
           <ToggleGroup
             type="single"
             value={mood ?? ''}
@@ -176,8 +176,8 @@ export function LogEntryScreen() {
           </ToggleGroup>
         </div>
 
-        <div className="mb-flow-6">
-          <Label htmlFor="log-note" className="mb-flow-2 block text-flow-caption text-muted-foreground">
+        <div className="mb-5">
+          <Label htmlFor="log-note" className="mb-1.5 block text-xs text-muted-foreground">
             Notes
           </Label>
           <Textarea
@@ -203,7 +203,7 @@ export function LogEntryScreen() {
               setNote(e.target.value);
               reportDraft(currentDraft({ note: e.target.value }));
             }}
-            className="min-h-[4.5rem] text-flow-caption"
+            className="min-h-[4.5rem] text-xs"
           />
         </div>
 
@@ -212,7 +212,7 @@ export function LogEntryScreen() {
             <AlertDialogTrigger asChild>
               <Button
                 variant="link"
-                className="mb-flow-2 h-11 justify-start px-0 text-flow-caption text-secondary no-underline"
+                className="mb-1.5 h-11 justify-start px-0 text-xs text-secondary no-underline"
               >
                 Clear this day's log
               </Button>
@@ -234,12 +234,12 @@ export function LogEntryScreen() {
         )}
 
         {saveError && (
-          <Alert className="mb-flow-3">
+          <Alert className="mb-2">
             <AlertDescription>Couldn't save — try again</AlertDescription>
           </Alert>
         )}
 
-        <Button disabled={isSaving} onClick={() => void handleSave()} className="h-11 w-full text-flow-nav">
+        <Button disabled={isSaving} onClick={() => void handleSave()} className="h-11 w-full text-sm">
           {isSaving ? 'Saving…' : 'Save'}
         </Button>
       </DrawerContent>

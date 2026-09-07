@@ -21,11 +21,11 @@ export function Stepper({
 }) {
   const labelId = `${label.replace(/\s+/g, '-').toLowerCase()}-label`;
   return (
-    <div className="mb-flow-6">
-      <span id={labelId} className="mb-flow-2 block text-flow-caption text-muted-foreground">
+    <div className="mb-5">
+      <span id={labelId} className="mb-1.5 block text-xs text-muted-foreground">
         {label}
       </span>
-      <div role="group" aria-labelledby={labelId} className="flex items-center justify-between rounded-md bg-card px-flow-4 py-flow-3">
+      <div role="group" aria-labelledby={labelId} className="flex items-center justify-between rounded-md bg-card px-3.5 py-2">
         <Button
           type="button"
           variant="outline"
@@ -37,7 +37,7 @@ export function Stepper({
         >
           &minus;
         </Button>
-        <span className="text-flow-body text-foreground">
+        <span className="text-xs text-foreground">
           {value} {unit}
         </span>
         <Button

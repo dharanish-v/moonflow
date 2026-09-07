@@ -93,11 +93,11 @@ export function SettingsScreen() {
   }
 
   return (
-    <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col px-flow-5 py-flow-6">
-      <h1 className="mb-flow-4 text-left text-flow-title font-medium text-foreground">Settings</h1>
+    <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col px-4 py-5">
+      <h1 className="mb-3.5 text-left text-base font-medium text-foreground">Settings</h1>
 
-      <div className="mb-flow-4">
-        <span id="theme-label" className="mb-flow-2 block text-flow-caption text-muted-foreground">
+      <div className="mb-3.5">
+        <span id="theme-label" className="mb-1.5 block text-xs text-muted-foreground">
           Appearance
         </span>
         <ToggleGroup
@@ -108,10 +108,10 @@ export function SettingsScreen() {
             void handleThemeChange(value as ThemeMode);
           }}
           aria-labelledby="theme-label"
-          className="w-full gap-flow-2"
+          className="w-full gap-1.5"
         >
           {THEME_OPTIONS.map(({ id, label, Icon }) => (
-            <ToggleGroupItem key={id} value={id} variant="pill" className="h-11 flex-1 gap-flow-1 px-2">
+            <ToggleGroupItem key={id} value={id} variant="pill" className="h-11 flex-1 gap-1 px-2">
               <Icon className="size-4" aria-hidden="true" />
               {label}
             </ToggleGroupItem>
@@ -147,7 +147,7 @@ export function SettingsScreen() {
             <SettingsRowButton icon={<EyeOffIcon className="size-4" />} label="Discreet icon" />
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <p className="px-flow-4 pb-flow-3 text-flow-micro text-muted-foreground">
+            <p className="px-3.5 pb-2 text-xs text-muted-foreground">
               To switch to a discreet home screen icon, remove Moonflow from your home screen, then open{' '}
               <a href="planner.html" target="_blank" rel="noopener noreferrer" className="text-primary underline">
                 the alternate install link
@@ -161,7 +161,7 @@ export function SettingsScreen() {
       </Card>
 
       <Drawer open={editField !== null} onOpenChange={(open) => { if (!open) setEditField(null); }}>
-        <DrawerContent className="mx-auto max-w-[26rem] px-flow-5 pb-flow-6">
+        <DrawerContent className="mx-auto max-w-[26rem] px-4 pb-5">
           <DrawerHeader className="px-0">
             <DrawerTitle>{editField === 'avgCycleLength' ? 'Average cycle length' : 'Average period length'}</DrawerTitle>
           </DrawerHeader>
@@ -178,11 +178,11 @@ export function SettingsScreen() {
           )}
 
           <DrawerFooter className="px-0">
-            <Button onClick={() => void handleSaveEdit()} className="h-11 w-full text-flow-nav">
+            <Button onClick={() => void handleSaveEdit()} className="h-11 w-full text-sm">
               Save
             </Button>
             <DrawerClose asChild>
-              <Button variant="outline" className="h-11 w-full text-flow-nav">
+              <Button variant="outline" className="h-11 w-full text-sm">
                 Cancel
               </Button>
             </DrawerClose>
@@ -195,10 +195,10 @@ export function SettingsScreen() {
 
 function SettingsRow({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
   return (
-    <div className="flex min-h-11 items-center justify-between gap-flow-3 px-flow-4 py-3">
-      <div className="flex items-center gap-flow-3 text-muted-foreground">
+    <div className="flex min-h-11 items-center justify-between gap-2 px-3.5 py-3">
+      <div className="flex items-center gap-2 text-muted-foreground">
         {icon}
-        <span className="text-flow-body text-foreground">{label}</span>
+        <span className="text-xs text-foreground">{label}</span>
       </div>
       {children}
     </div>
@@ -222,15 +222,15 @@ const SettingsRowButton = forwardRef<
       ref={ref}
       variant="ghost"
       aria-label={value ? `${label}, ${value}` : label}
-      className={cn('h-11 w-full justify-between rounded-none px-flow-4 text-left', className)}
+      className={cn('h-11 w-full justify-between rounded-none px-3.5 text-left', className)}
       {...props}
     >
-      <span className="flex items-center gap-flow-3 text-muted-foreground">
+      <span className="flex items-center gap-2 text-muted-foreground">
         {icon}
-        <span className="text-flow-body text-foreground">{label}</span>
+        <span className="text-xs text-foreground">{label}</span>
       </span>
-      <span className="flex items-center gap-flow-1 text-muted-foreground">
-        {value && <span className="text-flow-body">{value}</span>}
+      <span className="flex items-center gap-1 text-muted-foreground">
+        {value && <span className="text-xs">{value}</span>}
         <ChevronRightIcon className="size-4" />
       </span>
     </Button>

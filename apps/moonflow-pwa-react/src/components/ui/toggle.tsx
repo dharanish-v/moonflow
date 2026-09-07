@@ -15,8 +15,8 @@ const toggleVariants = cva(
         // Symptoms (multi-select), and Mood all use these via ToggleGroup.
         // Sizing (44px touch targets, ADR-024) is passed as className at
         // each call site, not baked in here — see LogEntry.tsx.
-        pill: "rounded-[var(--radius-pill)] border border-border/60 font-medium text-muted-foreground hover:border-border hover:text-foreground data-[state=on]:border-transparent data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground",
-        chip: "rounded-[var(--radius-pill)] border border-border/60 font-medium text-muted-foreground hover:border-border hover:text-foreground data-[state=on]:border-accent/40 data-[state=on]:bg-accent/15 data-[state=on]:text-accent",
+        pill: "rounded-lg border border-border/60 font-medium text-muted-foreground hover:border-border hover:text-foreground data-[state=on]:border-transparent data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground",
+        chip: "rounded-lg border border-border/60 font-medium text-muted-foreground hover:border-border hover:text-foreground data-[state=on]:border-accent/40 data-[state=on]:bg-accent/15 data-[state=on]:text-accent",
         mood: "rounded-full text-muted-foreground/70 hover:text-foreground data-[state=on]:bg-primary/15 data-[state=on]:text-primary [&_svg]:size-5",
       },
       size: {

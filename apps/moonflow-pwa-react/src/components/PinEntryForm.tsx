@@ -36,17 +36,17 @@ export function PinEntryForm({ title, error, onComplete, onCancel }: PinEntryFor
   }, [error, prefersReducedMotion]);
 
   return (
-    <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-flow-5 py-flow-6">
-      <div className="mx-auto mb-flow-4 flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+    <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-4 py-5">
+      <div className="mx-auto mb-3.5 flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary">
         <LockIcon className="size-5" />
       </div>
-      <h1 className="mb-flow-1 text-center text-flow-title font-medium text-foreground">{title}</h1>
-      <Alert className={`mb-flow-6 justify-center ${error ? '' : 'invisible'}`}>
+      <h1 className="mb-1 text-center text-base font-medium text-foreground">{title}</h1>
+      <Alert className={`mb-5 justify-center ${error ? '' : 'invisible'}`}>
         <AlertDescription>{error || ' '}</AlertDescription>
       </Alert>
 
-      <div className="mb-flow-6">
-        <Label htmlFor="pin-input" className="mb-flow-2 block text-flow-caption text-muted-foreground">
+      <div className="mb-5">
+        <Label htmlFor="pin-input" className="mb-1.5 block text-xs text-muted-foreground">
           {title}
         </Label>
         <Input
@@ -66,12 +66,12 @@ export function PinEntryForm({ title, error, onComplete, onCancel }: PinEntryFor
               onComplete(next);
             }
           }}
-          className="h-11 text-center text-flow-stat tracking-[0.5em]"
+          className="h-11 text-center text-xl tracking-[0.5em]"
         />
       </div>
 
       {onCancel && (
-        <Button variant="ghost" onClick={onCancel} className="h-11 w-full text-flow-nav text-muted-foreground">
+        <Button variant="ghost" onClick={onCancel} className="h-11 w-full text-sm text-muted-foreground">
           Cancel
         </Button>
       )}

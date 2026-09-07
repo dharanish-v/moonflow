@@ -89,8 +89,8 @@ export function CalendarScreen() {
   navDirectionRef.current = null;
 
   return (
-    <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col px-flow-5 py-flow-6">
-      <div className="mb-flow-4 flex items-center justify-between">
+    <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col px-4 py-5">
+      <div className="mb-3.5 flex items-center justify-between">
         <Button
           variant="ghost"
           size="icon-touch"
@@ -100,7 +100,7 @@ export function CalendarScreen() {
         >
           <ChevronLeftIcon className="size-[0.9rem]" />
         </Button>
-        <span className="text-flow-nav font-medium text-foreground">{monthLabel}</span>
+        <span className="text-sm font-medium text-foreground">{monthLabel}</span>
         <Button
           variant="ghost"
           size="icon-touch"
@@ -122,7 +122,7 @@ export function CalendarScreen() {
       >
         <div className="grid grid-cols-7">
           {WEEKDAY_LABELS.map((l, i) => (
-            <span key={i} className="pb-flow-2 text-center text-flow-micro text-muted-foreground/60">
+            <span key={i} className="pb-1.5 text-center text-xs text-muted-foreground/60">
               {l}
             </span>
           ))}
@@ -168,7 +168,7 @@ export function CalendarScreen() {
                   disabled={isFuture}
                   onClick={() => handleSelectDate(dateStr)}
                   aria-label={spokenParts.join(', ')}
-                  className={`flex size-10 items-center justify-center rounded-full text-flow-small text-foreground/80 disabled:cursor-default disabled:opacity-40 ${stateClass} ${isToday ? 'border-[1.5px] border-foreground' : ''}`}
+                  className={`flex size-10 items-center justify-center rounded-full text-xs text-foreground/80 disabled:cursor-default disabled:opacity-40 ${stateClass} ${isToday ? 'border-[1.5px] border-foreground' : ''}`}
                 >
                   {dayNum}
                 </button>
@@ -178,17 +178,17 @@ export function CalendarScreen() {
         </div>
       </motion.div>
 
-      <div className="mt-flow-4 flex justify-center gap-flow-4 text-flow-micro text-muted-foreground">
+      <div className="mt-3.5 flex justify-center gap-3.5 text-xs text-muted-foreground">
         <span>
-          <span className="mr-flow-1 inline-block size-2 rounded-full bg-secondary align-middle" />
+          <span className="mr-1 inline-block size-2 rounded-full bg-secondary align-middle" />
           Period
         </span>
         <span>
-          <span className="mr-flow-1 inline-block size-2 rounded-full bg-primary/30 align-middle" />
+          <span className="mr-1 inline-block size-2 rounded-full bg-primary/30 align-middle" />
           Fertile
         </span>
         <span>
-          <span className="mr-flow-1 inline-block size-2 rounded-full border-[1.5px] border-dashed border-secondary align-middle" />
+          <span className="mr-1 inline-block size-2 rounded-full border-[1.5px] border-dashed border-secondary align-middle" />
           Predicted
         </span>
       </div>

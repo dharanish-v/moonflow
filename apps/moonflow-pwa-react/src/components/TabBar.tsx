@@ -32,7 +32,7 @@ export function TabBar() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-[env(safe-area-inset-bottom,0.5rem)] z-10 mx-auto flex w-[min(26rem,calc(100%-2*var(--spacing-flow-4)))] justify-around rounded-flow-tabbar border-[0.5px] border-glass-border bg-glass-fill px-flow-4 py-flow-2 backdrop-blur-[18px] [-webkit-backdrop-filter:blur(18px)]"
+      className="fixed inset-x-0 bottom-[env(safe-area-inset-bottom,0.5rem)] z-10 mx-auto flex w-[min(26rem,calc(100%-2*0.875rem))] justify-around rounded-3xl border-[0.5px] border-border/50 bg-popover/70 px-3.5 py-1.5 backdrop-blur-[18px] [-webkit-backdrop-filter:blur(18px)]"
     >
       {TABS.map(({ to, label, Icon }) => {
         const isActive = location.pathname === to;

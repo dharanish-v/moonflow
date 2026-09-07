@@ -28,14 +28,14 @@ export function HomeScreen() {
   const quote = quoteOfTheDay(status.cyclePhase);
 
   return (
-    <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-flow-5 py-flow-6">
+    <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-4 py-5">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut' }}>
         <PhaseMotif cyclePhase={status.cyclePhase} />
 
-        <Card className="mb-flow-6">
-          <CardContent className="flex flex-col items-center py-flow-6 text-center">
-            <div className="text-flow-hero font-bold text-foreground">{dayLabel}</div>
-            <div className="mt-flow-1 text-flow-caption text-muted-foreground">
+        <Card className="mb-5">
+          <CardContent className="flex flex-col items-center py-5 text-center">
+            <div className="text-3xl font-bold text-foreground">{dayLabel}</div>
+            <div className="mt-1 text-xs text-muted-foreground">
               {status.statusText}
               {status.isEstimated ? ' · estimated' : ''}
             </div>
@@ -44,13 +44,13 @@ export function HomeScreen() {
 
         <Button
           onClick={() => navigate({ to: '/log', search: { date: todayString() } })}
-          className="h-11 w-full gap-flow-2 text-flow-nav"
+          className="h-11 w-full gap-1.5 text-sm"
         >
           <NotebookPen className="size-4" aria-hidden="true" />
           Log
         </Button>
 
-        <p className="mt-flow-6 text-center text-flow-caption text-muted-foreground/80 italic">"{quote}"</p>
+        <p className="mt-5 text-center text-xs text-muted-foreground/80 italic">"{quote}"</p>
       </motion.div>
     </div>
   );

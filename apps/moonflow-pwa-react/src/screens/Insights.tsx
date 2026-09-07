@@ -69,12 +69,12 @@ export function InsightsScreen() {
 
   if (!data.hasEnoughHistory) {
     return (
-      <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-flow-5 py-flow-6">
-        <div className="mx-auto mb-flow-4 flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+      <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-4 py-5">
+        <div className="mx-auto mb-3.5 flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary">
           <ChartBarIcon className="size-5" />
         </div>
-        <h1 className="mb-flow-1 text-center text-flow-title font-medium text-foreground">Insights</h1>
-        <p className="text-center text-flow-caption text-muted-foreground">
+        <h1 className="mb-1 text-center text-base font-medium text-foreground">Insights</h1>
+        <p className="text-center text-xs text-muted-foreground">
           Not enough history yet — check back after your next cycle
         </p>
       </div>
@@ -82,25 +82,25 @@ export function InsightsScreen() {
   }
 
   return (
-    <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col px-flow-5 py-flow-6">
-      <h1 className="mb-flow-4 text-left text-flow-title font-medium text-foreground">Insights</h1>
+    <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col px-4 py-5">
+      <h1 className="mb-3.5 text-left text-base font-medium text-foreground">Insights</h1>
       <div className="flex flex-1 flex-col justify-center">
-        <Card className="mb-flow-3">
+        <Card className="mb-2">
           <CardContent>
-            <div className="text-flow-caption text-muted-foreground">Avg cycle</div>
-            <div className="mt-flow-1 text-flow-hero font-bold text-primary">{data.avgCycleLength} days</div>
+            <div className="text-xs text-muted-foreground">Avg cycle</div>
+            <div className="mt-1 text-3xl font-bold text-primary">{data.avgCycleLength} days</div>
           </CardContent>
         </Card>
-        <div className="grid grid-cols-3 gap-flow-3">
+        <div className="grid grid-cols-3 gap-2">
           <Stat title="Avg period" value={`${data.avgPeriodLength}d`} />
           <Stat title="Variability" value={`±${data.variability}d`} />
           <Stat title="Logged" value={data.cyclesLogged} />
         </div>
 
-        <div className="mb-flow-3 mt-flow-6 text-flow-caption text-muted-foreground">
+        <div className="mb-2 mt-5 text-xs text-muted-foreground">
           Cycle length, last {data.recentCycleLengths.length} cycles
         </div>
-        <div className="flex h-16 items-end gap-flow-3">
+        <div className="flex h-16 items-end gap-2">
           {data.recentCycleLengths.map((len, i) => (
             <div
               key={i}
@@ -112,9 +112,9 @@ export function InsightsScreen() {
             />
           ))}
         </div>
-        <div className="mt-flow-1 flex gap-flow-3">
+        <div className="mt-1 flex gap-2">
           {data.recentCycleLengths.map((len, i) => (
-            <span key={i} className="flex-1 text-center text-flow-micro text-muted-foreground/60">
+            <span key={i} className="flex-1 text-center text-xs text-muted-foreground/60">
               {len}
             </span>
           ))}
@@ -122,10 +122,10 @@ export function InsightsScreen() {
 
         {data.topSymptoms.length > 0 && (
           <>
-            <div className="mb-flow-3 mt-flow-6 text-flow-caption text-muted-foreground">Most logged symptoms</div>
+            <div className="mb-2 mt-5 text-xs text-muted-foreground">Most logged symptoms</div>
             {data.topSymptoms.map((s, i) => (
-              <div key={s.id} className="mb-flow-3">
-                <div className="mb-flow-1 flex justify-between text-flow-caption text-foreground/80">
+              <div key={s.id} className="mb-2">
+                <div className="mb-1 flex justify-between text-xs text-foreground/80">
                   <span>{s.label}</span>
                   <span>{s.percent}%</span>
                 </div>
@@ -150,8 +150,8 @@ function Stat({ title, value }: { title: string; value: string | number }) {
   return (
     <Card size="sm">
       <CardContent>
-        <div className="text-flow-micro text-muted-foreground">{title}</div>
-        <div className="mt-flow-1 text-flow-stat font-medium text-foreground">{value}</div>
+        <div className="text-xs text-muted-foreground">{title}</div>
+        <div className="mt-1 text-xl font-medium text-foreground">{value}</div>
       </CardContent>
     </Card>
   );

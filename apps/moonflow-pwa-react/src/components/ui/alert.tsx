@@ -7,7 +7,7 @@ function Alert({ className, ...props }: React.ComponentProps<'div'>) {
       data-slot="alert"
       role="alert"
       className={cn(
-        'flex items-center gap-flow-2 rounded-md bg-destructive/10 px-flow-3 py-flow-2 text-flow-caption text-destructive',
+        'flex items-center gap-1.5 rounded-md bg-destructive/10 px-2 py-1.5 text-xs text-destructive',
         className,
       )}
       {...props}
@@ -16,7 +16,7 @@ function Alert({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 function AlertDescription({ className, ...props }: React.ComponentProps<'div'>) {
-  return <div data-slot="alert-description" className={cn('text-flow-caption', className)} {...props} />;
+  return <div data-slot="alert-description" className={cn('text-xs', className)} {...props} />;
 }
 
 export { Alert, AlertDescription };

@@ -44,17 +44,17 @@ export function OnboardingScreen() {
   }
 
   return (
-    <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-flow-5 py-flow-6">
-      <div className="mx-auto mb-flow-4 flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+    <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-4 py-5">
+      <div className="mx-auto mb-3.5 flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary">
         <MoonIcon className="size-5" />
       </div>
-      <h1 className="mb-flow-1 text-center text-flow-title font-medium text-foreground">Let's set up Moonflow</h1>
-      <p className="mb-flow-6 text-center text-flow-caption text-muted-foreground">
+      <h1 className="mb-1 text-center text-base font-medium text-foreground">Let's set up Moonflow</h1>
+      <p className="mb-5 text-center text-xs text-muted-foreground">
         Just enough to make your first prediction
       </p>
 
-      <div className="mb-flow-6">
-        <Label id="onboarding-date-label" className="mb-flow-2 block text-flow-caption text-muted-foreground">
+      <div className="mb-5">
+        <Label id="onboarding-date-label" className="mb-1.5 block text-xs text-muted-foreground">
           When did your last period start?
         </Label>
         <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
@@ -62,7 +62,7 @@ export function OnboardingScreen() {
             <Button
               variant="outline"
               aria-labelledby="onboarding-date-label onboarding-date-value"
-              className="h-11 w-full justify-start gap-flow-2 font-normal"
+              className="h-11 w-full justify-start gap-1.5 font-normal"
             >
               <CalendarIcon className="size-4 text-muted-foreground" aria-hidden="true" />
               <span id="onboarding-date-value" className={lastPeriodStart ? 'text-foreground' : 'text-muted-foreground'}>
@@ -103,7 +103,7 @@ export function OnboardingScreen() {
         onChange={setPeriodLength}
       />
 
-      <Button disabled={!lastPeriodStart} onClick={() => void handleSubmit()} className="h-11 w-full text-flow-nav">
+      <Button disabled={!lastPeriodStart} onClick={() => void handleSubmit()} className="h-11 w-full text-sm">
         Get started
       </Button>
     </div>
