@@ -61,7 +61,15 @@ function DrawerContent({
         {...props}
       >
         <div className="mx-auto mt-4 hidden h-1 w-[100px] shrink-0 rounded-full bg-muted group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
-        {children}
+        {/* max-h-[80vh] above caps the sheet, but nothing made overflow
+            scrollable — on a real phone (shorter viewport than any desktop
+            emulation) tall content (LogEntry's Flow+Symptoms+Mood+Notes)
+            genuinely exceeds that cap, and the Save button past the edge
+            was simply unreachable: no scroll container, so there was
+            nothing for a touch-scroll to grab. pb-[env(...)] guards the
+            same content from sitting flush against the iOS home-indicator
+            gesture area, same safe-area pattern TabBar already uses. */}
+        <div className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom,0px)]">{children}</div>
       </DrawerPrimitive.Content>
     </DrawerPortal>
   )

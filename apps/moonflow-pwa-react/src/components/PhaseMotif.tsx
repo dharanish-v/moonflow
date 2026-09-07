@@ -22,16 +22,24 @@ export function PhaseMotif({ cyclePhase }: { cyclePhase: CyclePhase }) {
   const colorClass = PHASE_COLOR_CLASS[cyclePhase];
 
   return (
-    <div className={`relative mx-auto mb-flow-4 flex size-16 items-center justify-center ${colorClass}`} aria-hidden="true">
+    <div className={`relative mx-auto mb-flow-6 flex size-32 items-center justify-center ${colorClass}`} aria-hidden="true">
+      {/* Two glow layers, not one — a single flat blur read as a small
+          badge behind the moon; a wider, softer outer layer plus a
+          tighter inner one gives the "surrounded by light" feel instead. */}
       <motion.div
-        className="absolute size-16 rounded-full bg-current opacity-20 blur-lg"
+        className="absolute size-32 rounded-full bg-current opacity-10 blur-2xl"
+        animate={prefersReducedMotion ? undefined : { opacity: [0.08, 0.18, 0.08], scale: [1, 1.1, 1] }}
+        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <motion.div
+        className="absolute size-20 rounded-full bg-current opacity-20 blur-lg"
         animate={prefersReducedMotion ? undefined : { opacity: [0.15, 0.3, 0.15], scale: [1, 1.15, 1] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.svg
         viewBox="0 0 24 24"
         fill="none"
-        className="relative size-9"
+        className="relative size-16"
         animate={prefersReducedMotion ? undefined : { scale: [1, 1.06, 1] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
       >
