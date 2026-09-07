@@ -97,6 +97,6 @@ describe('AppGate — onboarding', () => {
     fireEvent.click(screen.getByRole('button', { name: /when did your last period start/i }));
     fireEvent.click(await screen.findByRole('button', { name: /^today,/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Get started' }));
-    expect(await screen.findByText('Flow')).toBeInTheDocument();
+    expect(await screen.findByText('Log')).toBeInTheDocument();
   });
 });

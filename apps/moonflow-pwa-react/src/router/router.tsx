@@ -47,7 +47,6 @@ const pinSetupRoute = createRoute({
 
 export interface LogSearch {
   date?: string;
-  focus?: 'flow' | 'symptom' | 'mood';
 }
 
 // Exported (not inlined into logRoute below) so tests can build their own
@@ -55,7 +54,6 @@ export interface LogSearch {
 export function validateLogSearch(search: Record<string, unknown>): LogSearch {
   return {
     date: typeof search.date === 'string' ? search.date : undefined,
-    focus: search.focus === 'flow' || search.focus === 'symptom' || search.focus === 'mood' ? search.focus : undefined,
   };
 }
 

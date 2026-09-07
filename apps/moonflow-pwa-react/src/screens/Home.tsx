@@ -1,20 +1,23 @@
 // src/screens/Home.tsx — the main hub. Ported from screens/home.js.
+//
+// One "Log" button, not three (Flow/Mood/Symptom) — they used to open the
+// exact same LogEntry drawer, just pre-scrolled to a different section via
+// a `focus` search param. That wasn't three lightweight shortcuts, it was
+// one form with three doors into it: Save never required Flow, and the
+// other two sections stayed one swipe away regardless of which button was
+// tapped. Three same-weight buttons implied three separate actions that
+// didn't actually exist — a real UX debate before this landed, not a
+// unilateral call (see the conversation this was decided in).
 import { motion } from 'framer-motion';
+import { NotebookPen } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { PhaseMotif } from '../components/PhaseMotif';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
-import { DropletIcon, MoodSmileIcon, NotesIcon } from '../components/icons';
 import { todayString } from '../lib/cycle-math';
 import { computeHomeStatus } from '../lib/home-status';
 import { quoteOfTheDay } from '../lib/quotes';
 import { useAppState } from '../state/store';
-
-const QUICK_ACTIONS = [
-  { kind: 'flow', label: 'Flow', Icon: DropletIcon, colorClass: 'text-secondary' },
-  { kind: 'mood', label: 'Mood', Icon: MoodSmileIcon, colorClass: 'text-primary' },
-  { kind: 'symptom', label: 'Symptom', Icon: NotesIcon, colorClass: 'text-accent' },
-] as const;
 
 export function HomeScreen() {
   const { entries, settings } = useAppState();
@@ -39,19 +42,13 @@ export function HomeScreen() {
           </CardContent>
         </Card>
 
-        <div className="flex gap-flow-3">
-          {QUICK_ACTIONS.map(({ kind, label, Icon, colorClass }) => (
-            <Button
-              key={kind}
-              variant="outline"
-              onClick={() => navigate({ to: '/log', search: { date: todayString(), focus: kind } })}
-              className="h-auto flex-1 flex-col gap-flow-2 bg-card py-flow-4"
-            >
-              <Icon className={`size-[1.125rem] ${colorClass}`} />
-              <span className="text-flow-caption font-normal text-foreground/80">{label}</span>
-            </Button>
-          ))}
-        </div>
+        <Button
+          onClick={() => navigate({ to: '/log', search: { date: todayString() } })}
+          className="h-11 w-full gap-flow-2 text-flow-nav"
+        >
+          <NotebookPen className="size-4" aria-hidden="true" />
+          Log
+        </Button>
 
         <p className="mt-flow-6 text-center text-flow-caption text-muted-foreground/80 italic">"{quote}"</p>
       </motion.div>

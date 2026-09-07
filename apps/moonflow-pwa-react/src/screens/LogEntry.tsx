@@ -13,8 +13,7 @@
 // Flow/Symptoms/Mood are shadcn's ToggleGroup (single/single/single-select,
 // Symptoms would be "multiple") with app-specific variants added to
 // ui/toggle.tsx (pill/chip/mood) rather than separate bespoke components.
-import { useReducedMotion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -48,11 +47,9 @@ export function LogEntryScreen() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const search = useSearch({ from: '/log' });
-  const prefersReducedMotion = useReducedMotion();
   const { reportDraft, clearDraft } = useDraftAutosave();
 
   const date = search.date || todayString();
-  const focusSection = search.focus ?? null;
   const existingEntry = entries.find((e) => e.date === date) ?? null;
 
   const initial = resolveInitialDraft(date, existingEntry, settings.draftEntry);
@@ -62,17 +59,6 @@ export function LogEntryScreen() {
   const [note, setNote] = useState(initial.note);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
-
-  const sectionRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!focusSection || !sectionRef.current) return;
-    sectionRef.current.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
-    const firstControl = sectionRef.current.querySelector<HTMLElement>('button, textarea, input');
-    firstControl?.focus();
-    // Only ever needs to run once, right after this exact screen mounts.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   function currentDraft(overrides: Partial<LogEntryInput> = {}): LogEntryInput {
     return { date, flow, symptoms, mood, note, ...overrides };
@@ -125,7 +111,7 @@ export function LogEntryScreen() {
           </DrawerClose>
         </div>
 
-        <div className="mb-flow-6" id="log-field-flow" ref={focusSection === 'flow' ? sectionRef : undefined}>
+        <div className="mb-flow-6">
           <span className="mb-flow-2 block text-flow-caption text-muted-foreground">Flow</span>
           <ToggleGroup
             type="single"
@@ -146,7 +132,7 @@ export function LogEntryScreen() {
           </ToggleGroup>
         </div>
 
-        <div className="mb-flow-6" id="log-field-symptom" ref={focusSection === 'symptom' ? sectionRef : undefined}>
+        <div className="mb-flow-6">
           <span className="mb-flow-2 block text-flow-caption text-muted-foreground">Symptoms</span>
           <ToggleGroup
             type="multiple"
@@ -166,7 +152,7 @@ export function LogEntryScreen() {
           </ToggleGroup>
         </div>
 
-        <div className="mb-flow-6" id="log-field-mood" ref={focusSection === 'mood' ? sectionRef : undefined}>
+        <div className="mb-flow-6">
           <span className="mb-flow-2 block text-flow-caption text-muted-foreground">Mood</span>
           <ToggleGroup
             type="single"
