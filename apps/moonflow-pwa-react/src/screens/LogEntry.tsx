@@ -184,6 +184,21 @@ export function LogEntryScreen() {
             id="log-note"
             value={note}
             placeholder="Add a note for today..."
+            onFocus={(e) => {
+              // The index.html <meta interactive-widget> fix covers
+              // Chromium; iOS Safari (the platform this is installed as a
+              // PWA on) still just overlays the keyboard without shrinking
+              // the viewport. A plain scrollIntoView on focus fires before
+              // the keyboard has actually opened — visualViewport's own
+              // resize event is what fires once it does, which is the
+              // moment this textarea might newly be hidden behind it.
+              const el = e.currentTarget;
+              window.visualViewport?.addEventListener(
+                'resize',
+                () => el.scrollIntoView({ block: 'center', behavior: 'smooth' }),
+                { once: true },
+              );
+            }}
             onChange={(e) => {
               setNote(e.target.value);
               reportDraft(currentDraft({ note: e.target.value }));

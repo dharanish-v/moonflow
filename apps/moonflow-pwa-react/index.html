@@ -2,7 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- interactive-widget=resizes-content: without it, the on-screen
+         keyboard *overlays* content instead of shrinking the viewport —
+         #phone-frame's 100dvh doesn't shrink either, so the Drawer (fixed
+         within that frame) never gets pushed up, and the keyboard just
+         sits on top of whatever was focused (LogEntry's Notes textarea,
+         reported live: typing "didn't show" because it was hidden behind
+         the keyboard, not actually broken). Chromium-based browsers honor
+         this directly; the Notes onFocus handler covers iOS Safari, which
+         doesn't. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#14132B" />
     <!-- Without this pair, iOS "Add to Home Screen" launches the installed
          icon inside Safari's own chrome (address bar + toolbar) instead of
