@@ -1,11 +1,13 @@
 // src/screens/Home.tsx — the main hub. Ported from screens/home.js.
 import { motion } from 'framer-motion';
 import { useNavigate } from '@tanstack/react-router';
+import { PhaseMotif } from '../components/PhaseMotif';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { DropletIcon, MoodSmileIcon, NotesIcon } from '../components/icons';
 import { todayString } from '../lib/cycle-math';
 import { computeHomeStatus } from '../lib/home-status';
+import { quoteOfTheDay } from '../lib/quotes';
 import { useAppState } from '../state/store';
 
 const QUICK_ACTIONS = [
@@ -20,10 +22,13 @@ export function HomeScreen() {
 
   const status = computeHomeStatus(entries, settings);
   const dayLabel = status.cycleDay !== null ? `Day ${status.cycleDay}` : 'Welcome';
+  const quote = quoteOfTheDay(status.cyclePhase);
 
   return (
     <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-flow-5 py-flow-6">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut' }}>
+        <PhaseMotif cyclePhase={status.cyclePhase} />
+
         <Card className="mb-flow-6">
           <CardContent className="flex flex-col items-center py-flow-6 text-center">
             <div className="text-flow-hero font-bold text-foreground">{dayLabel}</div>
@@ -47,6 +52,8 @@ export function HomeScreen() {
             </Button>
           ))}
         </div>
+
+        <p className="mt-flow-6 text-center text-flow-caption text-muted-foreground/80 italic">"{quote}"</p>
       </motion.div>
     </div>
   );
