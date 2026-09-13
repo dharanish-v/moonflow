@@ -70,7 +70,7 @@ export function OnboardingScreen() {
               </span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="start">
+          <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)]">
             <Calendar
               mode="single"
               selected={lastPeriodStart ? parseDate(lastPeriodStart) : undefined}
