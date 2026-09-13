@@ -167,6 +167,16 @@
      harmless extra space at the bottom rather than any risk of clipped
      content on the screens that do show it. */
   padding-bottom: calc(1.5rem + 2.75rem + 0.5rem + env(safe-area-inset-bottom, 0.5rem));
+  /* viewport-fit=cover (index.html) + black-translucent status bar means
+     content genuinely renders under the hardware cutout on notch/Dynamic
+     Island iPhones unless something reserves that space — nothing did.
+     Reported live: Calendar's month-nav row (real tap targets, sitting
+     right at the top of its own screen) partly hidden behind the island.
+     Every screen was exposed to this, Calendar was just the one where it
+     was obvious. Each screen's own top padding (py-5 etc.) still applies
+     on top of this, same layering as the bottom-padding tab-bar clearance
+     above. */
+  padding-top: env(safe-area-inset-top, 0px);
   min-height: 100%;
   box-sizing: border-box;
   display: flex;
