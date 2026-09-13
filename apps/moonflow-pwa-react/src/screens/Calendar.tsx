@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
 import {
   addDays,
@@ -20,6 +21,18 @@ import { useAppDispatch, useAppState } from '../state/store';
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 type NavDirection = 'prev' | 'next' | null;
+
+/** "Sep 26–30" (same month) or "Sep 29–Oct 3" (crossing one) — never a year,
+ * this app's predictions never look far enough ahead to need one. */
+function formatDateRange(startStr: string, endStr: string): string {
+  const start = parseDate(startStr);
+  const end = parseDate(endStr);
+  const startLabel = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  if (startStr === endStr) return startLabel;
+  const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
+  const endLabel = end.toLocaleDateString(undefined, sameMonth ? { day: 'numeric' } : { month: 'short', day: 'numeric' });
+  return `${startLabel}–${endLabel}`;
+}
 
 const SLIDE_VARIANTS = {
   enter: (direction: NavDirection) => ({ opacity: 0, x: direction === 'prev' ? -24 : direction === 'next' ? 24 : 0 }),
@@ -52,15 +65,16 @@ export function CalendarScreen() {
 
   const prediction = predictNextPeriod(periods, settings);
   const predictedDates = new Set<string>();
+  const fertileDates = new Set<string>();
+  let fertilePeak: string | null = null;
+  let nextPeriodRange: { start: string; end: string } | null = null;
+  let fertileRange: { start: string; end: string } | null = null;
   if (prediction.confidence === 'confirmed' && prediction.date) {
     const lengths = periods.map((p) => diffDays(p.start, p.end) + 1);
     const avgLen = lengths.length ? Math.round(lengths.reduce((a, b) => a + b, 0) / lengths.length) : 5;
     for (let i = 0; i < avgLen; i++) predictedDates.add(addDays(prediction.date, i));
-  }
+    nextPeriodRange = { start: prediction.date, end: addDays(prediction.date, avgLen - 1) };
 
-  const fertileDates = new Set<string>();
-  let fertilePeak: string | null = null;
-  if (prediction.confidence === 'confirmed' && prediction.date) {
     const fertile = estimateFertileWindow(prediction.date);
     fertilePeak = fertile.peak;
     let d = fertile.start;
@@ -68,6 +82,7 @@ export function CalendarScreen() {
       fertileDates.add(d);
       d = addDays(d, 1);
     }
+    fertileRange = { start: fertile.start, end: fertile.end };
   }
 
   const cells: Array<string | null> = [];
@@ -192,6 +207,21 @@ export function CalendarScreen() {
           Predicted
         </span>
       </div>
+
+      {nextPeriodRange && fertileRange && (
+        <Card className="mt-3.5">
+          <CardContent className="flex flex-col gap-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Next period</span>
+              <span className="font-medium text-foreground">{formatDateRange(nextPeriodRange.start, nextPeriodRange.end)}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Fertile window</span>
+              <span className="font-medium text-foreground">{formatDateRange(fertileRange.start, fertileRange.end)}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
