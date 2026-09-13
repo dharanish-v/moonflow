@@ -13,6 +13,20 @@ import type { Entry, Settings } from './types';
  */
 export type CyclePhase = 'period' | 'follicular' | 'fertile' | 'luteal' | 'unknown';
 
+/** Degrees, 0-360, 0 = the top of the ring = day 1 of the cycle (matches a
+ * clock-face convention, not SVG's own 3-o'clock zero — the rendering side
+ * applies the -90° rotation). One full lap = one predicted cycle, the same
+ * "one loop" convention Flo's own dial uses. */
+export interface CycleRing {
+  totalDays: number;
+  todayAngle: number;
+  /** The period arc always starts at angle 0 (cycle day 1), so only its end
+   * angle is needed. */
+  periodEndAngle: number;
+  fertileStartAngle: number;
+  fertileEndAngle: number;
+}
+
 export interface HomeStatus {
   cycleDay: number | null;
   statusText: string;
@@ -26,11 +40,16 @@ export interface HomeStatus {
   isFertile: boolean;
   isEstimated: boolean;
   cyclePhase: CyclePhase;
+  /** null whenever there's no confident predicted date to size a lap of the
+   * ring against — same 'wide'-confidence gate the headline/caption already
+   * use, not Calendar's stricter confirmed-only gate for its dots (Home's
+   * own estimated-countdown convention already predates this). */
+  ring: CycleRing | null;
 }
 
 export function computeHomeStatus(
   entries: Array<Pick<Entry, 'date' | 'flow'>>,
-  settings: Pick<Settings, 'avgCycleLength' | 'lastPeriodStart'>,
+  settings: Pick<Settings, 'avgCycleLength' | 'avgPeriodLength' | 'lastPeriodStart'>,
   today: Date = new Date(),
 ): HomeStatus {
   const todayStr = formatDate(today);
@@ -48,6 +67,12 @@ export function computeHomeStatus(
     diffDays(todayStr, mostRecentEnd) >= 0
   );
 
+  // Computed once regardless of which headline branch fires below, since
+  // the ring needs the fertile window even while on-period (isFertile the
+  // *status flag* still respects on-period priority, same as before this
+  // was hoisted out of the else-if).
+  const fertile = prediction.confidence !== 'wide' && prediction.date ? estimateFertileWindow(prediction.date) : null;
+
   let statusText: string;
   let headline: string;
   let caption: string;
@@ -59,8 +84,7 @@ export function computeHomeStatus(
     headline = `Day ${cycleDay}`;
     caption = 'of your period';
     cyclePhase = 'period';
-  } else if (prediction.confidence !== 'wide' && prediction.date) {
-    const fertile = estimateFertileWindow(prediction.date);
+  } else if (fertile && prediction.date) {
     isFertile = diffDays(fertile.start, todayStr) >= 0 && diffDays(todayStr, fertile.end) >= 0;
     const daysToNext = diffDays(todayStr, prediction.date);
     if (isFertile) {
@@ -73,7 +97,7 @@ export function computeHomeStatus(
       headline = `${daysToNext} day${daysToNext === 1 ? '' : 's'}`;
       caption = 'to your next period';
     } else if (daysToNext === 0) {
-      statusText = `${daysToNext} day${daysToNext === 1 ? '' : 's'} to next period`;
+      statusText = '0 days to next period';
       headline = 'Today';
       caption = 'your period may start today';
     } else {
@@ -93,6 +117,25 @@ export function computeHomeStatus(
     cyclePhase = 'unknown';
   }
 
+  let ring: CycleRing | null = null;
+  if (mostRecentStart && prediction.date) {
+    const totalDays = diffDays(mostRecentStart, prediction.date);
+    if (totalDays > 0) {
+      const angleFor = (dateStr: string) => {
+        const wrapped = ((diffDays(mostRecentStart, dateStr) % totalDays) + totalDays) % totalDays;
+        return (wrapped / totalDays) * 360;
+      };
+      const periodLengthDays = mostRecent ? diffDays(mostRecent.start, mostRecent.end) + 1 : settings.avgPeriodLength;
+      ring = {
+        totalDays,
+        todayAngle: angleFor(todayStr),
+        periodEndAngle: Math.min(360, (periodLengthDays / totalDays) * 360),
+        fertileStartAngle: fertile ? angleFor(fertile.start) : 0,
+        fertileEndAngle: fertile ? angleFor(fertile.end) : 0,
+      };
+    }
+  }
+
   return {
     cycleDay,
     statusText,
@@ -101,5 +144,6 @@ export function computeHomeStatus(
     isFertile,
     isEstimated: !isOnPeriod && prediction.confidence === 'estimated',
     cyclePhase,
+    ring,
   };
 }

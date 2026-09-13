@@ -7,7 +7,7 @@
 // Framer Motion, no image asset — same "no custom nothing except what the
 // stack already provides" spirit as the rest of this rebuild.
 import { motion, useReducedMotion } from 'framer-motion';
-import type { CyclePhase } from '../lib/home-status';
+import type { CyclePhase, CycleRing } from '../lib/home-status';
 
 const PHASE_COLOR_CLASS: Record<CyclePhase, string> = {
   period: 'text-secondary',
@@ -17,9 +17,33 @@ const PHASE_COLOR_CLASS: Record<CyclePhase, string> = {
   unknown: 'text-muted-foreground',
 };
 
-export function PhaseMotif({ cyclePhase }: { cyclePhase: CyclePhase }) {
+// Ring geometry — a full lap = one predicted cycle (see CycleRing's own
+// doc). Sized to sit inside the size-32 (128px) motif with room for the
+// outer glow to still bleed past it.
+const RING_SIZE = 112;
+const RING_CENTER = RING_SIZE / 2;
+const RING_RADIUS = 50;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+/** SVG's own 0° is 3 o'clock; CycleRing's angles are clock-face (0° = top,
+ * day 1) — the -90° `transform` on each circle handles that, this only
+ * converts a degree span into a dasharray of that arc's length. */
+function arcDasharray(spanDegrees: number): string {
+  const clamped = Math.max(0, Math.min(360, spanDegrees));
+  const length = (clamped / 360) * RING_CIRCUMFERENCE;
+  return `${length} ${RING_CIRCUMFERENCE - length}`;
+}
+
+function pointOnRing(angleDegrees: number): { x: number; y: number } {
+  const rad = ((angleDegrees - 90) * Math.PI) / 180;
+  return { x: RING_CENTER + RING_RADIUS * Math.cos(rad), y: RING_CENTER + RING_RADIUS * Math.sin(rad) };
+}
+
+export function PhaseMotif({ cyclePhase, ring }: { cyclePhase: CyclePhase; ring: CycleRing | null }) {
   const prefersReducedMotion = useReducedMotion();
   const colorClass = PHASE_COLOR_CLASS[cyclePhase];
+  const todayPoint = ring ? pointOnRing(ring.todayAngle) : null;
+  const fertileSpan = ring ? ((ring.fertileEndAngle - ring.fertileStartAngle) % 360 + 360) % 360 : 0;
 
   return (
     <div className={`relative mx-auto mb-5 flex size-32 items-center justify-center ${colorClass}`} aria-hidden="true">
@@ -36,6 +60,43 @@ export function PhaseMotif({ cyclePhase }: { cyclePhase: CyclePhase }) {
         animate={prefersReducedMotion ? undefined : { opacity: [0.15, 0.3, 0.15], scale: [1, 1.15, 1] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
       />
+      {/* The ring itself — static, not breathing like the glow/moon, since
+          it's carrying real information (period/fertile arcs, today's
+          position), not mood lighting. Colored via the same secondary/
+          primary tokens Calendar's own legend already assigns to those
+          exact states, so this reads as the same visual language, not a
+          new one. */}
+      {ring && (
+        <svg width={RING_SIZE} height={RING_SIZE} viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`} className="absolute" fill="none">
+          <circle cx={RING_CENTER} cy={RING_CENTER} r={RING_RADIUS} stroke="currentColor" strokeOpacity="0.12" strokeWidth="4" />
+          <circle
+            cx={RING_CENTER}
+            cy={RING_CENTER}
+            r={RING_RADIUS}
+            stroke="var(--secondary)"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeDasharray={arcDasharray(ring.periodEndAngle)}
+            transform={`rotate(-90 ${RING_CENTER} ${RING_CENTER})`}
+          />
+          {fertileSpan > 0 && (
+            <circle
+              cx={RING_CENTER}
+              cy={RING_CENTER}
+              r={RING_RADIUS}
+              stroke="var(--primary)"
+              strokeWidth="4"
+              strokeLinecap="round"
+              strokeDasharray={arcDasharray(fertileSpan)}
+              strokeDashoffset={-(ring.fertileStartAngle / 360) * RING_CIRCUMFERENCE}
+              transform={`rotate(-90 ${RING_CENTER} ${RING_CENTER})`}
+            />
+          )}
+          {todayPoint && (
+            <circle cx={todayPoint.x} cy={todayPoint.y} r="5" fill="var(--foreground)" stroke="var(--background)" strokeWidth="1.5" />
+          )}
+        </svg>
+      )}
       <motion.svg
         viewBox="0 0 24 24"
         fill="none"

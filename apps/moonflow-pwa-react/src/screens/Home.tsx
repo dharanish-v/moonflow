@@ -29,7 +29,7 @@ export function HomeScreen() {
   return (
     <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-4 py-5">
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut' }}>
-        <PhaseMotif cyclePhase={status.cyclePhase} />
+        <PhaseMotif cyclePhase={status.cyclePhase} ring={status.ring} />
 
         <Card className="mb-5">
           <CardContent className="flex flex-col items-center py-5 text-center">
