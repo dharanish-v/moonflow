@@ -11,7 +11,7 @@
 import { motion } from 'framer-motion';
 import { NotebookPen } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
-import { PhaseMotif } from '../components/PhaseMotif';
+import { PHASE_COLOR_CLASS, PhaseMotif } from '../components/PhaseMotif';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { todayString } from '../lib/cycle-math';
@@ -28,6 +28,20 @@ export function HomeScreen() {
 
   return (
     <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-4 py-5">
+      {/* Ambient mood wash — the phase color bleeding into the whole screen,
+          not just PhaseMotif's own small glow, so the "world reflects your
+          cycle" idea reads at screen scale. `fixed` + phone-frame's own
+          transform (index.css) anchors this to the frame itself, same
+          technique TabBar already relies on — so it covers the full frame
+          on desktop's centered device view too, not just this narrow
+          content column. Reuses PhaseMotif's exact color-per-phase mapping
+          so the two can never drift apart. */}
+      <div
+        className={`pointer-events-none fixed inset-0 -z-10 opacity-[0.12] ${PHASE_COLOR_CLASS[status.cyclePhase]}`}
+        style={{ background: 'radial-gradient(ellipse 70% 55% at 50% 18%, currentColor, transparent 70%)' }}
+        aria-hidden="true"
+      />
+
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut' }}>
         <PhaseMotif cyclePhase={status.cyclePhase} ring={status.ring} />
 

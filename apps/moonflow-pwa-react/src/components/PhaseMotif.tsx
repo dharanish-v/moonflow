@@ -9,7 +9,10 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import type { CyclePhase, CycleRing } from '../lib/home-status';
 
-const PHASE_COLOR_CLASS: Record<CyclePhase, string> = {
+/** Exported for Home's ambient background wash too — one mapping, so the
+ * wash and the moon can never drift to different colors for the same
+ * phase. */
+export const PHASE_COLOR_CLASS: Record<CyclePhase, string> = {
   period: 'text-secondary',
   follicular: 'text-accent',
   fertile: 'text-primary',
