@@ -160,6 +160,8 @@ export function SettingsScreen() {
         <SettingsRowButton icon={<DownloadIcon className="size-4" />} label="Export data" onClick={() => void handleExport()} />
       </Card>
 
+      <p className="mt-5 text-center text-xs text-muted-foreground/80 italic">Made with ❤️ · M ❤️ D</p>
+
       <Drawer open={editField !== null} onOpenChange={(open) => { if (!open) setEditField(null); }}>
         <DrawerContent className="mx-auto max-w-[26rem] px-4 pb-5">
           <DrawerHeader className="px-0">
