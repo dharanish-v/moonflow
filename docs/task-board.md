@@ -106,8 +106,8 @@ Depends on: T1–T24
 ## Phase 7 — React rewrite: the log→prediction feedback loop (in progress)
 *Surfaced via a UX riff tracing real onboarding→log→prediction flows in the React rewrite (`apps/moonflow-pwa-react/`). The through-line: the app hands you a countdown before you've ever logged anything, never explains that logging is what sharpens it, and gives zero acknowledgment when a save actually improves a prediction — the core retention loop is never taught or reinforced.*
 
-**T27 — Onboarding explains the log→prediction loop** (S)
-Onboarding collects one date + two numbers, then Home immediately shows a confident-looking countdown — nothing tells a first-time user that this is a rough starting guess, or that logging is what makes it real. Add brief copy (onboarding itself, or a one-time nudge right after "Get started") making the loop explicit: log your days, predictions sharpen over time.
+**T27 — Onboarding explains the log→prediction loop** (S) ✅
+Onboarding collects one date + two numbers, then Home immediately shows a confident-looking countdown — nothing tells a first-time user that this is a rough starting guess, or that logging is what makes it real. Added one line above the "Get started" CTA: "This gives you a starting guess — logging each cycle makes it sharper over time."
 
 **T28 — The "estimated" tag is unexplained** (S)
 Home's caption appends `· estimated` in tiny muted text with zero context — a user could see it for months and never learn why, or that logging real periods removes it. Make it discoverable inline (tap/press for a one-line explanation, or a persistent sub-caption) without leaving Home.

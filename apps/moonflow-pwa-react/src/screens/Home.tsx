@@ -9,11 +9,12 @@
 // didn't actually exist — a real UX debate before this landed, not a
 // unilateral call (see the conversation this was decided in).
 import { motion } from 'framer-motion';
-import { NotebookPen } from 'lucide-react';
+import { Info, NotebookPen } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { PHASE_COLOR_CLASS, PhaseMotif } from '../components/PhaseMotif';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { todayString } from '../lib/cycle-math';
 import { computeHomeStatus } from '../lib/home-status';
 import { quoteOfTheDay } from '../lib/quotes';
@@ -48,9 +49,26 @@ export function HomeScreen() {
         <Card className="mb-5">
           <CardContent className="flex flex-col items-center py-5 text-center">
             <div className="text-3xl font-bold text-foreground">{status.headline}</div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              {status.caption}
-              {status.isEstimated ? ' · estimated' : ''}
+            <div className="mt-1 flex items-center justify-center gap-1 text-xs text-muted-foreground">
+              <span>{status.caption}</span>
+              {status.isEstimated && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Why is this estimated?"
+                      className="inline-flex items-center gap-0.5 underline decoration-dotted underline-offset-2"
+                    >
+                      estimated
+                      <Info className="size-3" aria-hidden="true" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="center" className="w-64 text-xs text-muted-foreground">
+                    Based on the date you entered during setup, not real tracking yet — log a couple of real
+                    cycles and this sharpens into a confirmed prediction.
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
           </CardContent>
         </Card>
