@@ -126,6 +126,13 @@ export function CalendarScreen() {
   const cells: Array<string | null> = [];
   for (let i = 0; i < startWeekday; i++) cells.push(null);
   for (let day = 1; day <= daysInMonth; day++) cells.push(formatDate(new Date(year, month - 1, day)));
+  // A month can span 4-6 calendar rows depending on its day count and start
+  // weekday (e.g. Sept 2026 needs 5, Jan 2027 needs 6) — left as-is, the grid's
+  // own height changes with it, pushing the legend/card below up or down on
+  // every month change. Padding to a constant 6 rows (42 cells, the real max
+  // any month can span) reuses the same invisible trailing-cell placeholder
+  // the leading blanks already use, so everything below the grid stays put.
+  while (cells.length < 42) cells.push(null);
 
   function handleSelectDate(dateStr: string) {
     navigate({ to: '/log', search: { date: dateStr } });
@@ -247,7 +254,7 @@ export function CalendarScreen() {
       </div>
 
       {nextPeriodRange && (
-        <Card className="mt-9">
+        <Card className="mt-12">
           <CardContent className={`grid gap-4 ${fertileVisible ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <SummaryStat
               accentClassName="text-secondary"
