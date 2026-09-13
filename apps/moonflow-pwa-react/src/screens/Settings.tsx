@@ -1,10 +1,21 @@
 // src/screens/Settings.tsx — ported from screens/settings.js. Setting a new
 // PIN (create-1/create-2) is its own route (PinSetup.tsx) — see that file
 // for why.
-import { forwardRef, useState, type ComponentProps, type ReactNode } from 'react';
-import { Calendar, Monitor, Moon, Sun } from 'lucide-react';
+import { forwardRef, useRef, useState, type ChangeEvent, type ComponentProps, type ReactNode } from 'react';
+import { Calendar, Monitor, Moon, Sun, Upload } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from 'cn';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/ui/alert-dialog';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
@@ -16,8 +27,9 @@ import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { BellIcon, ChevronRightIcon, DownloadIcon, DropletIcon, EyeOffIcon, LockIcon } from '../components/icons';
 import { MAX_CYCLE_LENGTH, MAX_PERIOD_LENGTH, MIN_CYCLE_LENGTH, MIN_PERIOD_LENGTH } from '../lib/constants';
 import { todayString } from '../lib/cycle-math';
-import { setSetting } from '../lib/db';
+import { importData, loadAllEntries, loadAllSettings, setSetting } from '../lib/db';
 import { buildExportPayload, exportFilename } from '../lib/export';
+import { parseImportPayload, type ImportPayload } from '../lib/import';
 import type { ThemeMode } from '../lib/types';
 import { useAppDispatch, useAppState } from '../state/store';
 
@@ -36,6 +48,9 @@ export function SettingsScreen() {
   const [discreetOpen, setDiscreetOpen] = useState(false);
   const [editField, setEditField] = useState<EditField>(null);
   const [draftValue, setDraftValue] = useState(0);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [pendingImport, setPendingImport] = useState<{ payload: ImportPayload; skippedEntries: number } | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   async function handleThemeChange(mode: ThemeMode) {
     await setSetting('themeMode', mode);
@@ -91,6 +106,45 @@ export function SettingsScreen() {
     a.click();
     URL.revokeObjectURL(url);
   }
+
+  function handleImportFileSelected(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file to retry
+    if (!file) return;
+    setImportError(null);
+    void file.text().then((text) => {
+      const result = parseImportPayload(text);
+      if (!result.ok) {
+        setImportError(result.error);
+        return;
+      }
+      setPendingImport({ payload: result.payload, skippedEntries: result.skippedEntries });
+    });
+  }
+
+  async function handleImportConfirm() {
+    if (!pendingImport) return;
+    const ok = await importData(pendingImport.payload.entries, pendingImport.payload.settings);
+    setPendingImport(null);
+    if (!ok) {
+      setImportError("Couldn't import — try again");
+      return;
+    }
+    const [freshEntries, freshSettings] = await Promise.all([loadAllEntries(), loadAllSettings()]);
+    dispatch({ type: 'BOOT_LOADED', entries: freshEntries, settings: freshSettings });
+  }
+
+  const importSummary = (() => {
+    if (!pendingImport) return '';
+    const n = pendingImport.payload.entries.length;
+    const dayPart = n > 0 ? `${n} logged day${n === 1 ? '' : 's'} and your cycle settings` : 'your cycle settings (no logged days were found in this file)';
+    const overwriteNote = n > 0 ? ' Entries already logged on the same date here will be overwritten.' : '';
+    const skippedNote =
+      pendingImport.skippedEntries > 0
+        ? ` ${pendingImport.skippedEntries} entr${pendingImport.skippedEntries === 1 ? 'y' : 'ies'} in the file couldn't be read and ${pendingImport.skippedEntries === 1 ? 'was' : 'were'} skipped.`
+        : '';
+    return `Import ${dayPart}?${overwriteNote}${skippedNote}`;
+  })();
 
   return (
     <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col px-4 py-5">
@@ -158,7 +212,28 @@ export function SettingsScreen() {
         </Collapsible>
         <Separator />
         <SettingsRowButton icon={<DownloadIcon className="size-4" />} label="Export data" onClick={() => void handleExport()} />
+        <Separator />
+        <SettingsRowButton
+          icon={<Upload className="size-4" aria-hidden="true" />}
+          label="Import data"
+          onClick={() => importInputRef.current?.click()}
+        />
       </Card>
+
+      <input
+        ref={importInputRef}
+        type="file"
+        accept="application/json"
+        aria-label="Import data file"
+        className="hidden"
+        onChange={handleImportFileSelected}
+      />
+
+      {importError && (
+        <Alert className="mt-3.5">
+          <AlertDescription>{importError}</AlertDescription>
+        </Alert>
+      )}
 
       <p className="mt-5 text-center text-xs text-muted-foreground/80 italic">Made with love — M 🩷 D</p>
 
@@ -191,6 +266,19 @@ export function SettingsScreen() {
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      <AlertDialog open={pendingImport !== null} onOpenChange={(open) => { if (!open) setPendingImport(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Import data?</AlertDialogTitle>
+            <AlertDialogDescription>{importSummary}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => void handleImportConfirm()}>Import</AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

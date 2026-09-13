@@ -108,3 +108,28 @@ export async function deleteEntry(date: string): Promise<boolean> {
     return false;
   }
 }
+
+/** Writes an imported payload (see lib/import.ts): entries upsert by date
+ * (bulkPut, same overwrite-by-date semantics saveEntry already uses), and
+ * only the three cycle settings an import actually restores — never the
+ * device-specific ones (PIN, sound, theme, draft) an export payload also
+ * carries. Also flips onboardingComplete so a device importing real history
+ * isn't sent through onboarding after. */
+export async function importData(
+  entries: Entry[],
+  settings: Pick<Settings, 'lastPeriodStart' | 'avgCycleLength' | 'avgPeriodLength'>,
+): Promise<boolean> {
+  try {
+    await db.entries.bulkPut(entries);
+    await db.settings.bulkPut([
+      { key: 'lastPeriodStart', value: settings.lastPeriodStart },
+      { key: 'avgCycleLength', value: settings.avgCycleLength },
+      { key: 'avgPeriodLength', value: settings.avgPeriodLength },
+      { key: 'onboardingComplete', value: true },
+    ]);
+    return true;
+  } catch (err) {
+    console.error('importData failed:', err);
+    return false;
+  }
+}
