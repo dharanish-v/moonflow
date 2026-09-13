@@ -34,18 +34,16 @@ function formatDateRange(startStr: string, endStr: string): string {
   return `${startLabel}–${endLabel}`;
 }
 
-/** One stat in the summary card — a legend-matching dot (pass the exact
- * classes the legend/grid already use for that state, not a new color) plus
- * date value and a relative caption so you don't have to do the date math
- * against today yourself. */
-function SummaryStat({ dotClassName, label, value, caption }: { dotClassName: string; label: string; value: string; caption: string }) {
+/** One stat in the summary card. The label is a small-caps "kicker" tinted
+ * with the same color family the legend/grid already use for that state
+ * (secondary for next-period, primary for fertile) — a color echo instead of
+ * repeating the legend's dot shape right below it, which read as a second,
+ * redundant legend. */
+function SummaryStat({ accentClassName, label, value, caption }: { accentClassName: string; label: string; value: string; caption: string }) {
   return (
     <div className="flex flex-col items-center gap-1 text-center">
-      <span className="flex items-center gap-1.5 text-[0.7rem] text-muted-foreground">
-        <span className={`inline-block size-2 rounded-full ${dotClassName}`} aria-hidden="true" />
-        {label}
-      </span>
-      <span className="text-sm font-medium text-foreground">{value}</span>
+      <span className={`text-[0.65rem] font-semibold tracking-wide uppercase ${accentClassName}`}>{label}</span>
+      <span className="text-base font-semibold text-foreground">{value}</span>
       <span className="text-[0.7rem] text-muted-foreground/70">{caption}</span>
     </div>
   );
@@ -233,7 +231,7 @@ export function CalendarScreen() {
         </div>
       </motion.div>
 
-      <div className="mt-3.5 flex justify-center gap-3.5 text-xs text-muted-foreground">
+      <div className="mt-2 flex justify-center gap-3.5 text-xs text-muted-foreground">
         <span>
           <span className="mr-1 inline-block size-2 rounded-full bg-secondary align-middle" />
           Period
@@ -244,22 +242,22 @@ export function CalendarScreen() {
         </span>
         <span>
           <span className="mr-1 inline-block size-2 rounded-full border-[1.5px] border-dashed border-secondary align-middle" />
-          Predicted
+          Next period
         </span>
       </div>
 
       {nextPeriodRange && (
-        <Card className="mt-3.5">
+        <Card className="mt-6">
           <CardContent className={`grid gap-4 ${fertileVisible ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <SummaryStat
-              dotClassName="border-[1.5px] border-dashed border-secondary"
+              accentClassName="text-secondary"
               label="Next period"
               value={formatDateRange(nextPeriodRange.start, nextPeriodRange.end)}
               caption={nextPeriodCaption!}
             />
             {fertileVisible && fertileRange && (
               <SummaryStat
-                dotClassName="bg-primary/30"
+                accentClassName="text-primary"
                 label="Fertile window"
                 value={formatDateRange(fertileRange.start, fertileRange.end)}
                 caption={fertileCaption!}
