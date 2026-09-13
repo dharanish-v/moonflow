@@ -2,7 +2,7 @@
 // PIN (create-1/create-2) is its own route (PinSetup.tsx) — see that file
 // for why.
 import { forwardRef, useRef, useState, type ChangeEvent, type ComponentProps, type ReactNode } from 'react';
-import { Calendar, Monitor, Moon, Sun, Upload } from 'lucide-react';
+import { Calendar, Info, Monitor, Moon, Sun, Upload } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from 'cn';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -46,6 +46,7 @@ export function SettingsScreen() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [discreetOpen, setDiscreetOpen] = useState(false);
+  const [dataMoveOpen, setDataMoveOpen] = useState(false);
   const [editField, setEditField] = useState<EditField>(null);
   const [draftValue, setDraftValue] = useState(0);
   const [importError, setImportError] = useState<string | null>(null);
@@ -218,6 +219,18 @@ export function SettingsScreen() {
           label="Import data"
           onClick={() => importInputRef.current?.click()}
         />
+        <Separator />
+        <Collapsible open={dataMoveOpen} onOpenChange={setDataMoveOpen}>
+          <CollapsibleTrigger asChild>
+            <SettingsRowButton icon={<Info className="size-4" aria-hidden="true" />} label="Moving data to another device" />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <p className="px-3.5 pb-2 text-xs text-muted-foreground">
+              Export creates a file — send it to your other device however you'd send any file (AirDrop, email,
+              messaging app), then open Settings there and tap Import to bring it in.
+            </p>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
 
       <input

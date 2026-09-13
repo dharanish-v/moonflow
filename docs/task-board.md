@@ -118,8 +118,8 @@ Save closes the drawer and returns you to Home/Calendar, which just renders norm
 **T30 — Recent-logs list / history browsing** (M)
 The only way to see or edit a past day today is paging Calendar month-by-month and tapping one day at a time — no list, no search-by-date. Real gap for anyone using this more than a couple months, and especially for irregular-cycle users who lean on their own history more since predictions can't help them as much. Needs a placement decision (new view? folded into an existing screen?) before sizing further.
 
-**T31 — Export/Import have no connecting narrative** (S)
-Two isolated Settings rows with no explanation of the actual cross-device workflow (export → send the file to the other device → import there). Fine for a technical user, opaque for anyone else. Add a short inline explanation near the two rows.
+**T31 — Export/Import have no connecting narrative** (S) ✅
+Two isolated Settings rows with no explanation of the actual cross-device workflow (export → send the file to the other device → import there). Added a third row, "Moving data to another device," using the same Collapsible-reveal pattern the Discreet-icon row already established, rather than an always-visible paragraph cluttering the list.
 
 **T32 — Insights' empty state gives no partial-progress signal** (S)
 "Not enough history yet" is honest but static — no sense of "3 days logged so far, keep going." Show real progress toward the threshold instead of a flat wait message.
