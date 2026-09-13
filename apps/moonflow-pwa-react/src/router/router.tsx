@@ -35,7 +35,29 @@ export const rootRoute = createRootRoute({
   notFoundComponent: () => <Navigate to="/" replace />,
 });
 
-const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: HomeScreen });
+export interface HomeSearch {
+  /** Set by LogEntry's Save when it lands back on Home fresh (no prior
+   * entry for that date) — a one-shot "just logged" signal Home reads once
+   * to show an acknowledgment, then clears from the URL itself (see
+   * Home.tsx) so a later refresh/revisit never replays it. */
+  justLogged?: boolean;
+}
+
+/** Mirrors validateLogSearch's own defensive style below — a boolean should
+ * round-trip as a real boolean through the router's search serializer, but
+ * accept the stringified form too rather than assume. */
+export function validateHomeSearch(search: Record<string, unknown>): HomeSearch {
+  return {
+    justLogged: search.justLogged === true || search.justLogged === 'true' ? true : undefined,
+  };
+}
+
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  validateSearch: validateHomeSearch,
+  component: HomeScreen,
+});
 const calendarRoute = createRoute({ getParentRoute: () => rootRoute, path: '/calendar', component: CalendarScreen });
 const insightsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/insights', component: InsightsScreen });
 const settingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/settings', component: SettingsScreen });

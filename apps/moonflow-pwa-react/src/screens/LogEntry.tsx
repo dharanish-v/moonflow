@@ -85,7 +85,15 @@ export function LogEntryScreen() {
     const freshEntries = await loadAllEntries();
     dispatch({ type: 'SET_ENTRIES', entries: freshEntries });
     dispatch({ type: 'PATCH_SETTINGS', patch: { draftEntry: null } });
-    navigate({ to: existingEntry ? '/calendar' : '/', replace: true });
+    // A fresh save (no prior entry for this date) landing back on Home is
+    // the "just used the app's core action" moment — flag it so Home can
+    // acknowledge the save instead of just silently re-rendering. Editing
+    // an existing entry lands on Calendar instead, where this doesn't apply.
+    if (existingEntry) {
+      navigate({ to: '/calendar', replace: true });
+    } else {
+      navigate({ to: '/', search: { justLogged: true }, replace: true });
+    }
   }
 
   async function handleClear() {

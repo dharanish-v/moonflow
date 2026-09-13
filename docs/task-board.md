@@ -109,11 +109,11 @@ Depends on: T1–T24
 **T27 — Onboarding explains the log→prediction loop** (S) ✅
 Onboarding collects one date + two numbers, then Home immediately shows a confident-looking countdown — nothing tells a first-time user that this is a rough starting guess, or that logging is what makes it real. Added one line above the "Get started" CTA: "This gives you a starting guess — logging each cycle makes it sharper over time."
 
-**T28 — The "estimated" tag is unexplained** (S)
-Home's caption appends `· estimated` in tiny muted text with zero context — a user could see it for months and never learn why, or that logging real periods removes it. Make it discoverable inline (tap/press for a one-line explanation, or a persistent sub-caption) without leaving Home.
+**T28 — The "estimated" tag is unexplained** (S) ✅
+Home's caption appends `· estimated` in tiny muted text with zero context — a user could see it for months and never learn why, or that logging real periods removes it. Made "estimated" a tap target (Popover) explaining what it means and what resolves it, without leaving Home.
 
-**T29 — Saving a log gives no feedback loop back to the prediction** (M)
-Save closes the drawer and returns you to Home/Calendar, which just renders normally — nothing acknowledges "got it, here's what changed." Give Home a visible, positive signal right after a fresh save (a brief confirmation tied to the ring/headline, not a generic toast disconnected from the prediction).
+**T29 — Saving a log gives no feedback loop back to the prediction** (M) ✅
+Save closes the drawer and returns you to Home/Calendar, which just renders normally — nothing acknowledges "got it, here's what changed." Fresh saves (no prior entry for that date) now navigate to `/` with a one-shot `justLogged` search flag (new `validateHomeSearch`); Home shows a brief text acknowledgment plus a pulse around the prediction card, self-clears after ~2.6s, and scrubs the flag from the URL so a refresh never replays it. Editing an existing entry still lands on Calendar, unaffected.
 
 **T30 — Recent-logs list / history browsing** (M)
 The only way to see or edit a past day today is paging Calendar month-by-month and tapping one day at a time — no list, no search-by-date. Real gap for anyone using this more than a couple months, and especially for irregular-cycle users who lean on their own history more since predictions can't help them as much. Needs a placement decision (new view? folded into an existing screen?) before sizing further.

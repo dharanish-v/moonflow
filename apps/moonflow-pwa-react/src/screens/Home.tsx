@@ -8,9 +8,10 @@
 // tapped. Three same-weight buttons implied three separate actions that
 // didn't actually exist — a real UX debate before this landed, not a
 // unilateral call (see the conversation this was decided in).
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Info, NotebookPen } from 'lucide-react';
-import { useNavigate } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { PHASE_COLOR_CLASS, PhaseMotif } from '../components/PhaseMotif';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
@@ -20,12 +21,36 @@ import { computeHomeStatus } from '../lib/home-status';
 import { quoteOfTheDay } from '../lib/quotes';
 import { useAppState } from '../state/store';
 
+/** How long the just-logged acknowledgment stays up before it self-clears. */
+const LOGGED_ACK_DURATION_MS = 2600;
+
 export function HomeScreen() {
   const { entries, settings } = useAppState();
   const navigate = useNavigate();
+  const search = useSearch({ from: '/' });
 
   const status = computeHomeStatus(entries, settings);
   const quote = quoteOfTheDay(status.cyclePhase);
+
+  // Captures the flag at mount, before the effect below clears it from the
+  // URL — a fresh save (LogEntry.tsx) that lands back here is the "just
+  // used the app's core action" moment; nothing else set this state to true
+  // before, so re-renders from other causes (e.g. a settings change) never
+  // replay it.
+  const [showLoggedAck, setShowLoggedAck] = useState(() => search.justLogged === true);
+
+  useEffect(() => {
+    if (search.justLogged) navigate({ to: '/', search: {}, replace: true });
+    // Runs once on mount only — clearing the URL's own justLogged flag so a
+    // later refresh/revisit never replays the acknowledgment.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!showLoggedAck) return;
+    const timer = setTimeout(() => setShowLoggedAck(false), LOGGED_ACK_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [showLoggedAck]);
 
   return (
     <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-4 py-5">
@@ -44,34 +69,59 @@ export function HomeScreen() {
       />
 
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut' }}>
+        <AnimatePresence>
+          {showLoggedAck && (
+            <motion.p
+              role="status"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="mb-3 text-center text-xs font-medium text-primary"
+            >
+              Logged — your prediction just updated
+            </motion.p>
+          )}
+        </AnimatePresence>
+
         <PhaseMotif cyclePhase={status.cyclePhase} ring={status.ring} />
 
-        <Card className="mb-5">
-          <CardContent className="flex flex-col items-center py-5 text-center">
-            <div className="text-3xl font-bold text-foreground">{status.headline}</div>
-            <div className="mt-1 flex items-center justify-center gap-1 text-xs text-muted-foreground">
-              <span>{status.caption}</span>
-              {status.isEstimated && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Why is this estimated?"
-                      className="inline-flex items-center gap-0.5 underline decoration-dotted underline-offset-2"
-                    >
-                      estimated
-                      <Info className="size-3" aria-hidden="true" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="center" className="w-64 text-xs text-muted-foreground">
-                    Based on the date you entered during setup, not real tracking yet — log a couple of real
-                    cycles and this sharpens into a confirmed prediction.
-                  </PopoverContent>
-                </Popover>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <motion.div
+          className="rounded-xl"
+          animate={
+            showLoggedAck
+              ? { boxShadow: ['0 0 0 0px transparent', '0 0 0 3px var(--primary)', '0 0 0 0px transparent'] }
+              : undefined
+          }
+          transition={{ duration: 1.8, ease: 'easeOut' }}
+        >
+          <Card className="mb-5">
+            <CardContent className="flex flex-col items-center py-5 text-center">
+              <div className="text-3xl font-bold text-foreground">{status.headline}</div>
+              <div className="mt-1 flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                <span>{status.caption}</span>
+                {status.isEstimated && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label="Why is this estimated?"
+                        className="inline-flex items-center gap-0.5 underline decoration-dotted underline-offset-2"
+                      >
+                        estimated
+                        <Info className="size-3" aria-hidden="true" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="center" className="w-64 text-xs text-muted-foreground">
+                      Based on the date you entered during setup, not real tracking yet — log a couple of real
+                      cycles and this sharpens into a confirmed prediction.
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         <Button
           onClick={() => navigate({ to: '/log', search: { date: todayString() } })}
