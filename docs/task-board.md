@@ -121,10 +121,12 @@ The only way to see or edit a past day today is paging Calendar month-by-month a
 **T31 — Export/Import have no connecting narrative** (S) ✅
 Two isolated Settings rows with no explanation of the actual cross-device workflow (export → send the file to the other device → import there). Added a third row, "Moving data to another device," using the same Collapsible-reveal pattern the Discreet-icon row already established, rather than an always-visible paragraph cluttering the list.
 
-**T32 — Insights' empty state gives no partial-progress signal** (S)
-"Not enough history yet" is honest but static — no sense of "3 days logged so far, keep going." Show real progress toward the threshold instead of a flat wait message.
+**T32 — Insights' empty state gives no partial-progress signal** (S) ✅
+"Not enough history yet" is honest but static — no sense of "3 days logged so far, keep going." `computeInsights()` already exposed `cyclesLogged` even when `hasEnoughHistory` is false — it just wasn't surfaced. Empty state now reads "No periods logged yet — log your first one..." or "1 period logged — one more and you'll see your cycle-length trend."
 
 Depends on: T6–T13 (React rewrite Home/Calendar/Settings/Insights/LogEntry/Onboarding)
+
+**T30 — Recent-logs list / history browsing** remains open (needs a placement decision).
 
 ---
 

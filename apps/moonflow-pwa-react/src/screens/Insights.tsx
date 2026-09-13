@@ -68,15 +68,21 @@ export function InsightsScreen() {
   }, [entries]);
 
   if (!data.hasEnoughHistory) {
+    // A real progress signal (0 vs. 1 logged period), not just a flat wait
+    // message — data.cyclesLogged is already computed either way, this
+    // just surfaces it instead of discarding it.
+    const progressText =
+      data.cyclesLogged === 0
+        ? 'No periods logged yet — log your first one to start building insights.'
+        : `${data.cyclesLogged} period logged — one more and you'll see your cycle-length trend.`;
+
     return (
       <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-4 py-5">
         <div className="mx-auto mb-3.5 flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary">
           <ChartBarIcon className="size-5" />
         </div>
         <h1 className="mb-1 text-center text-base font-medium text-foreground">Insights</h1>
-        <p className="text-center text-xs text-muted-foreground">
-          Not enough history yet — check back after your next cycle
-        </p>
+        <p className="text-center text-xs text-muted-foreground">{progressText}</p>
       </div>
     );
   }
