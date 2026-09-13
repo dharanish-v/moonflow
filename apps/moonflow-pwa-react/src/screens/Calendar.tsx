@@ -247,7 +247,7 @@ export function CalendarScreen() {
       </div>
 
       {nextPeriodRange && (
-        <Card className="mt-6">
+        <Card className="mt-9">
           <CardContent className={`grid gap-4 ${fertileVisible ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <SummaryStat
               accentClassName="text-secondary"
