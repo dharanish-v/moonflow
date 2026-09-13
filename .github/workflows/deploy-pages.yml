@@ -21,8 +21,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           # jsdom@30/vitest@5 (this app's deps, unlike the vanilla app's)
           # require Node ^22.22.2 || ^24.15.0 || >=26 — Node 20 (copied from
@@ -40,9 +40,9 @@ jobs:
         working-directory: apps/moonflow-pwa-react
       - run: npm run build
         working-directory: apps/moonflow-pwa-react
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: ./apps/moonflow-pwa-react/dist
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
