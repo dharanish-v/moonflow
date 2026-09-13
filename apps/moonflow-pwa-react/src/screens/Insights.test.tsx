@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
-import { render } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import { describe, expect, it } from 'vitest';
+import { renderRouted } from '../test/render-with-router';
 import { StateProvider } from '../state/store';
 import { InsightsScreen } from './Insights';
 import type { Entry } from '../lib/types';
@@ -13,7 +13,10 @@ const ENTRIES: Entry[] = [
 
 describe('InsightsScreen', () => {
   it('has no accessibility violations in the empty state', async () => {
-    const { container } = render(
+    // Uses the real router harness (not a bare render()) — the recent-logs
+    // list's rows call useNavigate(), which needs real router context to
+    // exist at all, even before any row is ever clicked.
+    const { container } = await renderRouted(
       <StateProvider testState={{}}>
         <InsightsScreen />
       </StateProvider>,
@@ -22,7 +25,7 @@ describe('InsightsScreen', () => {
   });
 
   it('has no accessibility violations in the populated state', async () => {
-    const { container } = render(
+    const { container } = await renderRouted(
       <StateProvider testState={{ entries: ENTRIES }}>
         <InsightsScreen />
       </StateProvider>,
