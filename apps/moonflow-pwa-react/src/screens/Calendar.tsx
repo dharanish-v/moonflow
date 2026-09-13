@@ -34,6 +34,23 @@ function formatDateRange(startStr: string, endStr: string): string {
   return `${startLabel}–${endLabel}`;
 }
 
+/** One stat in the summary card — a legend-matching dot (pass the exact
+ * classes the legend/grid already use for that state, not a new color) plus
+ * date value and a relative caption so you don't have to do the date math
+ * against today yourself. */
+function SummaryStat({ dotClassName, label, value, caption }: { dotClassName: string; label: string; value: string; caption: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1 text-center">
+      <span className="flex items-center gap-1.5 text-[0.7rem] text-muted-foreground">
+        <span className={`inline-block size-2 rounded-full ${dotClassName}`} aria-hidden="true" />
+        {label}
+      </span>
+      <span className="text-sm font-medium text-foreground">{value}</span>
+      <span className="text-[0.7rem] text-muted-foreground/70">{caption}</span>
+    </div>
+  );
+}
+
 const SLIDE_VARIANTS = {
   enter: (direction: NavDirection) => ({ opacity: 0, x: direction === 'prev' ? -24 : direction === 'next' ? 24 : 0 }),
   center: { opacity: 1, x: 0 },
@@ -84,6 +101,29 @@ export function CalendarScreen() {
     }
     fertileRange = { start: fertile.start, end: fertile.end };
   }
+
+  // A fertile window that's already fully over reads as wrong sitting next
+  // to an upcoming period date — only surface it while still current or
+  // upcoming, same as the grid's own dots still show past dates but a
+  // summary card is read as "what's next," not a history log.
+  const fertileVisible = !!fertileRange && diffDays(todayStr, fertileRange.end) >= 0;
+
+  const nextPeriodCaption = nextPeriodRange
+    ? (() => {
+        const daysToNext = diffDays(todayStr, nextPeriodRange.start);
+        if (daysToNext > 0) return `in ${daysToNext} day${daysToNext === 1 ? '' : 's'}`;
+        if (daysToNext === 0) return 'starting today';
+        return 'may be starting soon';
+      })()
+    : null;
+
+  const fertileCaption =
+    fertileVisible && fertileRange
+      ? (() => {
+          const daysToFertile = diffDays(todayStr, fertileRange.start);
+          return daysToFertile > 0 ? `in ${daysToFertile} day${daysToFertile === 1 ? '' : 's'}` : 'happening now';
+        })()
+      : null;
 
   const cells: Array<string | null> = [];
   for (let i = 0; i < startWeekday; i++) cells.push(null);
@@ -208,17 +248,23 @@ export function CalendarScreen() {
         </span>
       </div>
 
-      {nextPeriodRange && fertileRange && (
+      {nextPeriodRange && (
         <Card className="mt-3.5">
-          <CardContent className="flex flex-col gap-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Next period</span>
-              <span className="font-medium text-foreground">{formatDateRange(nextPeriodRange.start, nextPeriodRange.end)}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Fertile window</span>
-              <span className="font-medium text-foreground">{formatDateRange(fertileRange.start, fertileRange.end)}</span>
-            </div>
+          <CardContent className={`grid gap-4 ${fertileVisible ? 'grid-cols-2' : 'grid-cols-1'}`}>
+            <SummaryStat
+              dotClassName="border-[1.5px] border-dashed border-secondary"
+              label="Next period"
+              value={formatDateRange(nextPeriodRange.start, nextPeriodRange.end)}
+              caption={nextPeriodCaption!}
+            />
+            {fertileVisible && fertileRange && (
+              <SummaryStat
+                dotClassName="bg-primary/30"
+                label="Fertile window"
+                value={formatDateRange(fertileRange.start, fertileRange.end)}
+                caption={fertileCaption!}
+              />
+            )}
           </CardContent>
         </Card>
       )}
