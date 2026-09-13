@@ -103,6 +103,31 @@ Depends on: T1–T24
 
 ---
 
+## Phase 7 — React rewrite: the log→prediction feedback loop (in progress)
+*Surfaced via a UX riff tracing real onboarding→log→prediction flows in the React rewrite (`apps/moonflow-pwa-react/`). The through-line: the app hands you a countdown before you've ever logged anything, never explains that logging is what sharpens it, and gives zero acknowledgment when a save actually improves a prediction — the core retention loop is never taught or reinforced.*
+
+**T27 — Onboarding explains the log→prediction loop** (S)
+Onboarding collects one date + two numbers, then Home immediately shows a confident-looking countdown — nothing tells a first-time user that this is a rough starting guess, or that logging is what makes it real. Add brief copy (onboarding itself, or a one-time nudge right after "Get started") making the loop explicit: log your days, predictions sharpen over time.
+
+**T28 — The "estimated" tag is unexplained** (S)
+Home's caption appends `· estimated` in tiny muted text with zero context — a user could see it for months and never learn why, or that logging real periods removes it. Make it discoverable inline (tap/press for a one-line explanation, or a persistent sub-caption) without leaving Home.
+
+**T29 — Saving a log gives no feedback loop back to the prediction** (M)
+Save closes the drawer and returns you to Home/Calendar, which just renders normally — nothing acknowledges "got it, here's what changed." Give Home a visible, positive signal right after a fresh save (a brief confirmation tied to the ring/headline, not a generic toast disconnected from the prediction).
+
+**T30 — Recent-logs list / history browsing** (M)
+The only way to see or edit a past day today is paging Calendar month-by-month and tapping one day at a time — no list, no search-by-date. Real gap for anyone using this more than a couple months, and especially for irregular-cycle users who lean on their own history more since predictions can't help them as much. Needs a placement decision (new view? folded into an existing screen?) before sizing further.
+
+**T31 — Export/Import have no connecting narrative** (S)
+Two isolated Settings rows with no explanation of the actual cross-device workflow (export → send the file to the other device → import there). Fine for a technical user, opaque for anyone else. Add a short inline explanation near the two rows.
+
+**T32 — Insights' empty state gives no partial-progress signal** (S)
+"Not enough history yet" is honest but static — no sense of "3 days logged so far, keep going." Show real progress toward the threshold instead of a flat wait message.
+
+Depends on: T6–T13 (React rewrite Home/Calendar/Settings/Insights/LogEntry/Onboarding)
+
+---
+
 ## Backlog — V2 & Explorations
 *Deliberately left loose, not broken into tickets yet — that's its own future work, once V1 has actually shipped and been lived with for a cycle or two.*
 
