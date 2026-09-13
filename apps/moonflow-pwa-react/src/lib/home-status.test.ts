@@ -15,6 +15,8 @@ describe('computeHomeStatus', () => {
     expect(status.cycleDay).toBe(2);
     expect(status.cyclePhase).toBe('period');
     expect(status.isEstimated).toBe(false);
+    expect(status.headline).toBe('Day 2');
+    expect(status.caption).toBe('of your period');
   });
 
   it('reports days-to-next-period once a prediction is confirmed', () => {
@@ -30,6 +32,8 @@ describe('computeHomeStatus', () => {
     expect(status.statusText).toMatch(/day.*to next period/);
     expect(status.isEstimated).toBe(false);
     expect(status.cyclePhase).toBe('luteal');
+    expect(status.headline).toMatch(/^\d+ days?$/);
+    expect(status.caption).toBe('to your next period');
   });
 
   it('reports the follicular phase between a period ending and the fertile window opening', () => {
@@ -57,6 +61,9 @@ describe('computeHomeStatus', () => {
     );
     expect(status.statusText).toBe('predictions need a bit more history');
     expect(status.cyclePhase).toBe('unknown');
+    // Real logged history exists (just too irregular to predict confidently)
+    // — headline still shows the real cycle day, not a "new user" welcome.
+    expect(status.headline).toBe(`Day ${status.cycleDay}`);
   });
 
   it('falls back to an estimate from the onboarding date with no logged periods yet', () => {
@@ -82,5 +89,33 @@ describe('computeHomeStatus', () => {
     );
     expect(status.isFertile).toBe(true);
     expect(status.statusText).toBe('fertile window');
+    expect(status.headline).toMatch(/^(\d+ days? left|Last day)$/);
+    expect(status.caption).toBe('in your fertile window');
+  });
+
+  it('shows "Today" when the predicted period starts today', () => {
+    const status = computeHomeStatus(
+      [
+        { date: '2026-06-01', flow: 'medium' },
+        { date: '2026-06-29', flow: 'medium' },
+      ],
+      { avgCycleLength: 28, lastPeriodStart: null },
+      new Date(2026, 6, 27), // 28 days after 2026-06-29 = 2026-07-27
+    );
+    expect(status.headline).toBe('Today');
+    expect(status.caption).toBe('your period may start today');
+  });
+
+  it('shows "Any day now" once the predicted date has passed with no period logged', () => {
+    const status = computeHomeStatus(
+      [
+        { date: '2026-06-01', flow: 'medium' },
+        { date: '2026-06-29', flow: 'medium' },
+      ],
+      { avgCycleLength: 28, lastPeriodStart: null },
+      new Date(2026, 6, 30), // well past the 2026-07-27 prediction
+    );
+    expect(status.headline).toBe('Any day now');
+    expect(status.caption).toBe('your period may be starting soon');
   });
 });

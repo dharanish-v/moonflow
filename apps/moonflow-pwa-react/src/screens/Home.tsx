@@ -24,7 +24,6 @@ export function HomeScreen() {
   const navigate = useNavigate();
 
   const status = computeHomeStatus(entries, settings);
-  const dayLabel = status.cycleDay !== null ? `Day ${status.cycleDay}` : 'Welcome';
   const quote = quoteOfTheDay(status.cyclePhase);
 
   return (
@@ -34,9 +33,9 @@ export function HomeScreen() {
 
         <Card className="mb-5">
           <CardContent className="flex flex-col items-center py-5 text-center">
-            <div className="text-3xl font-bold text-foreground">{dayLabel}</div>
+            <div className="text-3xl font-bold text-foreground">{status.headline}</div>
             <div className="mt-1 text-xs text-muted-foreground">
-              {status.statusText}
+              {status.caption}
               {status.isEstimated ? ' · estimated' : ''}
             </div>
           </CardContent>
