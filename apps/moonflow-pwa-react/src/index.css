@@ -126,7 +126,23 @@
    any viewport wider than the app's own content, ported verbatim from the
    vanilla app's index.html. No component library ships this (nor the tab
    bar's floating-capsule positioning in TabBar.tsx) — real CSS, same
-   documented exception the vanilla app's own ADR-032 already drew. */
+   documented exception the vanilla app's own ADR-032 already drew.
+
+   #phone-frame itself does NOT scroll — #app-content does (below). A real
+   bug, caught live once Insights grew a recent-logs list long enough to
+   actually need scrolling: with `overflow-y: auto` and `transform` on the
+   *same* element, TabBar (position: fixed, using this element's transform
+   as its containing block per spec) gets pulled into that element's own
+   scrolling content — it's positioned like `absolute` relative to this
+   box, and an absolutely-positioned descendant scrolls with its container's
+   overflow same as anything else in it. TabBar visually scrolled away
+   with the page instead of staying pinned. The fix: the transformed box
+   and the scrolling box can't be the same element — #phone-frame keeps the
+   transform and clips (`overflow: hidden`) at a fixed size; #app-content
+   fills it (`inset: 0`) and does the actual scrolling; TabBar is #app-
+   content's *sibling*, not its child (router/router.tsx's RootLayout), so
+   it's outside the scrolling region entirely while still anchored to
+   #phone-frame's box. */
 #phone-frame {
   position: relative;
   width: 100%;
@@ -138,8 +154,7 @@
      scrollbars it shouldn't" mobile bug. */
   height: 100dvh;
   background: var(--background);
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   transform: translateZ(0);
 }
 
@@ -177,7 +192,12 @@
      on top of this, same layering as the bottom-padding tab-bar clearance
      above. */
   padding-top: env(safe-area-inset-top, 0px);
-  min-height: 100%;
+  /* The real scrolling element — see #phone-frame's own comment above for
+     why this can't also be the transformed element. */
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;

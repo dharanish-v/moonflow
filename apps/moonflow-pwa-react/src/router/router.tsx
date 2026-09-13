@@ -18,12 +18,24 @@ import { PinSetupScreen } from '../screens/PinSetup';
 import { SettingsScreen } from '../screens/Settings';
 import { AppGate } from './AppGate';
 
+// #app-content wraps AppGate (every branch: splash/lock/onboarding/real
+// screens all get its padding + flex-column treatment uniformly) and is the
+// one element that actually scrolls (index.css). TabBar sits as its
+// *sibling*, not its child — real bug, caught live: with TabBar nested
+// inside the scrolling box, it visually scrolled away with the content
+// instead of staying pinned, invisible on every screen until one had
+// content tall enough to actually scroll (Insights' recent-logs list was
+// the first).
 function RootLayout() {
   return (
-    <AppGate>
-      <Outlet />
+    <>
+      <main id="app-content">
+        <AppGate>
+          <Outlet />
+        </AppGate>
+      </main>
       <TabBar />
-    </AppGate>
+    </>
   );
 }
 
