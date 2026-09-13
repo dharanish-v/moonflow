@@ -103,6 +103,10 @@ export function OnboardingScreen() {
         onChange={setPeriodLength}
       />
 
+      <p className="mb-3.5 text-center text-xs text-muted-foreground">
+        This gives you a starting guess — logging each cycle makes it sharper over time.
+      </p>
+
       <Button disabled={!lastPeriodStart} onClick={() => void handleSubmit()} className="h-11 w-full text-sm">
         Get started
       </Button>
