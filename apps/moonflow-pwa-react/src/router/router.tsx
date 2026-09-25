@@ -28,14 +28,9 @@ import { AppGate } from './AppGate';
 // the first).
 function RootLayout() {
   return (
-    <>
-      <main id="app-content">
-        <AppGate>
-          <Outlet />
-        </AppGate>
-      </main>
-      <TabBar />
-    </>
+    <AppGate tabBar={<TabBar />}>
+      <Outlet />
+    </AppGate>
   );
 }
 

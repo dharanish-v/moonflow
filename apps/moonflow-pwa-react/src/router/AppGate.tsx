@@ -30,7 +30,20 @@ function RouteTracker({ onRouteChange }: { onRouteChange: (href: string) => void
   return null;
 }
 
-export function AppGate({ children }: { children: ReactNode }) {
+/** #app-content is the one scrolling element; TabBar must sit beside it,
+ * not inside it (see router.tsx). AppGate owns both so the tab bar only
+ * exists once the gate is open — rendered over the lock screen, it used to
+ * navigate the (unmounted) routes behind it. */
+function Frame({ children, tabBar }: { children: ReactNode; tabBar?: ReactNode }) {
+  return (
+    <>
+      <main id="app-content">{children}</main>
+      {tabBar}
+    </>
+  );
+}
+
+export function AppGate({ children, tabBar }: { children: ReactNode; tabBar?: ReactNode }) {
   const { booted, settings } = useAppState();
   const router = useRouter();
   // Applies the resolved .light/.dark class to <html> — shadcn's theme
@@ -91,18 +104,18 @@ export function AppGate({ children }: { children: ReactNode }) {
     router.history.replace(target);
   }
 
-  if (!booted || !hasResolvedLock) return <SplashScreen />;
-  if (isLocked) return <PinUnlockScreen onUnlock={handleUnlock} />;
-  if (!settings.onboardingComplete) return <OnboardingScreen />;
+  if (!booted || !hasResolvedLock) return <Frame><SplashScreen /></Frame>;
+  if (isLocked) return <Frame><PinUnlockScreen onUnlock={handleUnlock} /></Frame>;
+  if (!settings.onboardingComplete) return <Frame><OnboardingScreen /></Frame>;
 
   return (
-    <>
+    <Frame tabBar={tabBar}>
       <RouteTracker
         onRouteChange={(href) => {
           lastRouteRef.current = href;
         }}
       />
       {children}
-    </>
+    </Frame>
   );
 }

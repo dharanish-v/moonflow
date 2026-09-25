@@ -83,6 +83,25 @@ describe('AppGate — PIN lock', () => {
   });
 });
 
+describe('AppGate — tab bar never leaks past the gate', () => {
+  it('hides the tab bar on the PIN lock screen', async () => {
+    await renderGated('#/', LOCKED_SETTINGS);
+    expect(screen.getByRole('heading', { name: /enter your pin/i })).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'Primary' })).not.toBeInTheDocument();
+  });
+
+  it('hides the tab bar during onboarding', async () => {
+    await renderGated('#/', { onboardingComplete: false });
+    expect(screen.queryByRole('navigation', { name: 'Primary' })).not.toBeInTheDocument();
+  });
+
+  it('shows the tab bar once unlocked', async () => {
+    await renderGated('#/', { ...LOCKED_SETTINGS, lastPeriodStart: '2026-08-01' });
+    fireEvent.change(screen.getByLabelText('Enter your PIN'), { target: { value: '1234' } });
+    expect(await screen.findByRole('navigation', { name: 'Primary' })).toBeInTheDocument();
+  });
+});
+
 describe('AppGate — onboarding', () => {
   it('shows onboarding when not yet onboarded, skipping the lock entirely', async () => {
     await renderGated('#/settings', { onboardingComplete: false });
