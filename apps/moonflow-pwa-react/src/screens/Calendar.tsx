@@ -120,7 +120,7 @@ export function CalendarScreen() {
   while (cells.length < 42) cells.push(null);
 
   function handleSelectDate(dateStr: string) {
-    navigate({ to: '/log', search: { date: dateStr } });
+    navigate({ to: '/log', search: { date: dateStr, from: 'calendar' } });
   }
 
   function handleChangeMonth(direction: 'prev' | 'next') {

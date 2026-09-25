@@ -34,5 +34,5 @@ export async function renderRouted(
   // and a synchronous getByRole() right after sees an empty tree.
   await router.load();
   const app = <RouterProvider router={router} />;
-  return render(wrapper ? wrapper(app) : app);
+  return { ...render(wrapper ? wrapper(app) : app), router };
 }

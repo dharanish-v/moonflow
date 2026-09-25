@@ -126,7 +126,7 @@ export function HomeScreen() {
         </motion.div>
 
         <Button
-          onClick={() => navigate({ to: '/log', search: { date: todayString() } })}
+          onClick={() => navigate({ to: '/log', search: { date: todayString(), from: 'home' } })}
           className="h-11 w-full gap-1.5 text-sm"
         >
           <NotebookPen className="size-4" aria-hidden="true" />

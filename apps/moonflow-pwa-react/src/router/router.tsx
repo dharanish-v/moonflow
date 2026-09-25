@@ -79,9 +79,15 @@ const pinSetupRoute = createRoute({
   component: PinSetupScreen,
 });
 
+export type LogOrigin = 'home' | 'calendar' | 'insights';
+
 export interface LogSearch {
   date?: string;
+  /** Where the sheet was opened from — closing/saving returns there. */
+  from?: LogOrigin;
 }
+
+const LOG_ORIGINS: ReadonlySet<string> = new Set(['home', 'calendar', 'insights']);
 
 // Exported (not inlined into logRoute below) so tests can build their own
 // throwaway '/log' route without duplicating this shape.
@@ -92,6 +98,7 @@ export interface LogSearch {
 export function validateLogSearch(search: Record<string, unknown>): LogSearch {
   return {
     date: isRealDate(search.date) && !isFutureDate(search.date) ? search.date : undefined,
+    from: typeof search.from === 'string' && LOG_ORIGINS.has(search.from) ? (search.from as LogOrigin) : undefined,
   };
 }
 

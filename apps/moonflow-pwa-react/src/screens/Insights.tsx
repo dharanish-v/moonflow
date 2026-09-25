@@ -181,7 +181,7 @@ export function InsightsScreen() {
               <div key={entry.date}>
                 <Button
                   variant="ghost"
-                  onClick={() => navigate({ to: '/log', search: { date: entry.date } })}
+                  onClick={() => navigate({ to: '/log', search: { date: entry.date, from: 'insights' } })}
                   className="h-11 w-full justify-between rounded-none px-3.5 text-left"
                 >
                   <span className="text-xs text-foreground">

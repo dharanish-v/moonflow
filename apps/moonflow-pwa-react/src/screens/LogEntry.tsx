@@ -13,7 +13,7 @@
 // Flow/Symptoms/Mood are shadcn's ToggleGroup (single/single/single-select,
 // Symptoms would be "multiple") with app-specific variants added to
 // ui/toggle.tsx (pill/chip/mood) rather than separate bespoke components.
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -43,6 +43,8 @@ import type { FlowId, LogEntryInput, MoodId, SymptomId } from '../lib/types';
 import { useDraftAutosave } from '../hooks/useDraftAutosave';
 import { useAppDispatch, useAppState } from '../state/store';
 
+const ORIGIN_PATH = { home: '/', calendar: '/calendar', insights: '/insights' } as const;
+
 export function LogEntryScreen() {
   const { entries, settings } = useAppState();
   const dispatch = useAppDispatch();
@@ -52,7 +54,13 @@ export function LogEntryScreen() {
   const saveSettingsPatch = useSaveSettings();
 
   const date = search.date || todayString();
+  const isToday = date === todayString();
   const existingEntry = entries.find((e) => e.date === date) ?? null;
+  // Where closing/saving returns to: the screen that opened the sheet. Links
+  // without an origin fall back to the old rule (edits → Calendar).
+  const returnTo = search.from ? ORIGIN_PATH[search.from] : existingEntry ? '/calendar' : '/';
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const viewportListenerRef = useRef<(() => void) | null>(null);
 
   const initial = resolveInitialDraft(date, existingEntry, settings.draftEntry);
   const [flow, setFlow] = useState<FlowId | null>(initial.flow);
@@ -66,12 +74,31 @@ export function LogEntryScreen() {
     return { date, flow, symptoms, mood, note, ...overrides };
   }
 
+  const isDirty =
+    flow !== initial.flow ||
+    mood !== initial.mood ||
+    note !== initial.note ||
+    symptoms.length !== initial.symptoms.length ||
+    symptoms.some((s) => !initial.symptoms.includes(s));
+
+  useEffect(
+    () => () => {
+      if (viewportListenerRef.current) window.visualViewport?.removeEventListener('resize', viewportListenerRef.current);
+    },
+    [],
+  );
+
+  function requestClose() {
+    if (isDirty) setConfirmDiscard(true);
+    else void goBack();
+  }
+
   async function goBack() {
     clearDraft();
     // A failed clear leaves a stale draft for this date — harmless (it
     // pre-fills the form next time), so closing still closes.
     await saveSettingsPatch({ draftEntry: null });
-    navigate({ to: existingEntry ? '/calendar' : '/', replace: true });
+    navigate({ to: returnTo, replace: true });
   }
 
   async function handleSave() {
@@ -90,10 +117,10 @@ export function LogEntryScreen() {
     // the "just used the app's core action" moment — flag it so Home can
     // acknowledge the save instead of just silently re-rendering. Editing
     // an existing entry lands on Calendar instead, where this doesn't apply.
-    if (existingEntry) {
-      navigate({ to: '/calendar', replace: true });
-    } else {
+    if (returnTo === '/' && !existingEntry) {
       navigate({ to: '/', search: { justLogged: true }, replace: true });
+    } else {
+      navigate({ to: returnTo, replace: true });
     }
   }
 
@@ -107,11 +134,11 @@ export function LogEntryScreen() {
     clearDraft();
     dispatch({ type: 'REMOVE_ENTRY', date });
     dispatch({ type: 'PATCH_SETTINGS', patch: { draftEntry: null } });
-    navigate({ to: '/calendar', replace: true });
+    navigate({ to: returnTo, replace: true });
   }
 
   return (
-    <Drawer open onOpenChange={(open) => { if (!open) void goBack(); }}>
+    <Drawer open onOpenChange={(open) => { if (!open) requestClose(); }}>
       <DrawerContent className="mx-auto max-w-[26rem] px-4 pb-5">
         <div className="mb-5 flex items-center justify-between px-0 pt-2">
           <DrawerTitle className="text-base font-medium text-foreground">{formatHeaderDate(date)}</DrawerTitle>
@@ -124,13 +151,14 @@ export function LogEntryScreen() {
         </div>
 
         <div className="mb-5">
-          <span className="mb-1.5 block text-xs text-muted-foreground">Flow</span>
+          <span id="log-flow-label" className="mb-1.5 block text-xs text-muted-foreground">Flow</span>
           <ToggleGroup
             type="single"
+            aria-labelledby="log-flow-label"
             value={flow ?? ''}
             onValueChange={(value) => {
-              if (!value) return;
-              const id = value as FlowId;
+              // Tapping the selected option again clears it.
+              const id = value ? (value as FlowId) : null;
               setFlow(id);
               reportDraft(currentDraft({ flow: id }));
             }}
@@ -145,9 +173,11 @@ export function LogEntryScreen() {
         </div>
 
         <div className="mb-5">
-          <span className="mb-1.5 block text-xs text-muted-foreground">Symptoms</span>
+          <span id="log-symptoms-label" className="mb-1.5 block text-xs text-muted-foreground">Symptoms</span>
           <ToggleGroup
             type="multiple"
+            role="group"
+            aria-labelledby="log-symptoms-label"
             value={symptoms}
             onValueChange={(value) => {
               const next = value as SymptomId[];
@@ -165,13 +195,13 @@ export function LogEntryScreen() {
         </div>
 
         <div className="mb-5">
-          <span className="mb-1.5 block text-xs text-muted-foreground">Mood</span>
+          <span id="log-mood-label" className="mb-1.5 block text-xs text-muted-foreground">Mood</span>
           <ToggleGroup
             type="single"
+            aria-labelledby="log-mood-label"
             value={mood ?? ''}
             onValueChange={(value) => {
-              if (!value) return;
-              const id = value as MoodId;
+              const id = value ? (value as MoodId) : null;
               setMood(id);
               reportDraft(currentDraft({ mood: id }));
             }}
@@ -180,8 +210,8 @@ export function LogEntryScreen() {
             {MOOD_OPTIONS.map((opt) => {
               const Icon = MOOD_ICONS[opt.id];
               return (
-                <ToggleGroupItem key={opt.id} value={opt.id} variant="mood" aria-label={opt.id} className="size-11 p-0">
-                  <Icon />
+                <ToggleGroupItem key={opt.id} value={opt.id} variant="mood" aria-label={opt.label} className="size-11 p-0">
+                  <Icon className="size-7" />
                 </ToggleGroupItem>
               );
             })}
@@ -195,7 +225,7 @@ export function LogEntryScreen() {
           <Textarea
             id="log-note"
             value={note}
-            placeholder="Add a note for today..."
+            placeholder={isToday ? 'Add a note for today…' : 'Add a note…'}
             onFocus={(e) => {
               // The index.html <meta interactive-widget> fix covers
               // Chromium; iOS Safari (the platform this is installed as a
@@ -204,12 +234,18 @@ export function LogEntryScreen() {
               // the keyboard has actually opened — visualViewport's own
               // resize event is what fires once it does, which is the
               // moment this textarea might newly be hidden behind it.
+              // One listener at a time — refocusing without a keyboard resize
+              // (hardware keyboard) used to stack them up.
               const el = e.currentTarget;
-              window.visualViewport?.addEventListener(
-                'resize',
-                () => el.scrollIntoView({ block: 'center', behavior: 'smooth' }),
-                { once: true },
-              );
+              const vv = window.visualViewport;
+              if (!vv) return;
+              if (viewportListenerRef.current) vv.removeEventListener('resize', viewportListenerRef.current);
+              const onResize = () => {
+                el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                viewportListenerRef.current = null;
+              };
+              viewportListenerRef.current = onResize;
+              vv.addEventListener('resize', onResize, { once: true });
             }}
             onChange={(e) => {
               setNote(e.target.value);
@@ -254,6 +290,18 @@ export function LogEntryScreen() {
         <Button disabled={isSaving} onClick={() => void handleSave()} className="h-11 w-full text-sm">
           {isSaving ? 'Saving…' : 'Save'}
         </Button>
+        <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Discard changes?</AlertDialogTitle>
+              <AlertDialogDescription>What you entered for {formatHeaderDate(date)} hasn't been saved.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={() => void goBack()}>Discard</AlertDialogAction>
+              <AlertDialogCancel>Keep editing</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DrawerContent>
     </Drawer>
   );
