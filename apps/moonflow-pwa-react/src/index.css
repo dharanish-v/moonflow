@@ -176,6 +176,16 @@
   }
 }
 
+/* T49 privacy cover (usePrivacyScreen): while backgrounded, an opaque layer
+   hides everything so the iOS app-switcher snapshot shows no data. */
+.privacy-cover #phone-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--background);
+  z-index: 100;
+}
+
 /* Both entries use apple-mobile-web-app-status-bar-style=black-translucent
    (white status-bar text, content drawn underneath). In the light theme that
    white text would sit on a light background, so paint the status-bar area

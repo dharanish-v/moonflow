@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { RouterProvider } from '@tanstack/react-router';
 import { createAppRouter } from './router/router';
 import { StateProvider } from './state/store';
+import { usePrivacyScreen } from './hooks/usePrivacyScreen';
 
 // #phone-frame is static chrome, unrelated to routing. #app-content lives
 // inside RootLayout (router/router.tsx), not here — it has to sit alongside
@@ -11,6 +12,7 @@ import { StateProvider } from './state/store';
 // comment for the full mechanism.
 function App() {
   const [router] = useState(() => createAppRouter());
+  usePrivacyScreen();
 
   return (
     <StateProvider>
