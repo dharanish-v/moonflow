@@ -147,6 +147,20 @@ export async function deleteEntry(date: string): Promise<boolean> {
   }
 }
 
+/** Forgot-PIN recovery: erase every entry and setting on this device. */
+export async function eraseAllData(): Promise<boolean> {
+  try {
+    await db.transaction('rw', db.entries, db.settings, async () => {
+      await db.entries.clear();
+      await db.settings.clear();
+    });
+    return true;
+  } catch (err) {
+    console.error('eraseAllData failed:', err);
+    return false;
+  }
+}
+
 /** Writes an imported payload (see lib/import.ts): entries upsert by date
  * (bulkPut, same overwrite-by-date semantics saveEntry already uses), and
  * only the three cycle settings an import actually restores — never the

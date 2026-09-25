@@ -15,6 +15,7 @@ import { HomeScreen } from '../screens/Home';
 import { InsightsScreen } from '../screens/Insights';
 import { LogEntryScreen } from '../screens/LogEntry';
 import { PinSetupScreen } from '../screens/PinSetup';
+import { PinVerifyScreen } from '../screens/PinVerify';
 import { SettingsScreen } from '../screens/Settings';
 import { AppGate } from './AppGate';
 import { isFutureDate, isRealDate } from '../lib/dates';
@@ -93,6 +94,21 @@ export function validateLogSearch(search: Record<string, unknown>): LogSearch {
   };
 }
 
+export interface PinVerifySearch {
+  intent: 'disable' | 'change';
+}
+
+export function validatePinVerifySearch(search: Record<string, unknown>): PinVerifySearch {
+  return { intent: search.intent === 'change' ? 'change' : 'disable' };
+}
+
+const pinVerifyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/settings/pin-verify',
+  validateSearch: validatePinVerifySearch,
+  component: PinVerifyScreen,
+});
+
 const logRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/log',
@@ -106,6 +122,7 @@ export const routeTree = rootRoute.addChildren([
   insightsRoute,
   settingsRoute,
   pinSetupRoute,
+  pinVerifyRoute,
   logRoute,
 ]);
 

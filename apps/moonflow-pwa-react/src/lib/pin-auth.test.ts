@@ -1,33 +1,48 @@
-// Ported 1:1 from tests/pin-auth-tests.html — same 8 assertions.
 import { describe, expect, it } from 'vitest';
 import { PIN_LOCKOUT_AFTER_ATTEMPTS, PIN_LOCKOUT_SECONDS } from './constants';
-import { evaluatePinAttempt, hashPin, needsUnlock } from './pin-auth';
+import { PIN_HASH_ITERATIONS, evaluatePinAttempt, hashPin, needsUnlock, verifyPin } from './pin-auth';
 import { SETTINGS_DEFAULTS } from './db';
 
-describe('hashPin', () => {
-  it('matches the known SHA-256 hex digest for "1234"', async () => {
-    const hash = await hashPin('1234');
-    expect(hash).toBe('03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4');
+// SHA-256("1234") — the legacy (pre-T34) stored format.
+const LEGACY_1234 = '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
+const FAST = 1000; // test-only iteration count; production uses PIN_HASH_ITERATIONS
+
+describe('hashPin / verifyPin', () => {
+  it('produces a salted PBKDF2 record, never a bare digest', async () => {
+    const stored = await hashPin('1234', FAST);
+    expect(stored).toMatch(/^pbkdf2-sha256\$1000\$[A-Za-z0-9+/=]+\$[A-Za-z0-9+/=]+$/);
+    expect(stored).not.toContain(LEGACY_1234);
   });
 
-  it('is deterministic for the same input', async () => {
-    const a = await hashPin('9999');
-    const b = await hashPin('9999');
-    expect(a).toBe(b);
+  it('salts: the same PIN hashes differently each time', async () => {
+    expect(await hashPin('1234', FAST)).not.toBe(await hashPin('1234', FAST));
   });
 
-  it('differs for different inputs', async () => {
-    const a = await hashPin('0000');
-    const b = await hashPin('9999');
-    expect(a).not.toBe(b);
+  it('verifies the right PIN and rejects a wrong one', async () => {
+    const stored = await hashPin('1234', FAST);
+    expect(await verifyPin('1234', stored, FAST)).toEqual({ ok: true, needsUpgrade: false });
+    expect((await verifyPin('0000', stored, FAST)).ok).toBe(false);
+  });
+
+  it('still accepts a legacy SHA-256 hash, flagged for upgrade', async () => {
+    expect(await verifyPin('1234', LEGACY_1234)).toEqual({ ok: true, needsUpgrade: true });
+    expect((await verifyPin('0000', LEGACY_1234)).ok).toBe(false);
+  });
+
+  it('flags a record hashed with fewer iterations than production for upgrade', async () => {
+    const stored = await hashPin('1234', FAST);
+    expect((await verifyPin('1234', stored, PIN_HASH_ITERATIONS)).needsUpgrade).toBe(true);
+  });
+
+  it('rejects a malformed stored value', async () => {
+    expect((await verifyPin('1234', 'garbage')).ok).toBe(false);
   });
 });
 
 describe('evaluatePinAttempt', () => {
   it('correct PIN unlocks and clears attempts + lockout', () => {
     const result = evaluatePinAttempt({
-      enteredHash: 'abc',
-      storedHash: 'abc',
+      matches: true,
       failedAttempts: 3,
       lockoutUntil: null,
       now: 1000,
@@ -39,8 +54,7 @@ describe('evaluatePinAttempt', () => {
 
   it('wrong PIN below the lockout threshold just increments attempts', () => {
     const result = evaluatePinAttempt({
-      enteredHash: 'wrong',
-      storedHash: 'abc',
+      matches: false,
       failedAttempts: 2,
       lockoutUntil: null,
       now: 1000,
@@ -52,8 +66,7 @@ describe('evaluatePinAttempt', () => {
 
   it(`the ${PIN_LOCKOUT_AFTER_ATTEMPTS}th wrong PIN triggers a lockout and resets the counter`, () => {
     const result = evaluatePinAttempt({
-      enteredHash: 'wrong',
-      storedHash: 'abc',
+      matches: false,
       failedAttempts: PIN_LOCKOUT_AFTER_ATTEMPTS - 1,
       lockoutUntil: null,
       now: 1000,
@@ -66,8 +79,7 @@ describe('evaluatePinAttempt', () => {
 
   it('an attempt made while still locked out is rejected without touching the hash', () => {
     const result = evaluatePinAttempt({
-      enteredHash: 'abc', // even the CORRECT hash must be rejected while locked
-      storedHash: 'abc',
+      matches: true, // even the CORRECT PIN must be rejected while locked
       failedAttempts: 0,
       lockoutUntil: 5000,
       now: 4000,
@@ -80,14 +92,26 @@ describe('evaluatePinAttempt', () => {
 
   it('lockout that has just expired is treated as not locked', () => {
     const result = evaluatePinAttempt({
-      enteredHash: 'abc',
-      storedHash: 'abc',
+      matches: true,
       failedAttempts: 0,
       lockoutUntil: 5000,
       now: 5000,
     });
     expect(result.ok).toBe(true);
     expect(result.locked).toBe(false);
+  });
+});
+
+describe('evaluatePinAttempt — clock rollback', () => {
+  it('never locks out longer than the lockout period, even if the clock was set back', () => {
+    const result = evaluatePinAttempt({
+      matches: false,
+      failedAttempts: 0,
+      lockoutUntil: 10_000_000, // written before the clock jumped back hours
+      now: 1000,
+    });
+    expect(result.locked).toBe(true);
+    expect(result.secondsRemaining).toBe(PIN_LOCKOUT_SECONDS);
   });
 });
 

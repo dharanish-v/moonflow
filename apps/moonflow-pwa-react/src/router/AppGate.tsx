@@ -94,6 +94,14 @@ export function AppGate({ children, tabBar }: { children: ReactNode; tabBar?: Re
     return () => document.removeEventListener('visibilitychange', onVisibilityChange);
   }, [hasResolvedLock, settings]);
 
+  /** Forgot-PIN erase finished: drop the lock and re-read the (now empty)
+   * database, which lands on onboarding. */
+  function handleErased() {
+    setIsLocked(false);
+    setHasResolvedLock(false);
+    dispatch({ type: 'BOOT_RETRY' });
+  }
+
   function handleUnlock() {
     const target = deepLinkTargetRef.current ?? lastRouteRef.current;
     deepLinkTargetRef.current = null;
@@ -107,7 +115,7 @@ export function AppGate({ children, tabBar }: { children: ReactNode; tabBar?: Re
 
   if (bootError) return <Frame><BootErrorScreen onRetry={() => dispatch({ type: 'BOOT_RETRY' })} /></Frame>;
   if (!booted || !hasResolvedLock) return <Frame><SplashScreen /></Frame>;
-  if (isLocked) return <Frame><PinUnlockScreen onUnlock={handleUnlock} /></Frame>;
+  if (isLocked) return <Frame><PinUnlockScreen onUnlock={handleUnlock} onErased={handleErased} /></Frame>;
   if (!settings.onboardingComplete) return <Frame><OnboardingScreen /></Frame>;
 
   return (

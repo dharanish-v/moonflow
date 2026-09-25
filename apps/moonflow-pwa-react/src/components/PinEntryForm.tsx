@@ -4,7 +4,7 @@
 // gets the correct iOS keyboard for free. Wrong-PIN shake via framer-motion's
 // imperative animate() against the real input node.
 import { animate, useReducedMotion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Alert, AlertDescription } from './ui/alert';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -18,9 +18,11 @@ export interface PinEntryFormProps {
   error?: string | null;
   onComplete: (pin: string) => void;
   onCancel?: () => void;
+  /** Extra actions under the form (e.g. the unlock screen's "Forgot PIN?"). */
+  footer?: ReactNode;
 }
 
-export function PinEntryForm({ title, error, onComplete, onCancel }: PinEntryFormProps) {
+export function PinEntryForm({ title, error, onComplete, onCancel, footer }: PinEntryFormProps) {
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const prefersReducedMotion = useReducedMotion();
@@ -75,6 +77,7 @@ export function PinEntryForm({ title, error, onComplete, onCancel }: PinEntryFor
           Cancel
         </Button>
       )}
+      {footer}
     </div>
   );
 }

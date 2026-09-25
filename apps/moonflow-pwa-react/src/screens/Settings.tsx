@@ -69,14 +69,13 @@ export function SettingsScreen() {
     await persist({ themeMode: mode });
   }
 
-  async function handleTogglePinLock(enabled: boolean) {
+  // Turning the lock off needs the current PIN (anyone holding the unlocked
+  // phone could otherwise disable it for good). Turning it on always sets a
+  // fresh PIN — silently reviving one set months ago locked people out of
+  // their own data at the next relock.
+  function handleTogglePinLock(enabled: boolean) {
     if (!enabled) {
-      await persist({ pinLockEnabled: false });
-      return;
-    }
-    if (settings.pinHash) {
-      // Re-enabling after a prior disable — no need to set a new PIN.
-      await persist({ pinLockEnabled: true });
+      navigate({ to: '/settings/pin-verify', search: { intent: 'disable' } });
       return;
     }
     navigate({ to: '/settings/pin-setup' });
@@ -176,8 +175,18 @@ export function SettingsScreen() {
 
       <Card className="gap-0 p-0 ring-border/60">
         <SettingsRow icon={<LockIcon className="size-4" />} label="App lock">
-          <Switch checked={settings.pinLockEnabled} onCheckedChange={(v) => void handleTogglePinLock(v)} aria-label="App lock" />
+          <Switch checked={settings.pinLockEnabled} onCheckedChange={handleTogglePinLock} aria-label="App lock" />
         </SettingsRow>
+        {settings.pinLockEnabled && (
+          <>
+            <Separator />
+            <SettingsRowButton
+              icon={<LockIcon className="size-4" />}
+              label="Change PIN"
+              onClick={() => navigate({ to: '/settings/pin-verify', search: { intent: 'change' } })}
+            />
+          </>
+        )}
         <Separator />
         <SettingsRow icon={<BellIcon className="size-4" />} label="Reminders">
           <Switch checked={false} disabled aria-label="Reminders" title="Coming in V2" />

@@ -1,43 +1,72 @@
 // src/screens/PinUnlock.tsx — the security gate's real chrome (unlock mode
-// only; see AppGate.tsx for why pin-lock isn't a route). Setting a *new* PIN
-// is a separate, Settings-local flow (Settings.tsx) — it never touches
-// AppGate.isLocked since it only ever runs while already unlocked.
+// only; see AppGate.tsx for why pin-lock isn't a route).
+//
+// "Forgot PIN?" is the only recovery path, and it's honest about what it
+// costs: the PIN gates the only copy of the data, so the way out is erasing
+// it and starting over (restoring from an export afterwards).
 import { useState } from 'react';
 import { PinEntryForm } from '../components/PinEntryForm';
-import { evaluatePinAttempt, hashPin } from '../lib/pin-auth';
-import { useAppDispatch, useAppState } from '../state/store';
-import { useSaveSettings } from '../state/useSaveSettings';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
+import { Button } from '../components/ui/button';
+import { eraseAllData } from '../lib/db';
+import { usePinAttempt } from '../hooks/usePinAttempt';
 
-export function PinUnlockScreen({ onUnlock }: { onUnlock: () => void }) {
-  const { settings } = useAppState();
-  const dispatch = useAppDispatch();
-  const saveSettingsPatch = useSaveSettings();
-  const [error, setError] = useState<string | null>(null);
+export function PinUnlockScreen({ onUnlock, onErased }: { onUnlock: () => void; onErased?: () => void }) {
+  const { attempt, error } = usePinAttempt();
+  const [eraseFailed, setEraseFailed] = useState(false);
 
   async function handleComplete(pin: string) {
-    setError(null);
-    const enteredHash = await hashPin(pin);
-    const result = evaluatePinAttempt({
-      enteredHash,
-      storedHash: settings.pinHash ?? '',
-      failedAttempts: settings.pinFailedAttempts,
-      lockoutUntil: settings.pinLockoutUntil,
-      now: Date.now(),
-    });
-
-    if (result.patch) {
-      // Persist the attempt counter before reacting to it; if the write
-      // fails, still apply it in memory so this session's lockout holds.
-      const ok = await saveSettingsPatch(result.patch);
-      if (!ok) dispatch({ type: 'PATCH_SETTINGS', patch: result.patch });
-    }
-
-    if (result.ok) {
-      onUnlock();
-      return;
-    }
-    setError(result.locked ? `Too many attempts — try again in ${result.secondsRemaining}s` : 'Wrong PIN');
+    if (await attempt(pin)) onUnlock();
   }
 
-  return <PinEntryForm title="Enter your PIN" error={error} onComplete={(pin) => void handleComplete(pin)} />;
+  async function handleErase() {
+    const ok = await eraseAllData();
+    if (!ok) {
+      setEraseFailed(true);
+      return;
+    }
+    onErased?.();
+  }
+
+  return (
+    <PinEntryForm
+      title="Enter your PIN"
+      error={eraseFailed ? "Couldn't erase — try again" : error}
+      onComplete={(pin) => void handleComplete(pin)}
+      footer={
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" className="h-11 w-full text-sm text-muted-foreground">
+              Forgot PIN?
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Erase everything and start over?</AlertDialogTitle>
+              <AlertDialogDescription>
+                There's no way to recover a forgotten PIN. This permanently erases every log and setting on this device. If
+                you exported a backup, you can import it after setting up again.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={() => void handleErase()}>
+                Erase everything
+              </AlertDialogAction>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      }
+    />
+  );
 }
