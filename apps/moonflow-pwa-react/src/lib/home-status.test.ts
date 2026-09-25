@@ -56,6 +56,7 @@ describe('computeHomeStatus', () => {
     expect(status.cyclePhase).toBe('fertile');
     expect(status.headline).toMatch(/^(\d+ days? left|Last day)$/);
     expect(status.caption).toBe('in your estimated fertile window');
+    expect(status.detail).toMatch(/not birth control/i);
   });
 
   it('shows "Today" on the predicted date', () => {

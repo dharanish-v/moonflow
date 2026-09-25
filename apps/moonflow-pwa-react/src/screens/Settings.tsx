@@ -263,6 +263,11 @@ export function SettingsScreen() {
         </Alert>
       )}
 
+      <p className="mt-5 text-center text-xs text-muted-foreground">
+        Predictions are estimates from your own logs. This app is not a medical device, can't diagnose anything, and must
+        never be used as birth control.
+      </p>
+
       <Drawer open={editField !== null} onOpenChange={(open) => { if (!open) setEditField(null); }}>
         <DrawerContent className="mx-auto max-w-[26rem] px-4 pb-5">
           <DrawerHeader className="px-0">

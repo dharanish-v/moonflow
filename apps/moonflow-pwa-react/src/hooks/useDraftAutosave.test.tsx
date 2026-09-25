@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { act, render } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
 import { describe, expect, it } from 'vitest';
 import { getSetting } from '../lib/db';
@@ -31,11 +31,8 @@ describe('useDraftAutosave', () => {
         <StateProbe onState={(s) => (latest = s)} />
       </StateProvider>,
     );
-    await act(async () => {
-      setHidden(true);
-      await new Promise((r) => setTimeout(r, 20));
-    });
-    expect(latest!.settings.draftEntry).toEqual(DRAFT);
+    act(() => setHidden(true));
+    await waitFor(() => expect(latest!.settings.draftEntry).toEqual(DRAFT));
     expect(await getSetting('draftEntry')).toEqual(DRAFT);
     setHidden(false);
   });

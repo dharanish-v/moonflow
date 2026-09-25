@@ -9,6 +9,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
 import { addDays, derivePeriods, diffDays, formatDate, parseDate } from '../lib/cycle-math';
 import { computeForecast } from '../lib/forecast';
+import { FERTILE_DISCLAIMER } from '../lib/home-status';
 import { useAppDispatch, useAppState } from '../state/store';
 
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -266,6 +267,9 @@ export function CalendarScreen() {
               />
             )}
           </CardContent>
+          {fertileVisible && (
+            <p className="px-4 pb-3 text-center text-xs text-muted-foreground">{FERTILE_DISCLAIMER}</p>
+          )}
         </Card>
       )}
     </div>

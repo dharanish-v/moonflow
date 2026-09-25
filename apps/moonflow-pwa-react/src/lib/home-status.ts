@@ -37,6 +37,8 @@ export interface HomeStatus {
   ring: CycleRing | null;
 }
 
+export const FERTILE_DISCLAIMER = 'Estimate only — not birth control.';
+
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 function shortDate(dateStr: string): string {
@@ -131,10 +133,14 @@ export function computeHomeStatus(
     }
   }
 
+  // In the fertile window the one thing worth saying is the medical caveat:
+  // calendar-based windows miss fertile days for most people (Wilcox 2000).
   const detail =
-    f.status === 'on-period' || f.status === 'late'
-      ? null
-      : `Expected ${formatDateRange(next.rangeStart, next.rangeEnd)}${f.irregular ? ' · cycles vary' : ''}`;
+    cyclePhase === 'fertile'
+      ? FERTILE_DISCLAIMER
+      : f.status === 'on-period' || f.status === 'late'
+        ? null
+        : `Expected ${formatDateRange(next.rangeStart, next.rangeEnd)}${f.irregular ? ' · cycles vary' : ''}`;
 
   let ring: CycleRing | null = null;
   const totalDays = diffDays(f.lastStart, next.date);

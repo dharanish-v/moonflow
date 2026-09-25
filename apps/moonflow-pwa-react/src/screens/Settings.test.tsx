@@ -32,6 +32,11 @@ describe('SettingsScreen', () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  it('states plainly that the app is not a medical device', async () => {
+    await renderSettings();
+    expect(screen.getByText(/not a medical device/i)).toBeInTheDocument();
+  });
+
   it('a failed theme write shows an error and leaves the theme unchanged', async () => {
     vi.spyOn(db, 'saveSettings').mockResolvedValue(false);
     const state = await renderSettings();
