@@ -7,14 +7,13 @@
 import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { PinEntryForm } from '../components/PinEntryForm';
-import { setSetting } from '../lib/db';
 import { hashPin } from '../lib/pin-auth';
-import { useAppDispatch } from '../state/store';
+import { useSaveSettings } from '../state/useSaveSettings';
 
 type Mode = 'create-1' | 'create-2';
 
 export function PinSetupScreen() {
-  const dispatch = useAppDispatch();
+  const saveSettingsPatch = useSaveSettings();
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('create-1');
   const [firstPinHash, setFirstPinHash] = useState<string | null>(null);
@@ -29,9 +28,13 @@ export function PinSetupScreen() {
       return;
     }
     if (hash === firstPinHash) {
-      await setSetting('pinHash', hash);
-      await setSetting('pinLockEnabled', true);
-      dispatch({ type: 'PATCH_SETTINGS', patch: { pinHash: hash, pinLockEnabled: true } });
+      const ok = await saveSettingsPatch({ pinHash: hash, pinLockEnabled: true });
+      if (!ok) {
+        setMode('create-1');
+        setFirstPinHash(null);
+        setError("Couldn't save — try again");
+        return;
+      }
       navigate({ to: '/settings', replace: true });
     } else {
       setMode('create-1');

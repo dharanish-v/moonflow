@@ -63,6 +63,21 @@ export async function setSetting<K extends SettingKey>(key: K, value: Settings[K
   }
 }
 
+/** Write several settings in one transaction — all of them land, or none
+ * do. Multi-key updates (onboarding, PIN setup) must never half-apply: a
+ * committed onboardingComplete with a failed lastPeriodStart used to leave
+ * the app in a state it couldn't render. */
+export async function saveSettings(patch: Partial<Settings>): Promise<boolean> {
+  try {
+    const rows = Object.entries(patch).map(([key, value]) => ({ key, value }) as SettingRow);
+    await db.transaction('rw', db.settings, () => db.settings.bulkPut(rows));
+    return true;
+  } catch (err) {
+    console.error('saveSettings failed:', err);
+    return false;
+  }
+}
+
 /** Load every setting at once, merged over the defaults — used at boot.
  * Throws on a read failure: silently returning defaults would make a real
  * user's device look like a first run (onboarding, PIN lock off). */
@@ -90,6 +105,36 @@ export async function saveEntry(entry: LogEntryInput): Promise<boolean> {
  * failure — an empty list would be indistinguishable from "no history". */
 export async function loadAllEntries(): Promise<Entry[]> {
   return db.entries.orderBy('date').toArray();
+}
+
+/** Saves a day's log and clears the autosaved draft in one transaction.
+ * Returns the stored row (with updatedAt) so callers can update state
+ * directly instead of re-reading every entry. */
+export async function saveEntryAndClearDraft(entry: LogEntryInput): Promise<Entry | null> {
+  try {
+    const stored: Entry = { ...entry, updatedAt: Date.now() };
+    await db.transaction('rw', db.entries, db.settings, async () => {
+      await db.entries.put(stored);
+      await db.settings.put({ key: 'draftEntry', value: null });
+    });
+    return stored;
+  } catch (err) {
+    console.error('saveEntryAndClearDraft failed:', err);
+    return null;
+  }
+}
+
+export async function deleteEntryAndClearDraft(date: string): Promise<boolean> {
+  try {
+    await db.transaction('rw', db.entries, db.settings, async () => {
+      await db.entries.delete(date);
+      await db.settings.put({ key: 'draftEntry', value: null });
+    });
+    return true;
+  } catch (err) {
+    console.error('deleteEntryAndClearDraft failed:', err);
+    return false;
+  }
 }
 
 export async function deleteEntry(date: string): Promise<boolean> {

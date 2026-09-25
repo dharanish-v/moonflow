@@ -19,28 +19,39 @@ import {
   MIN_PERIOD_LENGTH,
 } from '../lib/constants';
 import { formatDate, parseDate } from '../lib/cycle-math';
-import { setSetting } from '../lib/db';
-import { useAppDispatch } from '../state/store';
+import type { Settings } from '../lib/types';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import { useSaveSettings } from '../state/useSaveSettings';
+
+type OnboardingValues = Pick<Settings, 'lastPeriodStart' | 'avgCycleLength' | 'avgPeriodLength'>;
+
+/** One atomic write for everything onboarding collects — a committed
+ * onboardingComplete without its lastPeriodStart used to be unrenderable. */
+export function submitOnboarding(values: OnboardingValues, save: (patch: Partial<Settings>) => Promise<boolean>): Promise<boolean> {
+  return save({ ...values, onboardingComplete: true });
+}
 
 export function OnboardingScreen() {
-  const dispatch = useAppDispatch();
+  const saveSettingsPatch = useSaveSettings();
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [lastPeriodStart, setLastPeriodStart] = useState('');
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [cycleLength, setCycleLength] = useState(DEFAULT_CYCLE_LENGTH);
   const [periodLength, setPeriodLength] = useState(DEFAULT_PERIOD_LENGTH);
 
   async function handleSubmit() {
-    if (!lastPeriodStart) return;
-    await Promise.all([
-      setSetting('lastPeriodStart', lastPeriodStart),
-      setSetting('avgCycleLength', cycleLength),
-      setSetting('avgPeriodLength', periodLength),
-      setSetting('onboardingComplete', true),
-    ]);
-    dispatch({
-      type: 'PATCH_SETTINGS',
-      patch: { lastPeriodStart, avgCycleLength: cycleLength, avgPeriodLength: periodLength, onboardingComplete: true },
-    });
+    if (!lastPeriodStart || isSaving) return;
+    setIsSaving(true);
+    setSaveError(false);
+    const ok = await submitOnboarding(
+      { lastPeriodStart, avgCycleLength: cycleLength, avgPeriodLength: periodLength },
+      saveSettingsPatch,
+    );
+    if (!ok) {
+      setIsSaving(false);
+      setSaveError(true);
+    }
   }
 
   return (
@@ -107,7 +118,12 @@ export function OnboardingScreen() {
         This gives you a starting guess — logging each cycle makes it sharper over time.
       </p>
 
-      <Button disabled={!lastPeriodStart} onClick={() => void handleSubmit()} className="h-11 w-full text-sm">
+      {saveError && (
+        <Alert className="mb-2">
+          <AlertDescription>Couldn't save — try again</AlertDescription>
+        </Alert>
+      )}
+      <Button disabled={!lastPeriodStart || isSaving} onClick={() => void handleSubmit()} className="h-11 w-full text-sm">
         Get started
       </Button>
     </div>

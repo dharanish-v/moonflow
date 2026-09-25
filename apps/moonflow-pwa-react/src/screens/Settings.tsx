@@ -27,12 +27,13 @@ import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { BellIcon, ChevronRightIcon, DownloadIcon, DropletIcon, EyeOffIcon, LockIcon } from '../components/icons';
 import { MAX_CYCLE_LENGTH, MAX_PERIOD_LENGTH, MIN_CYCLE_LENGTH, MIN_PERIOD_LENGTH } from '../lib/constants';
 import { todayString } from '../lib/cycle-math';
-import { importData, loadAllEntries, loadAllSettings, setSetting } from '../lib/db';
+import { importData, loadAllEntries, loadAllSettings } from '../lib/db';
+import { useSaveSettings } from '../state/useSaveSettings';
 import { buildExportPayload, exportFilename, exportShareTitle } from '../lib/export';
 import { isDiscreetInstall } from '../lib/install-identity';
 import { shareOrDownload } from '../lib/share-file';
 import { parseImportPayload, type ImportPayload } from '../lib/import';
-import type { ThemeMode } from '../lib/types';
+import type { Settings, ThemeMode } from '../lib/types';
 import { useAppDispatch, useAppState } from '../state/store';
 
 type EditField = 'avgCycleLength' | 'avgPeriodLength' | null;
@@ -53,23 +54,29 @@ export function SettingsScreen() {
   const [draftValue, setDraftValue] = useState(0);
   const [importError, setImportError] = useState<string | null>(null);
   const [pendingImport, setPendingImport] = useState<{ payload: ImportPayload; skippedEntries: number } | null>(null);
+  const [saveError, setSaveError] = useState(false);
   const importInputRef = useRef<HTMLInputElement>(null);
+  const saveSettingsPatch = useSaveSettings();
+
+  async function persist(patch: Partial<Settings>): Promise<boolean> {
+    setSaveError(false);
+    const ok = await saveSettingsPatch(patch);
+    if (!ok) setSaveError(true);
+    return ok;
+  }
 
   async function handleThemeChange(mode: ThemeMode) {
-    await setSetting('themeMode', mode);
-    dispatch({ type: 'PATCH_SETTINGS', patch: { themeMode: mode } });
+    await persist({ themeMode: mode });
   }
 
   async function handleTogglePinLock(enabled: boolean) {
     if (!enabled) {
-      await setSetting('pinLockEnabled', false);
-      dispatch({ type: 'PATCH_SETTINGS', patch: { pinLockEnabled: false } });
+      await persist({ pinLockEnabled: false });
       return;
     }
     if (settings.pinHash) {
       // Re-enabling after a prior disable — no need to set a new PIN.
-      await setSetting('pinLockEnabled', true);
-      dispatch({ type: 'PATCH_SETTINGS', patch: { pinLockEnabled: true } });
+      await persist({ pinLockEnabled: true });
       return;
     }
     navigate({ to: '/settings/pin-setup' });
@@ -82,12 +89,8 @@ export function SettingsScreen() {
 
   async function handleSaveEdit() {
     if (!editField) return;
-    await setSetting(editField, draftValue);
-    dispatch({
-      type: 'PATCH_SETTINGS',
-      patch: editField === 'avgCycleLength' ? { avgCycleLength: draftValue } : { avgPeriodLength: draftValue },
-    });
-    setEditField(null);
+    const ok = await persist(editField === 'avgCycleLength' ? { avgCycleLength: draftValue } : { avgPeriodLength: draftValue });
+    if (ok) setEditField(null);
   }
 
   async function handleExport() {
@@ -102,14 +105,17 @@ export function SettingsScreen() {
     e.target.value = ''; // allow re-selecting the same file to retry
     if (!file) return;
     setImportError(null);
-    void file.text().then((text) => {
-      const result = parseImportPayload(text);
-      if (!result.ok) {
-        setImportError(result.error);
-        return;
-      }
-      setPendingImport({ payload: result.payload, skippedEntries: result.skippedEntries });
-    });
+    file
+      .text()
+      .then((text) => {
+        const result = parseImportPayload(text);
+        if (!result.ok) {
+          setImportError(result.error);
+          return;
+        }
+        setPendingImport({ payload: result.payload, skippedEntries: result.skippedEntries });
+      })
+      .catch(() => setImportError("Couldn't read that file."));
   }
 
   async function handleImportConfirm() {
@@ -120,8 +126,13 @@ export function SettingsScreen() {
       setImportError("Couldn't import — try again");
       return;
     }
-    const [freshEntries, freshSettings] = await Promise.all([loadAllEntries(), loadAllSettings()]);
-    dispatch({ type: 'BOOT_LOADED', entries: freshEntries, settings: freshSettings });
+    try {
+      const [freshEntries, freshSettings] = await Promise.all([loadAllEntries(), loadAllSettings()]);
+      dispatch({ type: 'BOOT_LOADED', entries: freshEntries, settings: freshSettings });
+    } catch {
+      // The import itself committed; only the re-read failed. A reload re-reads it.
+      setImportError('Imported — reopen the app to see it.');
+    }
   }
 
   const importSummary = (() => {
@@ -230,6 +241,12 @@ export function SettingsScreen() {
         className="hidden"
         onChange={handleImportFileSelected}
       />
+
+      {saveError && (
+        <Alert className="mt-3.5">
+          <AlertDescription>Couldn't save — try again</AlertDescription>
+        </Alert>
+      )}
 
       {importError && (
         <Alert className="mt-3.5">

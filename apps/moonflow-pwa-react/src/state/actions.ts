@@ -28,6 +28,8 @@ export type Action =
   | { type: 'BOOT_FAILED' }
   | { type: 'BOOT_RETRY' }
   | { type: 'SET_ENTRIES'; entries: Entry[] }
+  | { type: 'UPSERT_ENTRY'; entry: Entry }
+  | { type: 'REMOVE_ENTRY'; date: string }
   | { type: 'PATCH_SETTINGS'; patch: Partial<Settings> }
   | { type: 'SET_CALENDAR_MONTH'; month: string }
   | { type: 'SET_EDITING_DATE'; date: string | null }
@@ -59,6 +61,13 @@ export function reducer(state: AppState, action: Action): AppState {
       return { ...state, booted: false, bootError: false, bootAttempt: state.bootAttempt + 1 };
     case 'SET_ENTRIES':
       return { ...state, entries: action.entries };
+    case 'UPSERT_ENTRY': {
+      const rest = state.entries.filter((e) => e.date !== action.entry.date);
+      const entries = [...rest, action.entry].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+      return { ...state, entries };
+    }
+    case 'REMOVE_ENTRY':
+      return { ...state, entries: state.entries.filter((e) => e.date !== action.date) };
     case 'PATCH_SETTINGS':
       return { ...state, settings: { ...state.settings, ...action.patch } };
     case 'SET_CALENDAR_MONTH':

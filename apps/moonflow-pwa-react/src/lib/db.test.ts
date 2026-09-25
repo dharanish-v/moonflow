@@ -4,7 +4,19 @@
 // verified for real, not assumed from reading the Dexie call.
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db, deleteEntry, getSetting, loadAllEntries, loadAllSettings, saveEntry, setSetting, SETTINGS_DEFAULTS } from './db';
+import {
+  db,
+  deleteEntry,
+  deleteEntryAndClearDraft,
+  getSetting,
+  loadAllEntries,
+  loadAllSettings,
+  saveEntry,
+  saveEntryAndClearDraft,
+  saveSettings,
+  setSetting,
+  SETTINGS_DEFAULTS,
+} from './db';
 
 beforeEach(async () => {
   await db.entries.clear();
@@ -63,5 +75,47 @@ describe('settings', () => {
     await setSetting('pinLockEnabled', true);
     const settings = await loadAllSettings();
     expect(settings).toEqual({ ...SETTINGS_DEFAULTS, pinLockEnabled: true });
+  });
+});
+
+describe('saveSettings (atomic multi-key write)', () => {
+  it('writes every key in the patch', async () => {
+    const ok = await saveSettings({ lastPeriodStart: '2026-09-01', avgCycleLength: 30, onboardingComplete: true });
+    expect(ok).toBe(true);
+    const s = await loadAllSettings();
+    expect(s.lastPeriodStart).toBe('2026-09-01');
+    expect(s.avgCycleLength).toBe(30);
+    expect(s.onboardingComplete).toBe(true);
+  });
+
+  it('writes nothing at all if any part fails', async () => {
+    const original = db.settings.bulkPut.bind(db.settings);
+    db.settings.bulkPut = (() => Promise.reject(new Error('quota'))) as unknown as typeof db.settings.bulkPut;
+    try {
+      expect(await saveSettings({ lastPeriodStart: '2026-09-01', onboardingComplete: true })).toBe(false);
+    } finally {
+      db.settings.bulkPut = original;
+    }
+    const s = await loadAllSettings();
+    expect(s.onboardingComplete).toBe(false);
+  });
+});
+
+describe('saveEntryAndClearDraft / deleteEntryAndClearDraft', () => {
+  it('saves the entry, stamps it, clears the draft, and returns the stored row', async () => {
+    await setSetting('draftEntry', { date: '2026-09-04', flow: 'light', symptoms: [], mood: null, note: 'draft' });
+    const saved = await saveEntryAndClearDraft({ date: '2026-09-04', flow: 'medium', symptoms: [], mood: null, note: '' });
+    expect(saved?.flow).toBe('medium');
+    expect(typeof saved?.updatedAt).toBe('number');
+    expect(await getSetting('draftEntry')).toBeNull();
+    expect(await loadAllEntries()).toHaveLength(1);
+  });
+
+  it('deletes the entry and clears the draft together', async () => {
+    await saveEntry({ date: '2026-09-04', flow: 'medium', symptoms: [], mood: null, note: '' });
+    await setSetting('draftEntry', { date: '2026-09-04', flow: 'light', symptoms: [], mood: null, note: 'draft' });
+    expect(await deleteEntryAndClearDraft('2026-09-04')).toBe(true);
+    expect(await loadAllEntries()).toHaveLength(0);
+    expect(await getSetting('draftEntry')).toBeNull();
   });
 });

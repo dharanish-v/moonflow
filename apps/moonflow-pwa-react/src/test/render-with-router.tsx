@@ -3,7 +3,7 @@
 // useNavigate()/useSearch() to not throw, not real multi-route matching —
 // AppGate.test.tsx is the one exception that builds the real routeTree
 // directly, since it's specifically testing route-to-route behavior.
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { RouterProvider, createMemoryHistory, createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
 import { render } from '@testing-library/react';
 
@@ -13,10 +13,14 @@ export async function renderRouted(
     path?: string;
     initialEntries?: string[];
     validateSearch?: (search: Record<string, unknown>) => unknown;
+    /** Wraps the whole router (e.g. a StateProvider that must outlive navigation). */
+    wrapper?: (children: ReactNode) => ReactElement;
   } = {},
 ) {
-  const { path = '/', initialEntries = [path], validateSearch } = opts;
-  const rootRoute = createRootRoute();
+  const { path = '/', initialEntries = [path], validateSearch, wrapper } = opts;
+  // Any navigation away from the route under test lands on a blank stub
+  // instead of a not-found error.
+  const rootRoute = createRootRoute({ notFoundComponent: () => null });
   const testRoute = createRoute({
     getParentRoute: () => rootRoute,
     path,
@@ -29,5 +33,6 @@ export async function renderRouted(
   // without this, render() returns before the route's component commits,
   // and a synchronous getByRole() right after sees an empty tree.
   await router.load();
-  return render(<RouterProvider router={router} />);
+  const app = <RouterProvider router={router} />;
+  return render(wrapper ? wrapper(app) : app);
 }

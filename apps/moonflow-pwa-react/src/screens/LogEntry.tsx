@@ -36,7 +36,8 @@ import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { MOOD_ICONS } from '../components/icons';
 import { FLOW_OPTIONS, MOOD_OPTIONS, SYMPTOM_OPTIONS } from '../lib/constants';
 import { todayString } from '../lib/cycle-math';
-import { deleteEntry, loadAllEntries, saveEntry, setSetting } from '../lib/db';
+import { deleteEntryAndClearDraft, saveEntryAndClearDraft } from '../lib/db';
+import { useSaveSettings } from '../state/useSaveSettings';
 import { formatHeaderDate, resolveInitialDraft } from '../lib/log-entry';
 import type { FlowId, LogEntryInput, MoodId, SymptomId } from '../lib/types';
 import { useDraftAutosave } from '../hooks/useDraftAutosave';
@@ -48,6 +49,7 @@ export function LogEntryScreen() {
   const navigate = useNavigate();
   const search = useSearch({ from: '/log' });
   const { reportDraft, clearDraft } = useDraftAutosave();
+  const saveSettingsPatch = useSaveSettings();
 
   const date = search.date || todayString();
   const existingEntry = entries.find((e) => e.date === date) ?? null;
@@ -66,24 +68,23 @@ export function LogEntryScreen() {
 
   async function goBack() {
     clearDraft();
-    await setSetting('draftEntry', null);
-    dispatch({ type: 'PATCH_SETTINGS', patch: { draftEntry: null } });
+    // A failed clear leaves a stale draft for this date — harmless (it
+    // pre-fills the form next time), so closing still closes.
+    await saveSettingsPatch({ draftEntry: null });
     navigate({ to: existingEntry ? '/calendar' : '/', replace: true });
   }
 
   async function handleSave() {
     setIsSaving(true);
     setSaveError(false);
-    const ok = await saveEntry({ date, flow, symptoms, mood, note });
-    if (ok === false) {
+    const saved = await saveEntryAndClearDraft({ date, flow, symptoms, mood, note });
+    if (!saved) {
       setIsSaving(false);
       setSaveError(true);
       return;
     }
     clearDraft();
-    await setSetting('draftEntry', null);
-    const freshEntries = await loadAllEntries();
-    dispatch({ type: 'SET_ENTRIES', entries: freshEntries });
+    dispatch({ type: 'UPSERT_ENTRY', entry: saved });
     dispatch({ type: 'PATCH_SETTINGS', patch: { draftEntry: null } });
     // A fresh save (no prior entry for this date) landing back on Home is
     // the "just used the app's core action" moment — flag it so Home can
@@ -97,11 +98,14 @@ export function LogEntryScreen() {
   }
 
   async function handleClear() {
-    await deleteEntry(date);
+    setSaveError(false);
+    const ok = await deleteEntryAndClearDraft(date);
+    if (!ok) {
+      setSaveError(true);
+      return;
+    }
     clearDraft();
-    await setSetting('draftEntry', null);
-    const freshEntries = await loadAllEntries();
-    dispatch({ type: 'SET_ENTRIES', entries: freshEntries });
+    dispatch({ type: 'REMOVE_ENTRY', date });
     dispatch({ type: 'PATCH_SETTINGS', patch: { draftEntry: null } });
     navigate({ to: '/calendar', replace: true });
   }
