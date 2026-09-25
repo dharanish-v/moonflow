@@ -28,7 +28,9 @@ import { BellIcon, ChevronRightIcon, DownloadIcon, DropletIcon, EyeOffIcon, Lock
 import { MAX_CYCLE_LENGTH, MAX_PERIOD_LENGTH, MIN_CYCLE_LENGTH, MIN_PERIOD_LENGTH } from '../lib/constants';
 import { todayString } from '../lib/cycle-math';
 import { importData, loadAllEntries, loadAllSettings, setSetting } from '../lib/db';
-import { buildExportPayload, exportFilename } from '../lib/export';
+import { buildExportPayload, exportFilename, exportShareTitle } from '../lib/export';
+import { isDiscreetInstall } from '../lib/install-identity';
+import { shareOrDownload } from '../lib/share-file';
 import { parseImportPayload, type ImportPayload } from '../lib/import';
 import type { ThemeMode } from '../lib/types';
 import { useAppDispatch, useAppState } from '../state/store';
@@ -89,23 +91,10 @@ export function SettingsScreen() {
   }
 
   async function handleExport() {
+    const discreet = isDiscreetInstall();
     const json = buildExportPayload(entries, settings, new Date().toISOString());
-    const file = new File([json], exportFilename(todayString()), { type: 'application/json' });
-
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: 'Moonflow export' });
-        return;
-      } catch {
-        // user cancelled the share sheet, or it failed — fall through to a plain download
-      }
-    }
-    const url = URL.createObjectURL(file);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = file.name;
-    a.click();
-    URL.revokeObjectURL(url);
+    const file = new File([json], exportFilename(todayString(), discreet), { type: 'application/json' });
+    await shareOrDownload(file, exportShareTitle(discreet));
   }
 
   function handleImportFileSelected(e: ChangeEvent<HTMLInputElement>) {
