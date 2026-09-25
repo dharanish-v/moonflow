@@ -206,13 +206,15 @@ export function SettingsScreen() {
           onClick={() => openEdit('avgPeriodLength', settings.avgPeriodLength)}
         />
         <Separator />
+        {!isDiscreetInstall() && (
+          <>
         <Collapsible open={discreetOpen} onOpenChange={setDiscreetOpen}>
           <CollapsibleTrigger asChild>
             <SettingsRowButton icon={<EyeOffIcon className="size-4" />} label="Discreet icon" />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <p className="px-3.5 pb-2 text-xs text-muted-foreground">
-              To switch to a discreet home screen icon, remove Moonflow from your home screen, then open{' '}
+              To switch to a discreet home screen icon, remove this app from your home screen, then open{' '}
               <a href="planner.html" target="_blank" rel="noopener noreferrer" className="text-primary underline">
                 the alternate install link
               </a>{' '}
@@ -220,7 +222,9 @@ export function SettingsScreen() {
             </p>
           </CollapsibleContent>
         </Collapsible>
-        <Separator />
+            <Separator />
+          </>
+        )}
         <SettingsRowButton icon={<DownloadIcon className="size-4" />} label="Export data" onClick={() => void handleExport()} />
         <Separator />
         <SettingsRowButton

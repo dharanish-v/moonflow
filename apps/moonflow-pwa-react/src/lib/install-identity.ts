@@ -4,3 +4,8 @@
 export function isDiscreetInstall(pathname: string = window.location.pathname): boolean {
   return pathname.endsWith('planner.html');
 }
+
+/** The name the user sees for this install — never "Moonflow" in Planner. */
+export function appName(pathname: string = window.location.pathname): 'Moonflow' | 'Planner' {
+  return isDiscreetInstall(pathname) ? 'Planner' : 'Moonflow';
+}

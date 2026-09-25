@@ -72,7 +72,7 @@ function clampNumber(value: unknown, min: number, max: number, fallback: number)
 
 /** Parses and validates a previously-exported Moonflow JSON file. */
 export function parseImportPayload(json: string): ImportResult {
-  if (json.length > MAX_IMPORT_BYTES) return { ok: false, error: "That file is too large to be a Moonflow export." };
+  if (json.length > MAX_IMPORT_BYTES) return { ok: false, error: "That file is too large to be a backup from this app." };
   let parsed: unknown;
   try {
     parsed = JSON.parse(json);
@@ -86,7 +86,7 @@ export function parseImportPayload(json: string): ImportResult {
     return { ok: false, error: 'This file is from a newer version of the app.' };
   }
   if (!Array.isArray(obj.entries) || typeof obj.settings !== 'object' || obj.settings === null) {
-    return { ok: false, error: "This doesn't look like a Moonflow export." };
+    return { ok: false, error: "This doesn't look like a backup from this app." };
   }
 
   const validEntries = obj.entries.map(normalizeEntry).filter((e): e is Entry => e !== null);

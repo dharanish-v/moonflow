@@ -9,6 +9,7 @@ import { Calendar } from '../components/ui/calendar';
 import { Label } from '../components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Stepper } from '../components/Stepper';
+import { CalendarDays } from 'lucide-react';
 import { MoonIcon } from '../components/icons';
 import {
   DEFAULT_CYCLE_LENGTH,
@@ -22,6 +23,7 @@ import { formatDate, parseDate } from '../lib/cycle-math';
 import type { Settings } from '../lib/types';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { useSaveSettings } from '../state/useSaveSettings';
+import { isDiscreetInstall } from '../lib/install-identity';
 
 type OnboardingValues = Pick<Settings, 'lastPeriodStart' | 'avgCycleLength' | 'avgPeriodLength'>;
 
@@ -32,6 +34,7 @@ export function submitOnboarding(values: OnboardingValues, save: (patch: Partial
 }
 
 export function OnboardingScreen() {
+  const discreet = isDiscreetInstall();
   const saveSettingsPatch = useSaveSettings();
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
@@ -57,9 +60,11 @@ export function OnboardingScreen() {
   return (
     <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col justify-center px-4 py-5">
       <div className="mx-auto mb-3.5 flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary">
-        <MoonIcon className="size-5" />
+        {discreet ? <CalendarDays className="size-5" aria-hidden="true" /> : <MoonIcon className="size-5" />}
       </div>
-      <h1 className="mb-1 text-center text-base font-medium text-foreground">Let's set up Moonflow</h1>
+      <h1 className="mb-1 text-center text-base font-medium text-foreground">
+        {discreet ? "Let's get set up" : "Let's set up Moonflow"}
+      </h1>
       <p className="mb-5 text-center text-xs text-muted-foreground">
         Just enough to make your first prediction
       </p>
