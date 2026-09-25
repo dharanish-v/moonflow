@@ -39,6 +39,23 @@ describe('CalendarScreen', () => {
     expect(screen.getByText(/not birth control/i)).toBeInTheDocument();
   });
 
+  it('still shows the next predicted period while currently on a period', async () => {
+    const entries = [
+      { date: '2026-08-19', flow: 'medium' as const, symptoms: [], mood: null, note: '', updatedAt: 0 },
+      { date: '2026-08-20', flow: 'medium' as const, symptoms: [], mood: null, note: '', updatedAt: 0 },
+    ];
+    await renderCalendar({ lastPeriodStart: '2026-08-19' }, '2026-09', entries);
+    // 19 Aug + 28 = 16 Sep
+    expect(screen.getByRole('button', { name: /^(September 16|16 September), predicted period/ })).toBeInTheDocument();
+  });
+
+  it('does not fade future days — their prediction colours carry the information', async () => {
+    await renderCalendar({ lastPeriodStart: '2026-08-10' }, '2026-09');
+    const day = screen.getByRole('button', { name: /^(September 7|7 September), predicted period/ });
+    expect(day).toBeDisabled();
+    expect(day.className).not.toMatch(/opacity-/);
+  });
+
   it('renders without crashing when there is no start date at all', async () => {
     await renderCalendar({ lastPeriodStart: null }, '2026-08');
     expect(screen.getByRole('button', { name: /^(August 20|20 August)/ })).toBeInTheDocument();

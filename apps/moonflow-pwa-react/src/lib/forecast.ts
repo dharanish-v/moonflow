@@ -16,7 +16,7 @@
 //   et al. 2019), fertile window widened by the prediction range.
 
 import { addDays, derivePeriods, diffDays, formatDate } from './cycle-math';
-import { MAX_PERIOD_LENGTH, MIN_PERIOD_LENGTH } from './constants';
+import { MAX_PERIOD_LENGTH, MIN_PERIOD_LENGTH, PERIOD_GAP_TOLERANCE_DAYS } from './constants';
 import type { Entry, Period, Settings } from './types';
 
 export const MIN_VALID_CYCLE_DAYS = 15;
@@ -100,7 +100,10 @@ export function computeForecast(
   const latestPeriod = periods.at(-1) ?? null;
   const starts = cycleStarts(periods, settings.lastPeriodStart);
 
-  const recentPeriodLengths = periods.slice(-PREDICTION_WINDOW_CYCLES).map((p) => diffDays(p.start, p.end) + 1);
+  // Only finished periods say how long a period lasts: one that ended within
+  // the missed-log tolerance may still be going (day 1 is not a 1-day period).
+  const completedPeriods = periods.filter((p) => diffDays(p.end, todayStr) > PERIOD_GAP_TOLERANCE_DAYS);
+  const recentPeriodLengths = completedPeriods.slice(-PREDICTION_WINDOW_CYCLES).map((p) => diffDays(p.start, p.end) + 1);
   const periodLength = recentPeriodLengths.length
     ? clamp(Math.round(median(recentPeriodLengths)), MIN_PERIOD_LENGTH, MAX_PERIOD_LENGTH)
     : settings.avgPeriodLength;

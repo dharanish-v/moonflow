@@ -112,7 +112,7 @@ export function computeHomeStatus(
       if (inFertile && f.fertile) {
         const daysLeft = diffDays(todayStr, f.fertile.end);
         headline = daysLeft <= 0 ? 'Last day' : `${plural(daysLeft, 'day')} left`;
-        caption = 'in your estimated fertile window';
+        caption = 'in your fertile window';
         cyclePhase = 'fertile';
       } else {
         headline = plural(daysToNext, 'day');

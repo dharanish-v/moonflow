@@ -16,29 +16,30 @@ export function PinSetupScreen() {
   const saveSettingsPatch = useSaveSettings();
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('create-1');
-  const [firstPinHash, setFirstPinHash] = useState<string | null>(null);
+  // The first entry is held in memory (never stored) and compared as plain
+  // digits: hashes are salted, so two hashes of the same PIN never match.
+  const [firstPin, setFirstPin] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleComplete(pin: string) {
-    const hash = await hashPin(pin);
     if (mode === 'create-1') {
-      setFirstPinHash(hash);
+      setFirstPin(pin);
       setMode('create-2');
       setError(null);
       return;
     }
-    if (hash === firstPinHash) {
-      const ok = await saveSettingsPatch({ pinHash: hash, pinLockEnabled: true });
+    if (pin === firstPin) {
+      const ok = await saveSettingsPatch({ pinHash: await hashPin(pin), pinLockEnabled: true });
       if (!ok) {
         setMode('create-1');
-        setFirstPinHash(null);
+        setFirstPin(null);
         setError("Couldn't save — try again");
         return;
       }
       navigate({ to: '/settings', replace: true });
     } else {
       setMode('create-1');
-      setFirstPinHash(null);
+      setFirstPin(null);
       setError("PINs didn't match — try again");
     }
   }

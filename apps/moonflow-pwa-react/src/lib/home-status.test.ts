@@ -55,7 +55,7 @@ describe('computeHomeStatus', () => {
     const status = computeHomeStatus(REGULAR, BASE, new Date(2026, 7, 9));
     expect(status.cyclePhase).toBe('fertile');
     expect(status.headline).toMatch(/^(\d+ days? left|Last day)$/);
-    expect(status.caption).toBe('in your estimated fertile window');
+    expect(status.caption).toBe('in your fertile window');
     expect(status.detail).toMatch(/not birth control/i);
   });
 

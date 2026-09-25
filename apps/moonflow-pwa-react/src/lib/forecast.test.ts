@@ -148,6 +148,15 @@ describe('computeForecast — status over the cycle', () => {
     expect(f.fertile!.end >= '2026-08-09').toBe(true);
   });
 
+  it('ignores the period still in progress when predicting the next one\'s length', () => {
+    // Day 1 of a new period logged today — it isn't a 1-day period, it just started.
+    const f = computeForecast([...regular, ...period('2026-08-21', 1)], SETTINGS, day('2026-08-21'));
+    expect(f.status).toBe('on-period');
+    expect(f.periodLength).toBe(4);
+    const fresh = computeForecast(period('2026-09-25', 1), { ...SETTINGS, lastPeriodStart: '2026-09-13' }, day('2026-09-25'));
+    expect(fresh.periodLength).toBe(5); // falls back to the setting
+  });
+
   it('predicts period length as the median of recent logged periods, falling back to the setting', () => {
     expect(computeForecast(regular, SETTINGS, day('2026-08-01')).periodLength).toBe(4);
     expect(computeForecast([], { ...SETTINGS, lastPeriodStart: '2026-09-10' }, day('2026-09-15')).periodLength).toBe(5);

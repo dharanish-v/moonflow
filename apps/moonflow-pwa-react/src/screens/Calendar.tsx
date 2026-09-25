@@ -9,24 +9,12 @@ import { Card, CardContent } from '../components/ui/card';
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
 import { addDays, derivePeriods, diffDays, formatDate, parseDate } from '../lib/cycle-math';
 import { computeForecast } from '../lib/forecast';
-import { FERTILE_DISCLAIMER } from '../lib/home-status';
+import { FERTILE_DISCLAIMER, formatDateRange } from '../lib/home-status';
 import { useAppDispatch, useAppState } from '../state/store';
 
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 type NavDirection = 'prev' | 'next' | null;
-
-/** "Sep 26–30" (same month) or "Sep 29–Oct 3" (crossing one) — never a year,
- * this app's predictions never look far enough ahead to need one. */
-function formatDateRange(startStr: string, endStr: string): string {
-  const start = parseDate(startStr);
-  const end = parseDate(endStr);
-  const startLabel = start.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  if (startStr === endStr) return startLabel;
-  const sameMonth = start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear();
-  const endLabel = end.toLocaleDateString(undefined, sameMonth ? { day: 'numeric' } : { month: 'short', day: 'numeric' });
-  return `${startLabel}–${endLabel}`;
-}
 
 /** One stat in the summary card. The label is a small-caps "kicker" tinted
  * with the same color family the legend/grid already use for that state
@@ -81,7 +69,8 @@ export function CalendarScreen() {
   let fertilePeak: string | null = null;
   let nextPeriodRange: { start: string; end: string } | null = null;
   let fertileRange: { start: string; end: string } | null = null;
-  if (forecast.next && forecast.status !== 'late' && forecast.status !== 'on-period') {
+  // On-period still has a valid next-cycle prediction; only 'late' has none.
+  if (forecast.next && forecast.status !== 'late') {
     for (let i = 0; i < forecast.periodLength; i++) predictedDates.add(addDays(forecast.next.date, i));
     nextPeriodRange = { start: forecast.next.rangeStart, end: forecast.next.rangeEnd };
   }
@@ -203,10 +192,10 @@ export function CalendarScreen() {
               stateClass = 'bg-secondary text-secondary-foreground';
               stateLabel = 'period day';
             } else if (dateStr === fertilePeak) {
-              stateClass = 'border-[1.5px] border-primary bg-primary/30 font-medium';
+              stateClass = 'bg-primary font-medium text-primary-foreground';
               stateLabel = `peak fertile day${estimateSuffix}`;
             } else if (fertileDates.has(dateStr)) {
-              stateClass = 'bg-primary/15 text-foreground';
+              stateClass = 'border-[1.5px] border-primary text-foreground';
               stateLabel = `fertile window${estimateSuffix}`;
             } else if (predictedDates.has(dateStr)) {
               stateClass = 'border-[1.5px] border-dashed border-secondary text-secondary';
@@ -224,7 +213,7 @@ export function CalendarScreen() {
                   disabled={isFuture}
                   onClick={() => handleSelectDate(dateStr)}
                   aria-label={spokenParts.join(', ')}
-                  className={`flex size-10 items-center justify-center rounded-full text-xs text-foreground disabled:cursor-default disabled:opacity-40 ${stateClass} ${isToday ? 'border-[1.5px] border-foreground' : ''}`}
+                  className={`flex size-10 items-center justify-center rounded-full text-xs text-foreground disabled:cursor-default ${stateClass} ${isFuture && !stateClass ? 'text-muted-foreground' : ''} ${isToday ? 'border-[1.5px] border-foreground' : ''}`}
                 >
                   {dayNum}
                 </button>
@@ -240,7 +229,7 @@ export function CalendarScreen() {
           Period
         </span>
         <span>
-          <span className="mr-1 inline-block size-2 rounded-full bg-primary/30 align-middle" />
+          <span className="mr-1 inline-block size-2 rounded-full border-[1.5px] border-primary align-middle" />
           Fertile
         </span>
         <span>
@@ -250,7 +239,7 @@ export function CalendarScreen() {
       </div>
 
       {nextPeriodRange && (
-        <Card className="mt-12">
+        <Card className="mt-6">
           <CardContent className={`grid gap-4 ${fertileVisible ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <SummaryStat
               accentClassName="text-secondary"

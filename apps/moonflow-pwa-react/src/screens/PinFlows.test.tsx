@@ -56,6 +56,24 @@ describe('PIN flows', () => {
     expect(await screen.findByRole('heading', { name: 'Set a PIN' })).toBeInTheDocument();
   });
 
+  it('setting a PIN (entered twice) saves a salted hash and returns to Settings', async () => {
+    await renderApp('#/settings', { ...BASE, pinLockEnabled: false, pinHash: null });
+    fireEvent.click(await screen.findByRole('switch', { name: 'App lock' }));
+    await typePin(/set a pin/i, '2468');
+    await typePin(/confirm your pin/i, '2468');
+    expect(await screen.findByRole('heading', { name: 'Settings' }, { timeout: 5000 })).toBeInTheDocument();
+    expect(await getSetting('pinLockEnabled')).toBe(true);
+    expect(await getSetting('pinHash')).toMatch(/^pbkdf2-sha256\$/);
+  });
+
+  it('mismatched confirmation starts over', async () => {
+    await renderApp('#/settings/pin-setup', { ...BASE, pinLockEnabled: false, pinHash: null });
+    await typePin(/set a pin/i, '2468');
+    await typePin(/confirm your pin/i, '1357');
+    expect(await screen.findByText("PINs didn't match — try again")).toBeInTheDocument();
+    expect(await getSetting('pinHash')).toBeNull();
+  });
+
   it('unlocking with a legacy SHA-256 PIN upgrades it to salted PBKDF2', async () => {
     await renderApp('#/', { ...BASE, pinLockEnabled: true, pinHash: LEGACY_1234 });
     await typePin(/enter your pin/i, '1234');

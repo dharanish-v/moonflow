@@ -129,22 +129,24 @@ Depends on: T6–T13 (React rewrite Home/Calendar/Settings/Insights/LogEntry/Onb
 
 ---
 
-## Phase 8 — Full audit P0: security, data safety, correctness
+## Phase 8 — Full audit P0: security, data safety, correctness ✅ done
 *From the 2026-09-25 five-way audit (code line-by-line, live browser, docs-vs-code, iOS platform research, medical/competitor research). Decisions: keep shadcn + current deps (maintainability over minimalism), hybrid identity (shadcn structure, original navy/gold tokens), stay on dharanish-v.github.io for now (Face ID/passkeys deferred until origin is final), ship per phase.*
 
-**T33 — Export strips device settings, versioned format** (S) — export carried `pinHash` (unsalted SHA-256 of 4 digits, reversible instantly). Export only entries + cycle settings + `schemaVersion`; neutral filename/title in discreet install.
-**T34 — PIN hardening** (M) — disabling the lock requires the current PIN; re-enabling always goes through setup; Change PIN; salted PBKDF2 hash (legacy SHA-256 upgraded on next unlock); lockout clamped against clock rollback; forgot-PIN = wipe after warning.
-**T35 — TabBar hidden while gated** (S) — it rendered over lock screen/onboarding and navigated behind the gate.
-**T36 — CSP: no network egress** (S) — `connect-src 'none'`-style meta CSP enforcing "no data leaves the phone".
-**T37 — No bricking: null-safe prediction, error boundary, boot-error screen** (M) — import without a usable start date (or a failed onboarding write) crashed Home/Calendar on every launch; a failed IndexedDB read at boot looked like a first run.
-**T38 — Input validation** (S) — `/log?date=` must be a real, non-future date; import rejects impossible dates, clamps lengths, writes in one transaction.
-**T39 — Never ignore a failed write** (M) — every setSetting/saveEntry/deleteEntry caller checks the result, dispatches only on success, shows the inline error; saved entry upserted locally instead of reload-from-DB.
-**T40 — Draft survives relock** (S) — autosaved draft also goes into state.
-**T41 — Service worker + storage durability** (S) — no reload on first install (only on real update); `navigator.storage.persist()`.
-**T42 — Prediction engine v2** (L) — last 6 valid cycles (15–90d), missed-log exclusion, always a range, confirmed needs ≥2 valid cycles, "Late · N days" state, roll-forward when past due, ovulation −13d, one period-length rule everywhere, Home/Calendar agree.
-**T43 — Medical disclaimers** (S) — "Estimate only. Not birth control." on fertile window; "Not a medical device" in Settings.
-**T44 — Contrast + focus ring, both themes** (M) — WCAG AA text, visible 2px focus ring.
-**T45 — iOS input zoom + tap polish** (S) — form fields ≥16px, no tap highlight, `touch-action: manipulation`, correct light-theme status bar/theme-color.
+**T33 — Export strips device settings, versioned format** (S) ✅ — export carried `pinHash` (unsalted SHA-256 of 4 digits, reversible instantly). Export only entries + cycle settings + `schemaVersion`; neutral filename/title in discreet install.
+**T34 — PIN hardening** (M) ✅ — disabling the lock requires the current PIN; re-enabling always goes through setup; Change PIN; salted PBKDF2 hash (legacy SHA-256 upgraded on next unlock); lockout clamped against clock rollback; forgot-PIN = wipe after warning.
+**T35 — TabBar hidden while gated** (S) ✅ — it rendered over lock screen/onboarding and navigated behind the gate.
+**T36 — CSP: no network egress** (S) ✅ — `connect-src 'none'`-style meta CSP enforcing "no data leaves the phone".
+**T37 — No bricking: null-safe prediction, error boundary, boot-error screen** (M) ✅ — import without a usable start date (or a failed onboarding write) crashed Home/Calendar on every launch; a failed IndexedDB read at boot looked like a first run.
+**T38 — Input validation** (S) ✅ — `/log?date=` must be a real, non-future date; import rejects impossible dates, clamps lengths, writes in one transaction.
+**T39 — Never ignore a failed write** (M) ✅ — every setSetting/saveEntry/deleteEntry caller checks the result, dispatches only on success, shows the inline error; saved entry upserted locally instead of reload-from-DB.
+**T40 — Draft survives relock** (S) ✅ — autosaved draft also goes into state.
+**T41 — Service worker + storage durability** (S) ✅ — no reload on first install (only on real update); `navigator.storage.persist()`.
+**T42 — Prediction engine v2** (L) ✅ — last 6 valid cycles (15–90d), missed-log exclusion, always a range, confirmed needs ≥2 valid cycles, "Late · N days" state, roll-forward when past due, ovulation −13d, one period-length rule everywhere, Home/Calendar agree.
+**T43 — Medical disclaimers** (S) ✅ — "Estimate only. Not birth control." on fertile window; "Not a medical device" in Settings.
+**T44 — Contrast + focus ring, both themes** (M) ✅ — WCAG AA text, visible 2px focus ring.
+**T45 — iOS input zoom + tap polish** (S) ✅ — form fields ≥16px, no tap highlight, `touch-action: manipulation`, correct light-theme status bar/theme-color.
+
+Review (real WebKit 26.6, iPhone 15 Pro profile, production build): every flow passed with zero console errors, CSP violations or failed requests; PBKDF2 unlock ~185ms. The review caught three real bugs unit tests missed, each fixed test-first: PIN setup compared two *salted* hashes (always "didn't match"); Calendar hid the next prediction while on a period; the in-progress period counted as a 1-day period. Also: palette moved up from T58 into T44 (contrast was fixed once, on the final colours).
 
 ## Phase 9 — Trust & data durability
 **T46** Encrypted export (passphrase, AES-GCM/PBKDF2) + CSV export · **T47** Backup nudge ("last backup N days ago") + icon-deletion / per-icon storage warning · **T48** Duress PIN (empty decoy) + panic wipe · **T49** App-switcher privacy blur · **T50** Dexie versionchange/blocked handling · **T51** Discreet mode: no "Moonflow" leaks anywhere in Planner install.
