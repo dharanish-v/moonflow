@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { cspPlugin } from './build/csp.ts'
 
 // base: './' — this deploys to a GitHub Pages subpath (or a preview path
 // during the rewrite), never domain root. Vite's default base:'/' emits
@@ -20,6 +21,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    cspPlugin(),
     tailwindcss(),
     VitePWA({
       // manifest: false — manifest.json/manifest-discreet.json stay
