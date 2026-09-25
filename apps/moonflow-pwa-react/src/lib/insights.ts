@@ -1,20 +1,16 @@
-// src/lib/insights.ts — ported from insights.js's computeInsights. Local
-// median/stdDev, deliberately duplicated rather than imported from
-// cycle-math.ts's own module-private copies — same duplication choice the
-// vanilla app made.
+// src/lib/insights.ts — Insights screen data. Cycle statistics come from the
+// shared forecast (forecast.ts), so Insights uses exactly the cycles the
+// prediction uses: impossible (<15/>90 day) cycles and likely missed logs are
+// excluded here too, instead of dragging the averages around.
 import { SYMPTOM_OPTIONS } from './constants';
-import { derivePeriods, diffDays } from './cycle-math';
+import { diffDays, derivePeriods } from './cycle-math';
+import { computeForecast } from './forecast';
 import type { Entry, SymptomId } from './types';
 
 function median(numbers: number[]): number {
   const sorted = [...numbers].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
   return sorted.length % 2 !== 0 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
-}
-
-function stdDev(numbers: number[]): number {
-  const avg = numbers.reduce((s, n) => s + n, 0) / numbers.length;
-  return Math.sqrt(numbers.reduce((s, n) => s + (n - avg) ** 2, 0) / numbers.length);
 }
 
 export interface TopSymptom {
@@ -30,17 +26,16 @@ export interface Insights {
   variability: number | null;
   cyclesLogged: number;
   recentCycleLengths: number[];
+  /** Gaps long enough that a period was probably never logged. */
+  suspectedMissedCycles: number;
   topSymptoms: TopSymptom[];
 }
 
 export function computeInsights(entries: Array<Pick<Entry, 'date' | 'flow' | 'symptoms'>>): Insights {
   const periods = derivePeriods(entries);
-  const hasEnoughHistory = periods.length >= 2;
-
-  const cycleLengths: number[] = [];
-  for (let i = 1; i < periods.length; i++) {
-    cycleLengths.push(diffDays(periods[i - 1]!.start, periods[i]!.start));
-  }
+  const forecast = computeForecast(entries, { lastPeriodStart: null, avgCycleLength: 28, avgPeriodLength: 5 });
+  const cycleLengths = forecast.usedCycleLengths;
+  const hasEnoughHistory = cycleLengths.length >= 1;
   const periodLengths = periods.map((p) => diffDays(p.start, p.end) + 1);
 
   const symptomCounts: Partial<Record<SymptomId, number>> = {};
@@ -63,9 +58,22 @@ export function computeInsights(entries: Array<Pick<Entry, 'date' | 'flow' | 'sy
     hasEnoughHistory,
     avgCycleLength: hasEnoughHistory ? Math.round(median(cycleLengths)) : null,
     avgPeriodLength: periodLengths.length ? Math.round(median(periodLengths)) : null,
-    variability: hasEnoughHistory ? Math.round(stdDev(cycleLengths)) : null,
+    // Spread between shortest and longest recent cycle — the FIGO regularity measure.
+    variability: hasEnoughHistory ? Math.max(...cycleLengths) - Math.min(...cycleLengths) : null,
     cyclesLogged: periods.length,
-    recentCycleLengths: cycleLengths.slice(-6),
+    recentCycleLengths: cycleLengths,
+    suspectedMissedCycles: forecast.suspectedMissedCycles.length,
     topSymptoms,
   };
+}
+
+/** Bar height in px for the cycle-length chart: 15 days (shortest valid
+ * cycle) sits at the floor, the longest bar (≥45 days of scale) fills the
+ * chart — never overflowing it the way the old fixed px-per-day scale did. */
+export function cycleBarHeight(length: number, all: number[], chartHeight: number): number {
+  const floor = 15;
+  const ceiling = Math.max(45, ...all);
+  const minBar = 8;
+  const ratio = Math.min(1, Math.max(0, (length - floor) / (ceiling - floor)));
+  return Math.round(minBar + ratio * (chartHeight - minBar));
 }

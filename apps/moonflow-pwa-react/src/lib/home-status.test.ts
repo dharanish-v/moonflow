@@ -1,17 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { computeHomeStatus } from './home-status';
+import type { Entry, Settings } from './types';
+
+type S = Pick<Settings, 'avgCycleLength' | 'avgPeriodLength' | 'lastPeriodStart'>;
+const BASE: S = { avgCycleLength: 28, avgPeriodLength: 5, lastPeriodStart: null };
+const med = (date: string): Pick<Entry, 'date' | 'flow'> => ({ date, flow: 'medium' });
+
+// Three single-day periods 28 days apart → 2 valid cycles → confirmed.
+const REGULAR = [med('2026-06-01'), med('2026-06-29'), med('2026-07-27')]; // next: 2026-08-24
 
 describe('computeHomeStatus', () => {
-  it('reports "on your period" while today falls inside the most recent logged period', () => {
-    const status = computeHomeStatus(
-      [
-        { date: '2026-09-01', flow: 'medium' },
-        { date: '2026-09-02', flow: 'medium' },
-      ],
-      { avgCycleLength: 28, avgPeriodLength: 5, lastPeriodStart: null },
-      new Date(2026, 8, 2),
-    );
-    expect(status.statusText).toBe('on your period');
+  it('never crashes with no start date and no periods — shows a welcome instead', () => {
+    const status = computeHomeStatus([], BASE, new Date(2026, 8, 25));
+    expect(status.headline).toBe('Welcome');
+    expect(status.cyclePhase).toBe('unknown');
+    expect(status.ring).toBeNull();
+    expect(status.detail).toBeNull();
+  });
+
+  it('reports the period day while today falls inside the latest logged period', () => {
+    const status = computeHomeStatus([med('2026-09-01'), med('2026-09-02')], BASE, new Date(2026, 8, 2));
     expect(status.cycleDay).toBe(2);
     expect(status.cyclePhase).toBe('period');
     expect(status.isEstimated).toBe(false);
@@ -19,117 +27,69 @@ describe('computeHomeStatus', () => {
     expect(status.caption).toBe('of your period');
   });
 
-  it('reports days-to-next-period once a prediction is confirmed', () => {
-    const status = computeHomeStatus(
-      [
-        { date: '2026-06-01', flow: 'medium' },
-        { date: '2026-06-29', flow: 'medium' },
-        { date: '2026-07-27', flow: 'medium' },
-      ],
-      { avgCycleLength: 28, avgPeriodLength: 5, lastPeriodStart: null },
-      new Date(2026, 7, 20),
-    );
-    expect(status.statusText).toMatch(/day.*to next period/);
+  it('counts down to a confirmed prediction and always shows the expected range', () => {
+    const status = computeHomeStatus(REGULAR, BASE, new Date(2026, 7, 16));
     expect(status.isEstimated).toBe(false);
     expect(status.cyclePhase).toBe('luteal');
-    expect(status.headline).toMatch(/^\d+ days?$/);
+    expect(status.headline).toBe('8 days');
     expect(status.caption).toBe('to your next period');
-
-    // One real logged period (2026-07-27, single day) -> mostRecentStart;
-    // median gap 28 days -> predicted 2026-08-24 -> totalDays 28. Ovulation
-    // 14 days before (LUTEAL_PHASE_DAYS) = 2026-08-10, fertile window
-    // 2026-08-05..2026-08-11 (5 before/1 after). Today 2026-08-20 is 24
-    // days into the cycle.
-    expect(status.ring).not.toBeNull();
-    expect(status.ring!.totalDays).toBe(28);
-    expect(status.ring!.todayAngle).toBeCloseTo((24 / 28) * 360, 1);
-    expect(status.ring!.periodEndAngle).toBeCloseTo((1 / 28) * 360, 1); // 1-day logged period
-    expect(status.ring!.fertileStartAngle).toBeCloseTo((9 / 28) * 360, 1);
-    expect(status.ring!.fertileEndAngle).toBeCloseTo((15 / 28) * 360, 1);
+    expect(status.detail).toBe('Expected 22–26 Aug');
   });
 
-  it('reports the follicular phase between a period ending and the fertile window opening', () => {
-    const status = computeHomeStatus(
-      [
-        { date: '2026-01-01', flow: 'medium' },
-        { date: '2026-01-29', flow: 'medium' },
-      ],
-      { avgCycleLength: 28, avgPeriodLength: 5, lastPeriodStart: null },
-      new Date(2026, 1, 1),
-    );
-    expect(status.isFertile).toBe(false);
+  it('sizes the ring to one predicted cycle without wrapping', () => {
+    const status = computeHomeStatus(REGULAR, BASE, new Date(2026, 7, 20));
+    expect(status.ring!.totalDays).toBe(28);
+    expect(status.ring!.todayAngle).toBeCloseTo((24 / 28) * 360, 1);
+    expect(status.ring!.periodEndAngle).toBeCloseTo((1 / 28) * 360, 1);
+    // range 22–26 Aug → fertile 4–14 Aug (same window the phase uses) = 8 and 18 days in
+    expect(status.ring!.fertileStartAngle).toBeCloseTo((8 / 28) * 360, 1);
+    expect(status.ring!.fertileEndAngle).toBeCloseTo((18 / 28) * 360, 1);
+  });
+
+  it('reports the follicular phase before the fertile window opens', () => {
+    const status = computeHomeStatus(REGULAR, BASE, new Date(2026, 6, 31));
     expect(status.cyclePhase).toBe('follicular');
   });
 
-  it('reports the unknown cycle phase when predictions are too wide to place a phase', () => {
-    const status = computeHomeStatus(
-      [
-        { date: '2026-01-01', flow: 'medium' },
-        { date: '2026-01-15', flow: 'medium' },
-        { date: '2026-02-20', flow: 'medium' },
-      ],
-      { avgCycleLength: 28, avgPeriodLength: 5, lastPeriodStart: null },
-      new Date(2026, 2, 1),
-    );
-    expect(status.statusText).toBe('predictions need a bit more history');
-    expect(status.cyclePhase).toBe('unknown');
-    // Real logged history exists (just too irregular to predict confidently)
-    // — headline still shows the real cycle day, not a "new user" welcome.
-    expect(status.headline).toBe(`Day ${status.cycleDay}`);
-    // No confident predicted date -> no lap length to size a ring against.
-    expect(status.ring).toBeNull();
-  });
-
-  it('falls back to an estimate from the onboarding date with no logged periods yet', () => {
-    const status = computeHomeStatus(
-      [],
-      { avgCycleLength: 28, avgPeriodLength: 5, lastPeriodStart: '2026-08-10' },
-      new Date(2026, 8, 6),
-    );
-    expect(status.cycleDay).toBe(28); // Aug 10 -> Sep 6 is 27 elapsed days, +1 for cycle day 1
-    expect(status.isEstimated).toBe(true);
-  });
-
-  it('flags the fertile window when today falls inside it', () => {
-    // Predicted next period 2026-09-29 (median cycle 28 from two prior periods),
-    // fertile peak 14 days before = 2026-09-15, window 09-10..09-16.
-    const status = computeHomeStatus(
-      [
-        { date: '2026-08-03', flow: 'medium' },
-        { date: '2026-08-31', flow: 'medium' },
-      ],
-      { avgCycleLength: 28, avgPeriodLength: 5, lastPeriodStart: null },
-      new Date(2026, 8, 15),
-    );
-    expect(status.isFertile).toBe(true);
-    expect(status.statusText).toBe('fertile window');
+  it('flags the fertile window as an estimate', () => {
+    const status = computeHomeStatus(REGULAR, BASE, new Date(2026, 7, 9));
+    expect(status.cyclePhase).toBe('fertile');
     expect(status.headline).toMatch(/^(\d+ days? left|Last day)$/);
-    expect(status.caption).toBe('in your fertile window');
+    expect(status.caption).toBe('in your estimated fertile window');
   });
 
-  it('shows "Today" when the predicted period starts today', () => {
-    const status = computeHomeStatus(
-      [
-        { date: '2026-06-01', flow: 'medium' },
-        { date: '2026-06-29', flow: 'medium' },
-      ],
-      { avgCycleLength: 28, avgPeriodLength: 5, lastPeriodStart: null },
-      new Date(2026, 6, 27), // 28 days after 2026-06-29 = 2026-07-27
-    );
+  it('shows "Today" on the predicted date', () => {
+    const status = computeHomeStatus(REGULAR, BASE, new Date(2026, 7, 24));
     expect(status.headline).toBe('Today');
     expect(status.caption).toBe('your period may start today');
   });
 
-  it('shows "Any day now" once the predicted date has passed with no period logged', () => {
+  it('shows "late · N days" past the predicted range — never "any day now" forever', () => {
+    const status = computeHomeStatus(REGULAR, BASE, new Date(2026, 8, 10));
+    expect(status.headline).toBe('17 days late');
+    expect(status.caption).toBe('log your period when it starts');
+    expect(status.isLate).toBe(true);
+  });
+
+  it('uses the onboarding date with no logged periods, and says so', () => {
+    const status = computeHomeStatus([], { ...BASE, lastPeriodStart: '2026-08-10' }, new Date(2026, 8, 1));
+    expect(status.cycleDay).toBe(23);
+    expect(status.isEstimated).toBe(true);
+    expect(status.estimateNote).toMatch(/date you entered during setup/);
+  });
+
+  it('explains an estimate based on one logged cycle differently from a setup-date estimate', () => {
+    const status = computeHomeStatus([med('2026-06-01'), med('2026-06-29')], BASE, new Date(2026, 6, 10));
+    expect(status.isEstimated).toBe(true);
+    expect(status.estimateNote).toMatch(/one logged cycle/);
+  });
+
+  it('marks irregular cycles in the detail line', () => {
     const status = computeHomeStatus(
-      [
-        { date: '2026-06-01', flow: 'medium' },
-        { date: '2026-06-29', flow: 'medium' },
-      ],
-      { avgCycleLength: 28, avgPeriodLength: 5, lastPeriodStart: null },
-      new Date(2026, 6, 30), // well past the 2026-07-27 prediction
+      [med('2026-03-01'), med('2026-03-25'), med('2026-05-01'), med('2026-05-27')],
+      BASE,
+      new Date(2026, 5, 1),
     );
-    expect(status.headline).toBe('Any day now');
-    expect(status.caption).toBe('your period may be starting soon');
+    expect(status.detail).toMatch(/^Expected 20 Jun–3 Jul · cycles vary$/);
   });
 });

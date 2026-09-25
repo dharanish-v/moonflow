@@ -113,12 +113,12 @@ export function HomeScreen() {
                       </button>
                     </PopoverTrigger>
                     <PopoverContent align="center" className="w-64 text-xs text-muted-foreground">
-                      Based on the date you entered during setup, not real tracking yet — log a couple of real
-                      cycles and this sharpens into a confirmed prediction.
+                      {status.estimateNote}
                     </PopoverContent>
                   </Popover>
                 )}
               </div>
+              {status.detail && <div className="mt-2 text-xs text-muted-foreground">{status.detail}</div>}
             </CardContent>
           </Card>
         </motion.div>

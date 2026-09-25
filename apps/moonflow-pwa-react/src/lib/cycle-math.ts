@@ -10,15 +10,8 @@
 // a ±1 hour (≤1/24 day) offset, which rounding always resolves back to the
 // correct whole-day count.
 
-import {
-  FERTILE_WINDOW_AFTER_OVULATION_DAYS,
-  FERTILE_WINDOW_BEFORE_OVULATION_DAYS,
-  LUTEAL_PHASE_DAYS,
-  PERIOD_FLOW_LEVELS,
-  PERIOD_GAP_TOLERANCE_DAYS,
-  VARIABILITY_THRESHOLD_DAYS,
-} from './constants';
-import type { Entry, FertileWindow, Period, PredictNextPeriodResult, Settings } from './types';
+import { PERIOD_FLOW_LEVELS, PERIOD_GAP_TOLERANCE_DAYS } from './constants';
+import type { Entry, Period } from './types';
 
 // --- Local date-only helpers ---
 
@@ -53,19 +46,9 @@ export function diffDays(fromStr: string, toStr: string): number {
   return Math.round((to.getTime() - from.getTime()) / 86400000);
 }
 
-function median(numbers: number[]): number {
-  const sorted = [...numbers].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 !== 0 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
-}
 
-function stdDev(numbers: number[]): number {
-  const avg = numbers.reduce((sum, n) => sum + n, 0) / numbers.length;
-  const variance = numbers.reduce((sum, n) => sum + (n - avg) ** 2, 0) / numbers.length;
-  return Math.sqrt(variance);
-}
 
-// --- Core algorithms ---
+// --- Period detection (prediction lives in forecast.ts) ---
 
 /**
  * Groups logged days into periods. None and Spotting are excluded from
@@ -92,52 +75,4 @@ export function derivePeriods(entries: Array<Pick<Entry, 'date' | 'flow'>>): Per
   }
   if (current) periods.push(current);
   return periods;
-}
-
-export function predictNextPeriod(
-  periods: Period[],
-  settings: Pick<Settings, 'avgCycleLength' | 'lastPeriodStart'>,
-): PredictNextPeriodResult {
-  if (periods.length < 2) {
-    const lastStart = periods.length === 1 ? periods[0]!.start : settings.lastPeriodStart;
-    return {
-      date: addDays(lastStart as string, settings.avgCycleLength),
-      confidence: 'estimated',
-    };
-  }
-
-  const lengths: number[] = [];
-  for (let i = 1; i < periods.length; i++) {
-    lengths.push(diffDays(periods[i - 1]!.start, periods[i]!.start));
-  }
-
-  const medianLength = median(lengths);
-  const variability = stdDev(lengths);
-  const lastStart = periods[periods.length - 1]!.start;
-  const predicted = addDays(lastStart, medianLength);
-
-  if (variability > VARIABILITY_THRESHOLD_DAYS) {
-    const spread = Math.round(variability);
-    return {
-      rangeStart: addDays(predicted, -spread),
-      rangeEnd: addDays(predicted, spread),
-      confidence: 'wide',
-    };
-  }
-
-  return { date: predicted, confidence: 'confirmed' };
-}
-
-/**
- * Luteal phase (ovulation to next period) is far more consistent across
- * cycles than the follicular phase — the standard heuristic every period
- * tracker uses.
- */
-export function estimateFertileWindow(nextPeriodDate: string): FertileWindow {
-  const peak = addDays(nextPeriodDate, -LUTEAL_PHASE_DAYS);
-  return {
-    start: addDays(peak, -FERTILE_WINDOW_BEFORE_OVULATION_DAYS),
-    end: addDays(peak, FERTILE_WINDOW_AFTER_OVULATION_DAYS),
-    peak,
-  };
 }

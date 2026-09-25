@@ -7,15 +7,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
-import {
-  addDays,
-  derivePeriods,
-  diffDays,
-  estimateFertileWindow,
-  formatDate,
-  parseDate,
-  predictNextPeriod,
-} from '../lib/cycle-math';
+import { addDays, derivePeriods, diffDays, formatDate, parseDate } from '../lib/cycle-math';
+import { computeForecast } from '../lib/forecast';
 import { useAppDispatch, useAppState } from '../state/store';
 
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -78,27 +71,29 @@ export function CalendarScreen() {
     }
   }
 
-  const prediction = predictNextPeriod(periods, settings);
+  // Same forecast Home reads (forecast.ts) — estimated predictions are drawn
+  // too, labelled as estimates, so the two screens can never disagree.
+  const forecast = computeForecast(entries, settings);
+  const isEstimate = forecast.next?.confidence === 'estimated';
   const predictedDates = new Set<string>();
   const fertileDates = new Set<string>();
   let fertilePeak: string | null = null;
   let nextPeriodRange: { start: string; end: string } | null = null;
   let fertileRange: { start: string; end: string } | null = null;
-  if (prediction.confidence === 'confirmed' && prediction.date) {
-    const lengths = periods.map((p) => diffDays(p.start, p.end) + 1);
-    const avgLen = lengths.length ? Math.round(lengths.reduce((a, b) => a + b, 0) / lengths.length) : 5;
-    for (let i = 0; i < avgLen; i++) predictedDates.add(addDays(prediction.date, i));
-    nextPeriodRange = { start: prediction.date, end: addDays(prediction.date, avgLen - 1) };
-
-    const fertile = estimateFertileWindow(prediction.date);
-    fertilePeak = fertile.peak;
-    let d = fertile.start;
-    while (diffDays(d, fertile.end) >= 0) {
+  if (forecast.next && forecast.status !== 'late' && forecast.status !== 'on-period') {
+    for (let i = 0; i < forecast.periodLength; i++) predictedDates.add(addDays(forecast.next.date, i));
+    nextPeriodRange = { start: forecast.next.rangeStart, end: forecast.next.rangeEnd };
+  }
+  if (forecast.fertile) {
+    fertilePeak = forecast.fertile.peak;
+    let d = forecast.fertile.start;
+    while (diffDays(d, forecast.fertile.end) >= 0) {
       fertileDates.add(d);
       d = addDays(d, 1);
     }
-    fertileRange = { start: fertile.start, end: fertile.end };
+    fertileRange = { start: forecast.fertile.start, end: forecast.fertile.end };
   }
+  const estimateSuffix = isEstimate ? ' (estimate)' : '';
 
   // A fertile window that's already fully over reads as wrong sitting next
   // to an upcoming period date — only surface it while still current or
@@ -108,7 +103,7 @@ export function CalendarScreen() {
 
   const nextPeriodCaption = nextPeriodRange
     ? (() => {
-        const daysToNext = diffDays(todayStr, nextPeriodRange.start);
+        const daysToNext = diffDays(todayStr, forecast.next!.date);
         if (daysToNext > 0) return `in ${daysToNext} day${daysToNext === 1 ? '' : 's'}`;
         if (daysToNext === 0) return 'starting today';
         return 'may be starting soon';
@@ -208,13 +203,13 @@ export function CalendarScreen() {
               stateLabel = 'period day';
             } else if (dateStr === fertilePeak) {
               stateClass = 'border-[1.5px] border-primary bg-primary/30 font-medium';
-              stateLabel = 'peak fertile day';
+              stateLabel = `peak fertile day${estimateSuffix}`;
             } else if (fertileDates.has(dateStr)) {
               stateClass = 'bg-primary/15 text-foreground';
-              stateLabel = 'fertile window';
+              stateLabel = `fertile window${estimateSuffix}`;
             } else if (predictedDates.has(dateStr)) {
               stateClass = 'border-[1.5px] border-dashed border-secondary text-secondary';
-              stateLabel = 'predicted period';
+              stateLabel = `predicted period${estimateSuffix}`;
             }
 
             const spokenParts = [parseDate(dateStr).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })];

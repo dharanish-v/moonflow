@@ -33,16 +33,6 @@ export interface Period {
   end: string;
 }
 
-export type PredictNextPeriodResult =
-  | { date: string; confidence: 'estimated' | 'confirmed'; rangeStart?: undefined; rangeEnd?: undefined }
-  | { rangeStart: string; rangeEnd: string; confidence: 'wide'; date?: undefined };
-
-export interface FertileWindow {
-  start: string;
-  end: string;
-  peak: string;
-}
-
 /** 'system' follows the OS/browser prefers-color-scheme; 'light'/'dark'
  * force that world regardless of it. See useResolvedTheme.ts. */
 export type ThemeMode = 'system' | 'light' | 'dark';

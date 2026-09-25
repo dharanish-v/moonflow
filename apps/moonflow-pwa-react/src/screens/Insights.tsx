@@ -16,7 +16,10 @@ import { Separator } from '../components/ui/separator';
 import { ChartBarIcon, ChevronRightIcon } from '../components/icons';
 import { FLOW_OPTIONS } from '../lib/constants';
 import { parseDate } from '../lib/cycle-math';
-import { computeInsights } from '../lib/insights';
+import { computeInsights, cycleBarHeight } from '../lib/insights';
+
+/** Matches the chart container's h-16. */
+const CHART_HEIGHT_PX = 64;
 import type { Entry } from '../lib/types';
 import { useAppState } from '../state/store';
 
@@ -57,7 +60,7 @@ export function InsightsScreen() {
     data.recentCycleLengths.forEach((len, i) => {
       const el = barRefs.current[i];
       if (!el) return;
-      const targetHeight = Math.max(8, (len - 20) * 4);
+      const targetHeight = cycleBarHeight(len, data.recentCycleLengths, CHART_HEIGHT_PX);
       controls.push(
         animate(0, targetHeight, {
           duration: 0.4,
@@ -119,7 +122,7 @@ export function InsightsScreen() {
           </Card>
           <div className="grid grid-cols-3 gap-2">
             <Stat title="Avg period" value={`${data.avgPeriodLength}d`} />
-            <Stat title="Variability" value={`±${data.variability}d`} />
+            <Stat title="Varies by" value={`${data.variability} ${data.variability === 1 ? 'day' : 'days'}`} />
             <Stat title="Logged" value={data.cyclesLogged} />
           </div>
 
@@ -134,7 +137,7 @@ export function InsightsScreen() {
                   barRefs.current[i] = el;
                 }}
                 className="flex-1 rounded-t-[0.25rem] bg-primary"
-                style={{ height: prefersReducedMotion ? Math.max(8, (len - 20) * 4) : 0 }}
+                style={{ height: prefersReducedMotion ? cycleBarHeight(len, data.recentCycleLengths, CHART_HEIGHT_PX) : 0 }}
               />
             ))}
           </div>

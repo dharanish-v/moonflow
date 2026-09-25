@@ -36,12 +36,8 @@ export const MOOD_OPTIONS: ReadonlyArray<{ id: MoodId; icon: string }> = [
   { id: 'happy', icon: 'mood-happy' },
 ];
 
-// Cycle-math thresholds — see technical-design.md for the reasoning behind each.
+// Period-detection thresholds — prediction constants live in forecast.ts.
 export const PERIOD_GAP_TOLERANCE_DAYS = 2; // missed-log tolerance before splitting into a new period
-export const VARIABILITY_THRESHOLD_DAYS = 4; // above this, predictions show a range instead of a single date
-export const LUTEAL_PHASE_DAYS = 14; // luteal phase is far more consistent than follicular — standard heuristic
-export const FERTILE_WINDOW_BEFORE_OVULATION_DAYS = 5;
-export const FERTILE_WINDOW_AFTER_OVULATION_DAYS = 1;
 
 // PIN lock behavior — see the security edge-case rules.
 export const PIN_LOCKOUT_AFTER_ATTEMPTS = 5;
