@@ -131,7 +131,7 @@ export function HomeScreen() {
           Log
         </Button>
 
-        <p className="mt-5 text-center text-xs text-muted-foreground/80 italic">"{quote}"</p>
+        <p className="mt-5 text-center text-xs text-muted-foreground italic">"{quote}"</p>
       </motion.div>
     </div>
   );

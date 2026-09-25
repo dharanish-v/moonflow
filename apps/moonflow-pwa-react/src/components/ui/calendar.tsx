@@ -21,16 +21,16 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: D
         month: 'flex flex-col gap-2',
         month_caption: 'flex items-center justify-center px-8 text-sm font-medium text-foreground',
         nav: 'flex items-center justify-between absolute inset-x-0 top-0',
-        button_previous: cn(buttonVariants({ variant: 'ghost', size: 'icon-touch' }), 'rounded-full text-muted-foreground/60'),
-        button_next: cn(buttonVariants({ variant: 'ghost', size: 'icon-touch' }), 'rounded-full text-muted-foreground/60'),
+        button_previous: cn(buttonVariants({ variant: 'ghost', size: 'icon-touch' }), 'rounded-full text-muted-foreground'),
+        button_next: cn(buttonVariants({ variant: 'ghost', size: 'icon-touch' }), 'rounded-full text-muted-foreground'),
         month_grid: 'w-full border-collapse',
         weekdays: 'flex',
-        weekday: 'flex-1 pb-1.5 text-center text-xs text-muted-foreground/60',
+        weekday: 'flex-1 pb-1.5 text-center text-xs text-muted-foreground',
         week: 'flex w-full',
         day: 'flex-1 p-0.5',
         day_button: cn(
           buttonVariants({ variant: 'ghost' }),
-          'size-10 w-full rounded-full p-0 text-xs font-normal text-foreground/80',
+          'size-10 w-full rounded-full p-0 text-xs font-normal text-foreground',
         ),
         // aria-selected/data-today live on the day cell (a <td>), not the
         // button inside it — a first attempt styled aria-selected: on the
@@ -38,8 +38,8 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: D
         // opening the picker rather than trusting the classNames alone.
         selected: '[&_button]:bg-primary [&_button]:text-primary-foreground [&_button]:font-medium',
         today: '[&_button]:border-[1.5px] [&_button]:border-foreground',
-        outside: 'text-muted-foreground/40',
-        disabled: 'text-muted-foreground/30 opacity-40',
+        outside: 'text-muted-foreground',
+        disabled: 'text-muted-foreground opacity-40',
         hidden: 'invisible',
         ...classNames,
       }}

@@ -38,7 +38,7 @@ function SummaryStat({ accentClassName, label, value, caption }: { accentClassNa
     <div className="flex flex-col items-center gap-1 text-center">
       <span className={`text-[0.65rem] font-semibold tracking-wide uppercase ${accentClassName}`}>{label}</span>
       <span className="text-base font-semibold text-foreground">{value}</span>
-      <span className="text-[0.7rem] text-muted-foreground/70">{caption}</span>
+      <span className="text-[0.7rem] text-muted-foreground">{caption}</span>
     </div>
   );
 }
@@ -152,7 +152,7 @@ export function CalendarScreen() {
           size="icon-touch"
           onClick={() => handleChangeMonth('prev')}
           aria-label="Previous month"
-          className="rounded-full text-muted-foreground/60"
+          className="rounded-full text-muted-foreground"
         >
           <ChevronLeftIcon className="size-[0.9rem]" />
         </Button>
@@ -162,7 +162,7 @@ export function CalendarScreen() {
           size="icon-touch"
           onClick={() => handleChangeMonth('next')}
           aria-label="Next month"
-          className="rounded-full text-muted-foreground/60"
+          className="rounded-full text-muted-foreground"
         >
           <ChevronRightIcon className="size-[0.9rem]" />
         </Button>
@@ -178,7 +178,7 @@ export function CalendarScreen() {
       >
         <div className="grid grid-cols-7">
           {WEEKDAY_LABELS.map((l, i) => (
-            <span key={i} className="pb-1.5 text-center text-xs text-muted-foreground/60">
+            <span key={i} className="pb-1.5 text-center text-xs text-muted-foreground">
               {l}
             </span>
           ))}
@@ -224,7 +224,7 @@ export function CalendarScreen() {
                   disabled={isFuture}
                   onClick={() => handleSelectDate(dateStr)}
                   aria-label={spokenParts.join(', ')}
-                  className={`flex size-10 items-center justify-center rounded-full text-xs text-foreground/80 disabled:cursor-default disabled:opacity-40 ${stateClass} ${isToday ? 'border-[1.5px] border-foreground' : ''}`}
+                  className={`flex size-10 items-center justify-center rounded-full text-xs text-foreground disabled:cursor-default disabled:opacity-40 ${stateClass} ${isToday ? 'border-[1.5px] border-foreground' : ''}`}
                 >
                   {dayNum}
                 </button>

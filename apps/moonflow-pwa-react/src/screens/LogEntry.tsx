@@ -117,7 +117,7 @@ export function LogEntryScreen() {
           <DrawerTitle className="text-base font-medium text-foreground">{formatHeaderDate(date)}</DrawerTitle>
           <DrawerDescription className="sr-only">Log flow, symptoms, mood, and notes for this day</DrawerDescription>
           <DrawerClose asChild>
-            <Button variant="ghost" size="icon-touch" aria-label="Close" className="rounded-full text-muted-foreground/60">
+            <Button variant="ghost" size="icon-touch" aria-label="Close" className="rounded-full text-muted-foreground">
               <X className="size-5" />
             </Button>
           </DrawerClose>

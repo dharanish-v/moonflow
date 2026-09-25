@@ -143,7 +143,7 @@ export function InsightsScreen() {
           </div>
           <div className="mt-1 flex gap-2">
             {data.recentCycleLengths.map((len, i) => (
-              <span key={i} className="flex-1 text-center text-xs text-muted-foreground/60">
+              <span key={i} className="flex-1 text-center text-xs text-muted-foreground">
                 {len}
               </span>
             ))}
@@ -154,7 +154,7 @@ export function InsightsScreen() {
               <div className="mb-2 mt-5 text-xs text-muted-foreground">Most logged symptoms</div>
               {data.topSymptoms.map((s, i) => (
                 <div key={s.id} className="mb-2">
-                  <div className="mb-1 flex justify-between text-xs text-foreground/80">
+                  <div className="mb-1 flex justify-between text-xs text-foreground">
                     <span>{s.label}</span>
                     <span>{s.percent}%</span>
                   </div>

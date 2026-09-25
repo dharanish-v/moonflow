@@ -4,7 +4,7 @@ import { cn } from "cn"
 import { Toggle as TogglePrimitive } from "radix-ui"
 
 const toggleVariants = cva(
-  "group/toggle inline-flex items-center justify-center gap-1 rounded-lg text-sm font-medium whitespace-nowrap transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 aria-pressed:bg-muted data-[state=on]:bg-muted dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/toggle inline-flex items-center justify-center gap-1 rounded-lg text-sm font-medium whitespace-nowrap transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 aria-pressed:bg-muted data-[state=on]:bg-muted dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -17,7 +17,7 @@ const toggleVariants = cva(
         // each call site, not baked in here — see LogEntry.tsx.
         pill: "rounded-lg border border-border/60 font-medium text-muted-foreground hover:border-border hover:text-foreground data-[state=on]:border-transparent data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground",
         chip: "rounded-lg border border-border/60 font-medium text-muted-foreground hover:border-border hover:text-foreground data-[state=on]:border-accent/40 data-[state=on]:bg-accent/15 data-[state=on]:text-accent",
-        mood: "rounded-full text-muted-foreground/70 hover:text-foreground data-[state=on]:bg-primary/15 data-[state=on]:text-primary [&_svg]:size-5",
+        mood: "rounded-full text-muted-foreground hover:text-foreground data-[state=on]:bg-primary/15 data-[state=on]:text-primary [&_svg]:size-5",
       },
       size: {
         default:

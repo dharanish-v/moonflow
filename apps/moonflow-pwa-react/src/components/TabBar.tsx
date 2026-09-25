@@ -42,7 +42,7 @@ export function TabBar() {
             asChild
             variant="ghost"
             size="icon-touch"
-            className={`rounded-full ${isActive ? 'text-primary' : 'text-muted-foreground/60'}`}
+            className={`rounded-full ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
           >
             <Link to={to} aria-label={label}>
               <Icon aria-hidden="true" className="size-5" />

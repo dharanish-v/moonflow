@@ -1,74 +1,66 @@
-/* index.css — shadcn's own generated token structure/values (style
-   "radix-nova", base color "neutral" — see components.json; confirmed by
-   actually running `shadcn init` with this exact config in a scratch
-   project and diffing its output, not from memory), not a hand-built
-   palette. Two deliberate deviations from that literal default, both
-   already decided before this rewrite, kept on purpose:
+/* index.css — shadcn's token *structure* (same variable names every
+   components/ui file reads), carrying Moonflow's own identity: the original
+   navy night-sky palette with gold (moon / fertile), rose (period) and blue
+   (symptoms / follicular) accents from design-system.md (T44/T58 — the
+   hybrid decision: keep shadcn's components, restore the look).
 
-   1. Dark-by-default, with `.light` overriding — not shadcn's own
-      light-by-default/`.dark`-overriding direction. This app's default was
-      always dark (a product decision, not a styling one); reversing which
-      block is bare :root vs. which is the class override preserves that
-      without touching shadcn's actual color values.
-   2. primary/secondary/accent carry real hue (gold/rose/blue) instead of
-      shadcn's own grayscale default for those three roles — the one
-      place this app still needs a color decision shadcn's generator
-      doesn't make for you, since period/fertile/follicular/luteal need to
-      read as visually distinct at a glance. Still expressed the same way
-      shadcn expresses its own colored token (destructive) — real OKLCH
-      triples, not arbitrary hex. destructive reuses the same rose as
-      secondary, matching this app's own prior convention (its only
-      "something's wrong" color already was rose, pre-dating this file).
-
-   Radius (0.625rem) and every grayscale value below are shadcn's own
-   numbers, unedited. */
+   Dark (navy) is the default :root; `.light` overrides it — the app was
+   always dark-first. Every text/background pair both themes actually use
+   is guarded at WCAG AA (4.5:1) by build/contrast.test.ts, so tokens are
+   plain hex: easy to read, easy for that test to check. Don't fade text
+   with opacity modifiers (faded muted text etc.) — that's exactly
+   what failed contrast before; pick a token instead. */
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Tailwind's dark: variant must follow the app's own theme toggle, not the
+   OS preference — dark is everything that isn't .light. */
+@custom-variant dark (&:where(:root:not(.light), :root:not(.light) *));
+
 :root {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.795 0.145 85);
-  --primary-foreground: oklch(0.205 0.03 85);
-  --secondary: oklch(0.72 0.09 350);
-  --secondary-foreground: oklch(0.205 0.03 350);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.6 0.15 264);
-  --accent-foreground: oklch(0.145 0 0);
-  --destructive: oklch(0.72 0.09 350);
-  --destructive-foreground: oklch(0.205 0.03 350);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.795 0.145 85);
-  --radius: 0.625rem;
+  --background: #14132B;
+  --foreground: #F5F3EC;
+  --card: #1E1C3B;
+  --card-foreground: #F5F3EC;
+  --popover: #1E1C3B;
+  --popover-foreground: #F5F3EC;
+  --primary: #E8C874;
+  --primary-foreground: #3A2B0A;
+  --secondary: #D99FC0;
+  --secondary-foreground: #4A2233;
+  --muted: #252346;
+  --muted-foreground: #A9A7D0;
+  --accent: #9FB8E8;
+  --accent-foreground: #14132B;
+  --destructive: #D99FC0;
+  --destructive-foreground: #4A2233;
+  --border: #302E56;
+  --input: #302E56;
+  --ring: #E8C874;
+  --radius: 0.75rem;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
 }
 
 .light {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.65 0.15 75);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.62 0.11 350);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.5 0.14 264);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.62 0.11 350);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.65 0.15 75);
+  --background: #F7F5EF;
+  --foreground: #1B1A33;
+  --card: #FFFFFF;
+  --card-foreground: #1B1A33;
+  --popover: #FFFFFF;
+  --popover-foreground: #1B1A33;
+  --primary: #8A5F00;
+  --primary-foreground: #FFFFFF;
+  --secondary: #A8456F;
+  --secondary-foreground: #FFFFFF;
+  --muted: #EEECF5;
+  --muted-foreground: #5B5979;
+  --accent: #3F5DA8;
+  --accent-foreground: #FFFFFF;
+  --destructive: #A8456F;
+  --destructive-foreground: #FFFFFF;
+  --border: #DDDAE8;
+  --input: #CFCBDF;
+  --ring: #8A5F00;
 }
 
 @theme inline {
@@ -102,7 +94,13 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
+  }
+  /* One visible focus indicator everywhere keyboard/switch-control users
+     land — 2px solid ring colour with an offset (≥3:1, WCAG 1.4.11). */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
   html {
     @apply font-sans;
