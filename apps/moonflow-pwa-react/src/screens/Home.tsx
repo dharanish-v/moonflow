@@ -9,9 +9,9 @@
 // didn't actually exist — a real UX debate before this landed, not a
 // unilateral call (see the conversation this was decided in).
 import { AnimatePresence, motion } from 'framer-motion';
-import { Info, NotebookPen } from 'lucide-react';
+import { Info, NotebookPen, ShieldAlert } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { PHASE_COLOR_CLASS, PhaseMotif } from '../components/PhaseMotif';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popove
 import { todayString } from '../lib/cycle-math';
 import { computeHomeStatus } from '../lib/home-status';
 import { quoteOfTheDay } from '../lib/quotes';
+import { backupNudge } from '../lib/backup-nudge';
 import { useAppState } from '../state/store';
 
 /** How long the just-logged acknowledgment stays up before it self-clears. */
@@ -31,6 +32,7 @@ export function HomeScreen() {
 
   const status = computeHomeStatus(entries, settings);
   const quote = quoteOfTheDay(status.cyclePhase);
+  const nudge = backupNudge({ lastBackupAt: settings.lastBackupAt, firstEntryDate: entries[0]?.date ?? null, now: Date.now() });
 
   // Captures the flag at mount, before the effect below clears it from the
   // URL — a fresh save (LogEntry.tsx) that lands back here is the "just
@@ -132,6 +134,18 @@ export function HomeScreen() {
         </Button>
 
         <p className="mt-5 text-center text-xs text-muted-foreground italic">"{quote}"</p>
+
+        {nudge && (
+          <Link
+            to="/settings"
+            className="mt-4 flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-border px-3 text-xs text-muted-foreground"
+          >
+            <ShieldAlert className="size-4 text-primary" aria-hidden="true" />
+            <span>
+              Back up your data · {nudge}
+            </span>
+          </Link>
+        )}
       </motion.div>
     </div>
   );

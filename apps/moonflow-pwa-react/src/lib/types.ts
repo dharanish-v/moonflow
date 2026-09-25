@@ -49,6 +49,8 @@ export interface Settings {
   soundEnabled: boolean;
   draftEntry: LogEntryInput | null;
   themeMode: ThemeMode;
+  /** Epoch ms of the last successful export (T47). */
+  lastBackupAt: number | null;
 }
 
 export type SettingKey = keyof Settings;

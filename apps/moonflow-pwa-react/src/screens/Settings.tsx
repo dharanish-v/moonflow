@@ -30,6 +30,7 @@ import { importData, loadAllEntries, loadAllSettings } from '../lib/db';
 import { useSaveSettings } from '../state/useSaveSettings';
 import { decryptBackup, isEncryptedBackup } from '../lib/backup-crypto';
 import { isDiscreetInstall } from '../lib/install-identity';
+import { lastBackupLabel } from '../lib/backup-nudge';
 import { ExportSheet } from '../components/ExportSheet';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -244,7 +245,7 @@ export function SettingsScreen() {
             <Separator />
           </>
         )}
-        <SettingsRowButton icon={<DownloadIcon className="size-4" />} label="Export data" onClick={() => setExportOpen(true)} />
+        <SettingsRowButton icon={<DownloadIcon className="size-4" />} label="Export data" value={lastBackupLabel(settings.lastBackupAt, Date.now())} onClick={() => setExportOpen(true)} />
         <Separator />
         <SettingsRowButton
           icon={<Upload className="size-4" aria-hidden="true" />}
@@ -260,6 +261,10 @@ export function SettingsScreen() {
             <p className="px-3.5 pb-2 text-xs text-muted-foreground">
               Export creates a file — send it to your other device however you'd send any file (AirDrop, email,
               messaging app), then open Settings there and tap Import to bring it in.
+            </p>
+            <p className="px-3.5 pb-2 text-xs text-muted-foreground">
+              Your logs live only on this phone. Removing the app from your home screen deletes everything, and each
+              home-screen icon keeps its own separate data — so keep a recent backup.
             </p>
           </CollapsibleContent>
         </Collapsible>
@@ -321,7 +326,13 @@ export function SettingsScreen() {
         </DrawerContent>
       </Drawer>
 
-      <ExportSheet open={exportOpen} onOpenChange={setExportOpen} entries={entries} settings={settings} />
+      <ExportSheet
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        entries={entries}
+        settings={settings}
+        onExported={() => void persist({ lastBackupAt: Date.now() })}
+      />
 
       <AlertDialog
         open={lockedBackup !== null}

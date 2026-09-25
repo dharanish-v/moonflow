@@ -37,7 +37,7 @@ describe('export', () => {
   it('encrypted backup (the default) needs a confirmed passphrase and contains no plaintext', async () => {
     const files = captureShare();
     await renderSettings();
-    fireEvent.click(screen.getByRole('button', { name: 'Export data' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Export data/ }));
     fireEvent.change(await screen.findByLabelText('Passphrase'), { target: { value: 'long enough pass' } });
     fireEvent.change(screen.getByLabelText('Confirm passphrase'), { target: { value: 'long enough pass' } });
     fireEvent.click(screen.getByRole('button', { name: 'Export encrypted backup' }));
@@ -51,7 +51,7 @@ describe('export', () => {
   it('refuses a short or mismatched passphrase', async () => {
     const files = captureShare();
     await renderSettings();
-    fireEvent.click(screen.getByRole('button', { name: 'Export data' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Export data/ }));
     fireEvent.change(await screen.findByLabelText('Passphrase'), { target: { value: 'short' } });
     fireEvent.change(screen.getByLabelText('Confirm passphrase'), { target: { value: 'short' } });
     expect(screen.getByRole('button', { name: 'Export encrypted backup' })).toBeDisabled();
@@ -64,7 +64,7 @@ describe('export', () => {
   it('offers a readable CSV copy', async () => {
     const files = captureShare();
     await renderSettings();
-    fireEvent.click(screen.getByRole('button', { name: 'Export data' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Export data/ }));
     fireEvent.click(await screen.findByRole('button', { name: /spreadsheet \(csv\)/i }));
     await waitFor(() => expect(files).toHaveLength(1));
     expect(files[0]!.name).toMatch(/\.csv$/);
@@ -74,7 +74,7 @@ describe('export', () => {
   it('unencrypted JSON is available but clearly warned about', async () => {
     const files = captureShare();
     await renderSettings();
-    fireEvent.click(screen.getByRole('button', { name: 'Export data' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Export data/ }));
     expect(await screen.findByText(/anyone who gets the file can read it/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /unencrypted/i }));
     await waitFor(() => expect(files).toHaveLength(1));
@@ -94,5 +94,24 @@ describe('import of an encrypted backup', () => {
     fireEvent.change(screen.getByLabelText('Backup passphrase'), { target: { value: 'long enough pass' } });
     fireEvent.click(screen.getByRole('button', { name: 'Unlock backup' }));
     expect(await screen.findByText(/Import 1 logged day/)).toBeInTheDocument();
+  });
+});
+
+describe('backup bookkeeping', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('records when a backup was made and shows it in Settings', async () => {
+    captureShare();
+    await renderSettings();
+    expect(screen.getByText('Never backed up')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^Export data/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /spreadsheet \(csv\)/i }));
+    expect(await screen.findByText('Backed up today')).toBeInTheDocument();
+  });
+
+  it('warns that deleting the icon deletes the data', async () => {
+    await renderSettings();
+    fireEvent.click(screen.getByRole('button', { name: /moving data to another device/i }));
+    expect(await screen.findByText(/removing the app from your home screen deletes everything/i)).toBeInTheDocument();
   });
 });

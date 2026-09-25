@@ -57,6 +57,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   soundEnabled: false,
   draftEntry: null,
   themeMode: 'system',
+  lastBackupAt: null,
 };
 
 /** Read one setting, falling back to its documented default if never set. */
