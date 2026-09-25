@@ -4,15 +4,13 @@
     <meta charset="UTF-8" />
     <!-- Same fix as index.html's — see its comment for why. -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
-    <meta name="theme-color" content="#F0EEE8" />
-    <!-- Same fix as index.html's — see its comment for why this pair (and
-         both the apple- and unprefixed mobile-web-app-capable tags) matter.
-         "default" here, not "black-translucent": this entry's theme is
-         light (#F0EEE8), and black-translucent's light status-bar text
-         would read poorly against it. -->
+    <meta name="theme-color" content="#14132B" />
+    <!-- Same as index.html: black-translucent for both entries — the app
+         itself renders dark by default, and the light theme paints a navy
+         band under the status bar (index.css) so white text stays readable. -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Planner</title>
 
     <!-- ADR-011's discreet install identity: a second front door to the

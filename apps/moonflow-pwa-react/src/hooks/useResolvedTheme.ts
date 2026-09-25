@@ -11,6 +11,9 @@ import type { ThemeMode } from '../lib/types';
 
 export type ResolvedTheme = 'light' | 'dark';
 
+/** Mirrors --background in index.css. */
+const THEME_BACKGROUND: Record<ResolvedTheme, string> = { dark: '#14132B', light: '#F7F5EF' };
+
 function resolveSystemPreference(): ResolvedTheme {
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }
@@ -29,6 +32,8 @@ export function useResolvedTheme(themeMode: ThemeMode): ResolvedTheme {
 
   useEffect(() => {
     document.documentElement.classList.toggle('light', resolved === 'light');
+    // Browser UI tint (Safari tab bar, Android status bar) follows the theme.
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_BACKGROUND[resolved]);
   }, [resolved]);
 
   return resolved;

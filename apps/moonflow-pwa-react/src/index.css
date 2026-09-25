@@ -105,6 +105,10 @@
   html {
     @apply font-sans;
     color-scheme: dark;
+    /* No grey flash on tap (iOS), and no double-tap-to-zoom delay on
+       rapid taps (stepper +/−, month arrows). */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
   html.light {
     /* Native form controls (date inputs, scrollbars) should match the
@@ -170,6 +174,21 @@
       0 1.5rem 4rem rgba(0, 0, 0, 0.55),
       0 0 0 0.5px var(--border);
   }
+}
+
+/* Both entries use apple-mobile-web-app-status-bar-style=black-translucent
+   (white status-bar text, content drawn underneath). In the light theme that
+   white text would sit on a light background, so paint the status-bar area
+   navy. Status bar style is fixed at install time — it can't follow the
+   theme — so this band is how the light theme stays readable. */
+.light #phone-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: env(safe-area-inset-top, 0px);
+  background: #1B1A33;
+  z-index: 50;
+  pointer-events: none;
 }
 
 #app-content {

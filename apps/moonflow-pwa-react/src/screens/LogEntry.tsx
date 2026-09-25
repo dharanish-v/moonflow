@@ -215,7 +215,7 @@ export function LogEntryScreen() {
               setNote(e.target.value);
               reportDraft(currentDraft({ note: e.target.value }));
             }}
-            className="min-h-[4.5rem] text-xs"
+            className="min-h-[4.5rem]"
           />
         </div>
 
