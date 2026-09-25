@@ -27,15 +27,21 @@ export function StateProvider({ children, testState }: StateProviderProps) {
     if (testState) return;
     let cancelled = false;
     void (async () => {
-      const [entries, settings] = await Promise.all([loadAllEntries(), loadAllSettings()]);
-      if (!cancelled) dispatch({ type: 'BOOT_LOADED', entries, settings });
+      try {
+        const [entries, settings] = await Promise.all([loadAllEntries(), loadAllSettings()]);
+        if (!cancelled) dispatch({ type: 'BOOT_LOADED', entries, settings });
+      } catch (err) {
+        console.error('Boot read failed:', err);
+        if (!cancelled) dispatch({ type: 'BOOT_FAILED' });
+      }
     })();
     return () => {
       cancelled = true;
     };
-    // Boot runs exactly once per mount — testState is a fixed test-only seam, not a live prop.
+    // Boot runs once per mount, and again on each BOOT_RETRY — testState is a
+    // fixed test-only seam, not a live prop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [state.bootAttempt]);
 
   return (
     <StateContext.Provider value={state}>

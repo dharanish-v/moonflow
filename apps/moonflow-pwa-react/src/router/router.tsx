@@ -17,6 +17,7 @@ import { LogEntryScreen } from '../screens/LogEntry';
 import { PinSetupScreen } from '../screens/PinSetup';
 import { SettingsScreen } from '../screens/Settings';
 import { AppGate } from './AppGate';
+import { AppErrorScreen } from './placeholders';
 
 // #app-content wraps AppGate (every branch: splash/lock/onboarding/real
 // screens all get its padding + flex-column treatment uniformly) and is the
@@ -40,6 +41,7 @@ export const rootRoute = createRootRoute({
   // catch-all — an unrecognized hash (hand-edited, or a stale deep link)
   // lands on Home instead of a blank error screen.
   notFoundComponent: () => <Navigate to="/" replace />,
+  errorComponent: AppErrorScreen,
 });
 
 export interface HomeSearch {

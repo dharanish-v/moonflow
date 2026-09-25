@@ -16,8 +16,8 @@ import { PIN_RELOCK_AFTER_MINUTES } from '../lib/constants';
 import { needsUnlock } from '../lib/pin-auth';
 import { OnboardingScreen } from '../screens/Onboarding';
 import { PinUnlockScreen } from '../screens/PinUnlock';
-import { useAppState } from '../state/store';
-import { SplashScreen } from './placeholders';
+import { useAppDispatch, useAppState } from '../state/store';
+import { BootErrorScreen, SplashScreen } from './placeholders';
 
 /** Mounted only once unlocked+onboarded — records the last real route so a
  * later re-lock (backgrounding) can return here, not just to the original
@@ -44,7 +44,8 @@ function Frame({ children, tabBar }: { children: ReactNode; tabBar?: ReactNode }
 }
 
 export function AppGate({ children, tabBar }: { children: ReactNode; tabBar?: ReactNode }) {
-  const { booted, settings } = useAppState();
+  const { booted, bootError, settings } = useAppState();
+  const dispatch = useAppDispatch();
   const router = useRouter();
   // Applies the resolved .light/.dark class to <html> — shadcn's theme
   // system reads these tokens; this is the only thing deciding which set
@@ -104,6 +105,7 @@ export function AppGate({ children, tabBar }: { children: ReactNode; tabBar?: Re
     router.history.replace(target);
   }
 
+  if (bootError) return <Frame><BootErrorScreen onRetry={() => dispatch({ type: 'BOOT_RETRY' })} /></Frame>;
   if (!booted || !hasResolvedLock) return <Frame><SplashScreen /></Frame>;
   if (isLocked) return <Frame><PinUnlockScreen onUnlock={handleUnlock} /></Frame>;
   if (!settings.onboardingComplete) return <Frame><OnboardingScreen /></Frame>;

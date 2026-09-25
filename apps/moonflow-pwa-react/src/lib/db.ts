@@ -63,19 +63,16 @@ export async function setSetting<K extends SettingKey>(key: K, value: Settings[K
   }
 }
 
-/** Load every setting at once, merged over the defaults — used once at boot. */
+/** Load every setting at once, merged over the defaults — used at boot.
+ * Throws on a read failure: silently returning defaults would make a real
+ * user's device look like a first run (onboarding, PIN lock off). */
 export async function loadAllSettings(): Promise<Settings> {
-  try {
-    const rows = await db.settings.toArray();
-    const settings = { ...SETTINGS_DEFAULTS };
-    for (const row of rows) {
-      (settings as Record<string, unknown>)[row.key] = row.value;
-    }
-    return settings;
-  } catch (err) {
-    console.error('loadAllSettings failed:', err);
-    return { ...SETTINGS_DEFAULTS };
+  const rows = await db.settings.toArray();
+  const settings = { ...SETTINGS_DEFAULTS };
+  for (const row of rows) {
+    (settings as Record<string, unknown>)[row.key] = row.value;
   }
+  return settings;
 }
 
 /** Save (upsert) a day's log entry by date — never appends, per the data-safety rules. */
@@ -89,14 +86,10 @@ export async function saveEntry(entry: LogEntryInput): Promise<boolean> {
   }
 }
 
-/** Load every logged entry, sorted by date ascending. */
+/** Load every logged entry, sorted by date ascending. Throws on a read
+ * failure — an empty list would be indistinguishable from "no history". */
 export async function loadAllEntries(): Promise<Entry[]> {
-  try {
-    return await db.entries.orderBy('date').toArray();
-  } catch (err) {
-    console.error('loadAllEntries failed:', err);
-    return [];
-  }
+  return db.entries.orderBy('date').toArray();
 }
 
 export async function deleteEntry(date: string): Promise<boolean> {

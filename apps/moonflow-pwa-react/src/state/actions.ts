@@ -11,6 +11,10 @@ export type LogFocusSection = 'flow' | 'symptom' | 'mood' | null;
 export interface AppState {
   /** Whether the initial IndexedDB load has finished. */
   booted: boolean;
+  /** The boot read failed — show a retry screen, never a first-run state. */
+  bootError: boolean;
+  /** Bumped by BOOT_RETRY; the store re-runs the boot read when it changes. */
+  bootAttempt: number;
   entries: Entry[];
   settings: Settings;
   /** "YYYY-MM" */
@@ -21,6 +25,8 @@ export interface AppState {
 
 export type Action =
   | { type: 'BOOT_LOADED'; entries: Entry[]; settings: Settings }
+  | { type: 'BOOT_FAILED' }
+  | { type: 'BOOT_RETRY' }
   | { type: 'SET_ENTRIES'; entries: Entry[] }
   | { type: 'PATCH_SETTINGS'; patch: Partial<Settings> }
   | { type: 'SET_CALENDAR_MONTH'; month: string }
@@ -34,6 +40,8 @@ function currentMonth(): string {
 
 export const initialState: AppState = {
   booted: false,
+  bootError: false,
+  bootAttempt: 0,
   entries: [],
   settings: SETTINGS_DEFAULTS,
   calendarMonth: currentMonth(),
@@ -44,7 +52,11 @@ export const initialState: AppState = {
 export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'BOOT_LOADED':
-      return { ...state, booted: true, entries: action.entries, settings: action.settings };
+      return { ...state, booted: true, bootError: false, entries: action.entries, settings: action.settings };
+    case 'BOOT_FAILED':
+      return { ...state, booted: false, bootError: true };
+    case 'BOOT_RETRY':
+      return { ...state, booted: false, bootError: false, bootAttempt: state.bootAttempt + 1 };
     case 'SET_ENTRIES':
       return { ...state, entries: action.entries };
     case 'PATCH_SETTINGS':
