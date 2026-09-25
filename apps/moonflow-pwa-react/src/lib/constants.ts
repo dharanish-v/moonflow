@@ -28,12 +28,12 @@ export const SYMPTOM_OPTIONS: ReadonlyArray<{ id: SymptomId; label: string }> = 
   { id: 'acne', label: 'Acne' },
 ];
 
-export const MOOD_OPTIONS: ReadonlyArray<{ id: MoodId; icon: string }> = [
-  { id: 'cry', icon: 'mood-cry' },
-  { id: 'sad', icon: 'mood-sad' },
-  { id: 'neutral', icon: 'mood-neutral' },
-  { id: 'smile', icon: 'mood-smile' },
-  { id: 'happy', icon: 'mood-happy' },
+export const MOOD_OPTIONS: ReadonlyArray<{ id: MoodId; icon: string; label: string }> = [
+  { id: 'cry', icon: 'mood-cry', label: 'Very low' },
+  { id: 'sad', icon: 'mood-sad', label: 'Low' },
+  { id: 'neutral', icon: 'mood-neutral', label: 'Okay' },
+  { id: 'smile', icon: 'mood-smile', label: 'Good' },
+  { id: 'happy', icon: 'mood-happy', label: 'Very happy' },
 ];
 
 // Period-detection thresholds — prediction constants live in forecast.ts.

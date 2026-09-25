@@ -25,8 +25,13 @@ export function buildExportPayload(entries: Entry[], settings: Settings, exporte
   );
 }
 
+export type ExportKind = 'json' | 'encrypted' | 'csv';
+
 /** @param dateStr "YYYY-MM-DD" · @param discreet true in the "Planner" install (ADR-011) */
-export function exportFilename(dateStr: string, discreet: boolean): string {
+export function exportFilename(dateStr: string, discreet: boolean, kind: ExportKind = 'json'): string {
+  const base = discreet ? 'planner' : 'moonflow';
+  if (kind === 'csv') return `${base}-log-${dateStr}.csv`;
+  if (kind === 'encrypted') return `${base}-backup-${dateStr}.encrypted.json`;
   return discreet ? `planner-backup-${dateStr}.json` : `moonflow-export-${dateStr}.json`;
 }
 

@@ -26,12 +26,13 @@ import { Switch } from '../components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { BellIcon, ChevronRightIcon, DownloadIcon, DropletIcon, EyeOffIcon, LockIcon } from '../components/icons';
 import { MAX_CYCLE_LENGTH, MAX_PERIOD_LENGTH, MIN_CYCLE_LENGTH, MIN_PERIOD_LENGTH } from '../lib/constants';
-import { todayString } from '../lib/cycle-math';
 import { importData, loadAllEntries, loadAllSettings } from '../lib/db';
 import { useSaveSettings } from '../state/useSaveSettings';
-import { buildExportPayload, exportFilename, exportShareTitle } from '../lib/export';
+import { decryptBackup, isEncryptedBackup } from '../lib/backup-crypto';
 import { isDiscreetInstall } from '../lib/install-identity';
-import { shareOrDownload } from '../lib/share-file';
+import { ExportSheet } from '../components/ExportSheet';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 import { parseImportPayload, type ImportPayload } from '../lib/import';
 import type { Settings, ThemeMode } from '../lib/types';
 import { useAppDispatch, useAppState } from '../state/store';
@@ -55,6 +56,10 @@ export function SettingsScreen() {
   const [importError, setImportError] = useState<string | null>(null);
   const [pendingImport, setPendingImport] = useState<{ payload: ImportPayload; skippedEntries: number } | null>(null);
   const [saveError, setSaveError] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [lockedBackup, setLockedBackup] = useState<string | null>(null);
+  const [backupPassphrase, setBackupPassphrase] = useState('');
+  const [unlockError, setUnlockError] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const saveSettingsPatch = useSaveSettings();
 
@@ -92,13 +97,6 @@ export function SettingsScreen() {
     if (ok) setEditField(null);
   }
 
-  async function handleExport() {
-    const discreet = isDiscreetInstall();
-    const json = buildExportPayload(entries, settings, new Date().toISOString());
-    const file = new File([json], exportFilename(todayString(), discreet), { type: 'application/json' });
-    await shareOrDownload(file, exportShareTitle(discreet));
-  }
-
   function handleImportFileSelected(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = ''; // allow re-selecting the same file to retry
@@ -107,14 +105,35 @@ export function SettingsScreen() {
     file
       .text()
       .then((text) => {
-        const result = parseImportPayload(text);
-        if (!result.ok) {
-          setImportError(result.error);
+        if (isEncryptedBackup(text)) {
+          setLockedBackup(text);
           return;
         }
-        setPendingImport({ payload: result.payload, skippedEntries: result.skippedEntries });
+        stageImport(text);
       })
       .catch(() => setImportError("Couldn't read that file."));
+  }
+
+  function stageImport(json: string) {
+    const result = parseImportPayload(json);
+    if (!result.ok) {
+      setImportError(result.error);
+      return;
+    }
+    setPendingImport({ payload: result.payload, skippedEntries: result.skippedEntries });
+  }
+
+  async function handleUnlockBackup() {
+    if (!lockedBackup) return;
+    setUnlockError(null);
+    const result = await decryptBackup(lockedBackup, backupPassphrase);
+    if (!result.ok) {
+      setUnlockError(result.error);
+      return;
+    }
+    setLockedBackup(null);
+    setBackupPassphrase('');
+    stageImport(result.json);
   }
 
   async function handleImportConfirm() {
@@ -225,7 +244,7 @@ export function SettingsScreen() {
             <Separator />
           </>
         )}
-        <SettingsRowButton icon={<DownloadIcon className="size-4" />} label="Export data" onClick={() => void handleExport()} />
+        <SettingsRowButton icon={<DownloadIcon className="size-4" />} label="Export data" onClick={() => setExportOpen(true)} />
         <Separator />
         <SettingsRowButton
           icon={<Upload className="size-4" aria-hidden="true" />}
@@ -301,6 +320,48 @@ export function SettingsScreen() {
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      <ExportSheet open={exportOpen} onOpenChange={setExportOpen} entries={entries} settings={settings} />
+
+      <AlertDialog
+        open={lockedBackup !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setLockedBackup(null);
+            setBackupPassphrase('');
+            setUnlockError(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Encrypted backup</AlertDialogTitle>
+            <AlertDialogDescription>Enter the passphrase this backup was exported with.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <Label htmlFor="backup-passphrase" className="sr-only">
+            Backup passphrase
+          </Label>
+          <Input
+            id="backup-passphrase"
+            type="password"
+            autoComplete="current-password"
+            value={backupPassphrase}
+            onChange={(e) => setBackupPassphrase(e.target.value)}
+            className="h-11"
+          />
+          {unlockError && (
+            <Alert>
+              <AlertDescription>{unlockError}</AlertDescription>
+            </Alert>
+          )}
+          <AlertDialogFooter>
+            <Button onClick={() => void handleUnlockBackup()} className="h-11 w-full text-sm">
+              Unlock backup
+            </Button>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={pendingImport !== null} onOpenChange={(open) => { if (!open) setPendingImport(null); }}>
         <AlertDialogContent>
