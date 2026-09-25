@@ -158,13 +158,17 @@ export async function importData(
   settings: Pick<Settings, 'lastPeriodStart' | 'avgCycleLength' | 'avgPeriodLength'>,
 ): Promise<boolean> {
   try {
-    await db.entries.bulkPut(entries);
-    await db.settings.bulkPut([
-      { key: 'lastPeriodStart', value: settings.lastPeriodStart },
-      { key: 'avgCycleLength', value: settings.avgCycleLength },
-      { key: 'avgPeriodLength', value: settings.avgPeriodLength },
-      { key: 'onboardingComplete', value: true },
-    ]);
+    // One transaction: a half-applied import (entries in, settings not) is
+    // worse than none.
+    await db.transaction('rw', db.entries, db.settings, async () => {
+      await db.entries.bulkPut(entries);
+      await db.settings.bulkPut([
+        { key: 'lastPeriodStart', value: settings.lastPeriodStart },
+        { key: 'avgCycleLength', value: settings.avgCycleLength },
+        { key: 'avgPeriodLength', value: settings.avgPeriodLength },
+        { key: 'onboardingComplete', value: true },
+      ]);
+    });
     return true;
   } catch (err) {
     console.error('importData failed:', err);

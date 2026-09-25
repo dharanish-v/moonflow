@@ -17,6 +17,7 @@ import { LogEntryScreen } from '../screens/LogEntry';
 import { PinSetupScreen } from '../screens/PinSetup';
 import { SettingsScreen } from '../screens/Settings';
 import { AppGate } from './AppGate';
+import { isFutureDate, isRealDate } from '../lib/dates';
 import { AppErrorScreen } from './placeholders';
 
 // #app-content wraps AppGate (every branch: splash/lock/onboarding/real
@@ -82,9 +83,13 @@ export interface LogSearch {
 
 // Exported (not inlined into logRoute below) so tests can build their own
 // throwaway '/log' route without duplicating this shape.
+/** Only a real, non-future day can be logged — `?date=banana` used to save
+ * a row keyed "banana" that turned Insights into NaN, and future dates
+ * (which Calendar disables) were reachable by URL. Anything else falls back
+ * to today. */
 export function validateLogSearch(search: Record<string, unknown>): LogSearch {
   return {
-    date: typeof search.date === 'string' ? search.date : undefined,
+    date: isRealDate(search.date) && !isFutureDate(search.date) ? search.date : undefined,
   };
 }
 

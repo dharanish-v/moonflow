@@ -73,3 +73,43 @@ describe('parseImportPayload', () => {
     expect(result.payload.settings).toEqual({ lastPeriodStart: null, avgCycleLength: 28, avgPeriodLength: 5 });
   });
 });
+
+describe('parseImportPayload — hardening (T38)', () => {
+  it('drops entries on impossible dates like 30 February', () => {
+    const json = JSON.stringify({
+      entries: [ENTRY, { ...ENTRY, date: '2026-02-30' }],
+      settings: { lastPeriodStart: null, avgCycleLength: 28, avgPeriodLength: 5 },
+    });
+    const result = parseImportPayload(json);
+    expect(result.ok && result.payload.entries).toEqual([ENTRY]);
+    expect(result.ok && result.skippedEntries).toBe(1);
+  });
+
+  it('clamps cycle and period lengths into the app\'s supported range', () => {
+    const json = JSON.stringify({ entries: [], settings: { lastPeriodStart: '2026-09-01', avgCycleLength: 0, avgPeriodLength: 999 } });
+    const result = parseImportPayload(json);
+    expect(result.ok && result.payload.settings).toEqual({ lastPeriodStart: '2026-09-01', avgCycleLength: 15, avgPeriodLength: 14 });
+  });
+
+  it('rejects an impossible lastPeriodStart', () => {
+    const json = JSON.stringify({ entries: [], settings: { lastPeriodStart: '2026-02-30', avgCycleLength: 28, avgPeriodLength: 5 } });
+    const result = parseImportPayload(json);
+    expect(result.ok && result.payload.settings.lastPeriodStart).toBeNull();
+  });
+
+  it('rejects files from a newer, unknown export format', () => {
+    const result = parseImportPayload(JSON.stringify({ schemaVersion: 99, entries: [], settings: {} }));
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects absurdly large files before parsing', () => {
+    const result = parseImportPayload('x'.repeat(21 * 1024 * 1024));
+    expect(result.ok).toBe(false);
+  });
+
+  it('drops notes over the length limit rather than storing them', () => {
+    const json = JSON.stringify({ entries: [{ ...ENTRY, note: 'a'.repeat(10_001) }], settings: {} });
+    const result = parseImportPayload(json);
+    expect(result.ok && result.skippedEntries).toBe(1);
+  });
+});
