@@ -21,12 +21,13 @@ import { Button } from '../components/ui/button';
 import { eraseAllData } from '../lib/db';
 import { usePinAttempt } from '../hooks/usePinAttempt';
 
-export function PinUnlockScreen({ onUnlock, onErased }: { onUnlock: () => void; onErased?: () => void }) {
-  const { attempt, error } = usePinAttempt();
+export function PinUnlockScreen({ onUnlock, onErased }: { onUnlock: (kind: 'real' | 'duress') => void; onErased?: () => void }) {
+  const { attempt, error } = usePinAttempt({ allowDuress: true });
   const [eraseFailed, setEraseFailed] = useState(false);
 
   async function handleComplete(pin: string) {
-    if (await attempt(pin)) onUnlock();
+    const outcome = await attempt(pin);
+    if (outcome) onUnlock(outcome);
   }
 
   async function handleErase() {

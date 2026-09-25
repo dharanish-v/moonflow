@@ -14,8 +14,8 @@ class MoonflowDB extends Dexie {
   entries!: Table<Entry, string>;
   settings!: Table<SettingRow, string>;
 
-  constructor() {
-    super('MoonflowDB');
+  constructor(name = 'MoonflowDB') {
+    super(name);
     this.version(1).stores({
       entries: 'date', // primary key = "YYYY-MM-DD" — one row per day, upsert by date (never append)
       settings: 'key',
@@ -26,7 +26,37 @@ class MoonflowDB extends Dexie {
   }
 }
 
-export const db = new MoonflowDB();
+export type DatabaseKind = 'real' | 'decoy';
+
+/** The real database, and a separate decoy one opened by the duress PIN
+ * (T48). Same schema; every read/write below goes through `db`, so while
+ * the decoy is active nothing can touch the real data. `db` is a live
+ * binding — importers always see the active one. */
+const databases: Record<DatabaseKind, MoonflowDB> = {
+  real: new MoonflowDB('MoonflowDB'),
+  decoy: new MoonflowDB('PlannerData'),
+};
+let active: DatabaseKind = 'real';
+export let db: MoonflowDB = databases.real;
+
+export function activeDatabase(): DatabaseKind {
+  return active;
+}
+
+export async function switchDatabase(kind: DatabaseKind): Promise<void> {
+  active = kind;
+  db = databases[kind];
+  if (kind === 'decoy') {
+    // First use: make the decoy look like a set-up app, not a fresh install.
+    const set = await db.settings.get('onboardingComplete');
+    if (!set) {
+      await db.settings.bulkPut([
+        { key: 'onboardingComplete', value: true },
+        { key: 'lastPeriodStart', value: null },
+      ]);
+    }
+  }
+}
 
 // Two installed icons (Moonflow + Planner, ADR-011) can have this database
 // open at once. When a newer build upgrades the schema in one of them, the
@@ -34,11 +64,13 @@ export const db = new MoonflowDB();
 // running against a closed connection and every write fails. Close, then
 // tell the app (main.tsx reloads onto the new build).
 const replacedListeners = new Set<() => void>();
-db.on('versionchange', () => {
-  db.close();
-  for (const fn of replacedListeners) fn();
-  return false; // we've handled it; skip Dexie's default
-});
+for (const instance of Object.values(databases)) {
+  instance.on('versionchange', () => {
+    instance.close();
+    for (const fn of replacedListeners) fn();
+    return false; // we've handled it; skip Dexie's default
+  });
+}
 
 export function onDatabaseReplaced(fn: () => void): () => void {
   replacedListeners.add(fn);
@@ -51,6 +83,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   avgCycleLength: 28,
   avgPeriodLength: 5,
   pinHash: null,
+  duressPinHash: null,
   pinLockEnabled: false,
   pinFailedAttempts: 0,
   pinLockoutUntil: null,

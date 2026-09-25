@@ -14,6 +14,7 @@ import { useLocation, useRouter } from '@tanstack/react-router';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { PIN_RELOCK_AFTER_MINUTES } from '../lib/constants';
 import { needsUnlock } from '../lib/pin-auth';
+import { switchDatabase } from '../lib/db';
 import { OnboardingScreen } from '../screens/Onboarding';
 import { PinUnlockScreen } from '../screens/PinUnlock';
 import { useAppDispatch, useAppState } from '../state/store';
@@ -102,9 +103,15 @@ export function AppGate({ children, tabBar }: { children: ReactNode; tabBar?: Re
     dispatch({ type: 'BOOT_RETRY' });
   }
 
-  function handleUnlock() {
+  async function handleUnlock(kind: 'real' | 'duress' = 'real') {
     const target = deepLinkTargetRef.current ?? lastRouteRef.current;
     deepLinkTargetRef.current = null;
+    if (kind === 'duress') {
+      // Swap to the decoy database and re-read from it; the real data is
+      // never loaded into this session again until the app is relaunched.
+      await switchDatabase('decoy');
+      dispatch({ type: 'BOOT_RETRY' });
+    }
     setIsLocked(false);
     // A raw href string (possibly with a query string) restored from either
     // a pre-unlock deep link or the last route visited before locking —
@@ -115,7 +122,7 @@ export function AppGate({ children, tabBar }: { children: ReactNode; tabBar?: Re
 
   if (bootError) return <Frame><BootErrorScreen onRetry={() => dispatch({ type: 'BOOT_RETRY' })} /></Frame>;
   if (!booted || !hasResolvedLock) return <Frame><SplashScreen /></Frame>;
-  if (isLocked) return <Frame><PinUnlockScreen onUnlock={handleUnlock} onErased={handleErased} /></Frame>;
+  if (isLocked) return <Frame><PinUnlockScreen onUnlock={(kind) => void handleUnlock(kind)} onErased={handleErased} /></Frame>;
   if (!settings.onboardingComplete) return <Frame><OnboardingScreen /></Frame>;
 
   return (

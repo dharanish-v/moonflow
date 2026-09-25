@@ -43,6 +43,8 @@ export interface Settings {
   avgCycleLength: number;
   avgPeriodLength: number;
   pinHash: string | null;
+  /** A second PIN that opens the empty decoy database instead (T48). */
+  duressPinHash: string | null;
   pinLockEnabled: boolean;
   pinFailedAttempts: number;
   pinLockoutUntil: number | null;

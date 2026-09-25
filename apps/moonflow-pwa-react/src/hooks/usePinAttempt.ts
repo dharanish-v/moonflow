@@ -7,16 +7,24 @@ import { useAppState } from '../state/store';
 import { useSaveSettings } from '../state/useSaveSettings';
 import { useAppDispatch } from '../state/store';
 
-export function usePinAttempt() {
+export type PinOutcome = 'real' | 'duress' | null;
+
+/** @param allowDuress true only on the unlock screen — the duress PIN must
+ * never pass "confirm your current PIN" (disabling the lock, changing it). */
+export function usePinAttempt({ allowDuress = false }: { allowDuress?: boolean } = {}) {
   const { settings } = useAppState();
   const dispatch = useAppDispatch();
   const saveSettingsPatch = useSaveSettings();
   const [error, setError] = useState<string | null>(null);
 
-  async function attempt(pin: string): Promise<boolean> {
+  async function attempt(pin: string): Promise<PinOutcome> {
     setError(null);
     const stored = settings.pinHash ?? '';
-    const { ok: matches, needsUpgrade } = stored ? await verifyPin(pin, stored) : { ok: false, needsUpgrade: false };
+    const real = stored ? await verifyPin(pin, stored) : { ok: false, needsUpgrade: false };
+    const duress =
+      !real.ok && allowDuress && settings.duressPinHash ? (await verifyPin(pin, settings.duressPinHash)).ok : false;
+    const matches = real.ok || duress;
+    const needsUpgrade = real.needsUpgrade;
     const result = evaluatePinAttempt({
       matches,
       failedAttempts: settings.pinFailedAttempts,
@@ -32,11 +40,12 @@ export function usePinAttempt() {
     }
 
     if (result.ok) {
+      if (duress) return 'duress';
       if (needsUpgrade) void hashPin(pin).then((pinHash) => saveSettingsPatch({ pinHash }));
-      return true;
+      return 'real';
     }
     setError(result.locked ? `Too many attempts — try again in ${result.secondsRemaining}s` : 'Wrong PIN');
-    return false;
+    return null;
   }
 
   return { attempt, error };

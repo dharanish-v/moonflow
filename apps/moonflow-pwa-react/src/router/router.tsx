@@ -16,6 +16,7 @@ import { InsightsScreen } from '../screens/Insights';
 import { LogEntryScreen } from '../screens/LogEntry';
 import { PinSetupScreen } from '../screens/PinSetup';
 import { PinVerifyScreen } from '../screens/PinVerify';
+import { DuressSetupScreen } from '../screens/DuressSetup';
 import { SettingsScreen } from '../screens/Settings';
 import { AppGate } from './AppGate';
 import { isFutureDate, isRealDate } from '../lib/dates';
@@ -109,6 +110,12 @@ const pinVerifyRoute = createRoute({
   component: PinVerifyScreen,
 });
 
+const duressSetupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/settings/duress-setup',
+  component: DuressSetupScreen,
+});
+
 const logRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/log',
@@ -123,6 +130,7 @@ export const routeTree = rootRoute.addChildren([
   settingsRoute,
   pinSetupRoute,
   pinVerifyRoute,
+  duressSetupRoute,
   logRoute,
 ]);
 

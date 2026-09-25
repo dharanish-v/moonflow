@@ -13,7 +13,7 @@ export function PinVerifyScreen() {
   const saveSettingsPatch = useSaveSettings();
 
   async function handleComplete(pin: string) {
-    if (!(await attempt(pin))) return;
+    if ((await attempt(pin)) !== 'real') return;
     if (intent === 'change') {
       navigate({ to: '/settings/pin-setup', replace: true });
       return;

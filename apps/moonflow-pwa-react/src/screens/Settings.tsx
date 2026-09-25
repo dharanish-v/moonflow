@@ -2,7 +2,7 @@
 // PIN (create-1/create-2) is its own route (PinSetup.tsx) — see that file
 // for why.
 import { forwardRef, useRef, useState, type ChangeEvent, type ComponentProps, type ReactNode } from 'react';
-import { Calendar, Info, Monitor, Moon, Sun, Upload } from 'lucide-react';
+import { Calendar, Info, Monitor, Moon, ShieldAlert, Sun, Upload } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from 'cn';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -26,7 +26,7 @@ import { Switch } from '../components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { BellIcon, ChevronRightIcon, DownloadIcon, DropletIcon, EyeOffIcon, LockIcon } from '../components/icons';
 import { MAX_CYCLE_LENGTH, MAX_PERIOD_LENGTH, MIN_CYCLE_LENGTH, MIN_PERIOD_LENGTH } from '../lib/constants';
-import { importData, loadAllEntries, loadAllSettings } from '../lib/db';
+import { eraseAllData, importData, loadAllEntries, loadAllSettings } from '../lib/db';
 import { useSaveSettings } from '../state/useSaveSettings';
 import { decryptBackup, isEncryptedBackup } from '../lib/backup-crypto';
 import { isDiscreetInstall } from '../lib/install-identity';
@@ -58,6 +58,9 @@ export function SettingsScreen() {
   const [pendingImport, setPendingImport] = useState<{ payload: ImportPayload; skippedEntries: number } | null>(null);
   const [saveError, setSaveError] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [removeDuressOpen, setRemoveDuressOpen] = useState(false);
+  const [eraseOpen, setEraseOpen] = useState(false);
+  const [eraseConfirm, setEraseConfirm] = useState('');
   const [lockedBackup, setLockedBackup] = useState<string | null>(null);
   const [backupPassphrase, setBackupPassphrase] = useState('');
   const [unlockError, setUnlockError] = useState<string | null>(null);
@@ -113,6 +116,18 @@ export function SettingsScreen() {
         stageImport(text);
       })
       .catch(() => setImportError("Couldn't read that file."));
+  }
+
+  async function handleEraseAll() {
+    const ok = await eraseAllData();
+    setEraseOpen(false);
+    setEraseConfirm('');
+    if (!ok) {
+      setSaveError(true);
+      return;
+    }
+    // Re-read the now-empty database: AppGate lands on onboarding.
+    dispatch({ type: 'BOOT_RETRY' });
   }
 
   function stageImport(json: string) {
@@ -205,6 +220,13 @@ export function SettingsScreen() {
               label="Change PIN"
               onClick={() => navigate({ to: '/settings/pin-verify', search: { intent: 'change' } })}
             />
+            <Separator />
+            <SettingsRowButton
+              icon={<ShieldAlert className="size-4" aria-hidden="true" />}
+              label="Duress PIN"
+              value={settings.duressPinHash ? 'On' : 'Off'}
+              onClick={() => (settings.duressPinHash ? setRemoveDuressOpen(true) : navigate({ to: '/settings/duress-setup' }))}
+            />
           </>
         )}
         <Separator />
@@ -291,6 +313,14 @@ export function SettingsScreen() {
         </Alert>
       )}
 
+      <Button
+        variant="ghost"
+        onClick={() => setEraseOpen(true)}
+        className="mt-3.5 h-11 w-full text-sm text-destructive"
+      >
+        Erase all data
+      </Button>
+
       <p className="mt-5 text-center text-xs text-muted-foreground">
         Predictions are estimates from your own logs. This app is not a medical device, can't diagnose anything, and must
         never be used as birth control.
@@ -325,6 +355,61 @@ export function SettingsScreen() {
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      <AlertDialog open={removeDuressOpen} onOpenChange={setRemoveDuressOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove duress PIN?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The duress PIN opens an empty decoy instead of your real data. Removing it means only your real PIN works.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => void persist({ duressPinHash: null })}>Remove</AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={eraseOpen}
+        onOpenChange={(open) => {
+          setEraseOpen(open);
+          if (!open) setEraseConfirm('');
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Erase all data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes every log and setting on this device. It can't be undone — export a backup first if
+              you might want it back.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Label htmlFor="erase-confirm" className="text-sm">
+            Type ERASE to confirm
+          </Label>
+          <Input
+            id="erase-confirm"
+            autoCapitalize="characters"
+            autoComplete="off"
+            value={eraseConfirm}
+            onChange={(e) => setEraseConfirm(e.target.value)}
+            className="h-11"
+          />
+          <AlertDialogFooter>
+            <Button
+              variant="destructive"
+              disabled={eraseConfirm.trim().toUpperCase() !== 'ERASE'}
+              onClick={() => void handleEraseAll()}
+              className="h-11 w-full text-sm"
+            >
+              Erase everything
+            </Button>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <ExportSheet
         open={exportOpen}
