@@ -28,6 +28,23 @@ class MoonflowDB extends Dexie {
 
 export const db = new MoonflowDB();
 
+// Two installed icons (Moonflow + Planner, ADR-011) can have this database
+// open at once. When a newer build upgrades the schema in one of them, the
+// other must let go — otherwise the upgrade blocks, or this copy keeps
+// running against a closed connection and every write fails. Close, then
+// tell the app (main.tsx reloads onto the new build).
+const replacedListeners = new Set<() => void>();
+db.on('versionchange', () => {
+  db.close();
+  for (const fn of replacedListeners) fn();
+  return false; // we've handled it; skip Dexie's default
+});
+
+export function onDatabaseReplaced(fn: () => void): () => void {
+  replacedListeners.add(fn);
+  return () => replacedListeners.delete(fn);
+}
+
 export const SETTINGS_DEFAULTS: Settings = {
   onboardingComplete: false,
   lastPeriodStart: null,
