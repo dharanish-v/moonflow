@@ -83,6 +83,11 @@ describe('SettingsScreen', () => {
     await waitFor(() => expect(state().settings.perimenopauseMode).toBe(true));
   });
 
+  it('shows the app version (T95)', async () => {
+    await renderSettings();
+    expect(screen.getByText(/^Version \d+\.\d+\.\d+/)).toBeInTheDocument();
+  });
+
   it('a failed theme write shows an error and leaves the theme unchanged', async () => {
     vi.spyOn(db, 'saveSettings').mockResolvedValue(false);
     const state = await renderSettings();

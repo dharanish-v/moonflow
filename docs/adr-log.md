@@ -349,3 +349,15 @@ It also caught a real bug: update detection was decided once at launch, so an up
   - Adds six related symptoms and STRAW+10 stage hints (7+ day swings, 60+ day gaps, 12 months without a period).
   - Silences the irregularity nudges.
   - Bleeding after 12 months without a period is always flagged, in every mode, to see a clinician.
+
+### ADR-052: v1.0.0 feature freeze ("finished forever")
+**Status:** Accepted 2026-09-26
+**Decision:**
+- Moonflow v1.0.0 is feature-complete and frozen.
+- Every dependency is pinned to an exact version, and the build declares its Node version (`engines`).
+- The `v1.0.0` GitHub Release carries the built app (`moonflow-v1.0.0-dist.zip`) plus `SHA256SUMS`, so it can be served from any static host without ever rebuilding.
+- The data formats are documented field by field (`docs/data-format.md`). The encrypted-backup recipe is verified by decrypting an app-made backup with Python's standard crypto libraries.
+- The upkeep routine is in `docs/maintenance.md`: a yearly backup and restore test, a check after each iOS release, and exact rebuild steps.
+- After the freeze, dependencies change only for security fixes, through the full gate. Changes happen only when Safari breaks something.
+
+**Open:** the permanent address (ADR-042) is deliberately left for the owner to decide.

@@ -1,5 +1,7 @@
 # Moonflow
 
+**v1.0.0: feature-complete and frozen** (see `docs/maintenance.md`).
+
 A private, local-only period tracker for iPhone. No account, no server, and no data leaves your phone: the page's Content Security Policy blocks every network request.
 
 It installs as a home-screen web app, so there's no App Store and no Apple developer account.
@@ -59,3 +61,5 @@ Test on a real iPhone for installation, the Share Sheet, VoiceOver, Dynamic Type
 - `docs/qa-checklist.md`: manual on-device checks.
 - `docs/copy-deck.md`: user-facing strings and tone.
 - `docs/task-board.md`: the build log, phase by phase.
+- `docs/data-format.md`: every file format the app writes, field by field, so the data stays readable without the app.
+- `docs/maintenance.md`: the yearly routine, post-iOS-update checks, exact rebuild steps, and what to do if the host disappears.

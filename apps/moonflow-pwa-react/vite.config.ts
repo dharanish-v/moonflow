@@ -11,6 +11,8 @@ import { cspPlugin } from './build/csp.ts'
 // this exact bug once on the vanilla-JS app's own Vite migration.
 export default defineConfig({
   base: './',
+  // Shown in Settings → About, and on the release (T95).
+  define: { __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.0.0') },
   build: {
     rollupOptions: {
       input: {

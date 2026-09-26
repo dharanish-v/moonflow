@@ -358,7 +358,9 @@ export function SettingsScreen() {
         Erase all data
       </Button>
 
-      <p className="mt-5 text-center text-xs text-muted-foreground">
+      <p className="mt-5 text-center text-xs text-muted-foreground">Version {__APP_VERSION__}</p>
+
+      <p className="mt-2 text-center text-xs text-muted-foreground">
         Predictions are estimates from your own logs. This app is not a medical device, can't diagnose anything, and must
         never be used as birth control.
       </p>
