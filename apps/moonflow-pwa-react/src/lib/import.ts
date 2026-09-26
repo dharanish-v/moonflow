@@ -11,7 +11,10 @@
 import { MAX_CYCLE_LENGTH, MAX_PERIOD_LENGTH, MIN_CYCLE_LENGTH, MIN_PERIOD_LENGTH } from './constants';
 import { isRealDate } from './dates';
 import { EXPORT_SCHEMA_VERSION } from './export';
-import type { Entry, FlowId, MoodId, SymptomId } from './types';
+import type { Entry, FlowId, MoodId, MucusId, SymptomId } from './types';
+import { isPlausibleCelsius } from './temperature';
+
+const MUCUS_IDS: ReadonlySet<string> = new Set(['dry', 'sticky', 'creamy', 'watery', 'eggwhite']);
 
 /** Far beyond any real history (decades of daily logs is ~2MB). */
 const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
@@ -65,8 +68,14 @@ function normalizeEntry(value: unknown): Entry | null {
   ) {
     return null;
   }
+  if (e.temperature !== undefined && e.temperature !== null && !isPlausibleCelsius(e.temperature)) return null;
+  if (e.mucus !== undefined && e.mucus !== null && !MUCUS_IDS.has(e.mucus as string)) return null;
+  if (e.tempDisturbed !== undefined && typeof e.tempDisturbed !== 'boolean') return null;
   return {
     date: e.date,
+    ...(typeof e.temperature === 'number' ? { temperature: e.temperature } : {}),
+    ...(e.mucus ? { mucus: e.mucus as MucusId } : {}),
+    ...(e.tempDisturbed === true ? { tempDisturbed: true } : {}),
     flow: e.flow as FlowId | null,
     symptoms: e.symptoms as SymptomId[],
     mood: e.mood as MoodId | null,

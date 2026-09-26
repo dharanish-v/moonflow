@@ -1,7 +1,7 @@
 // src/lib/csv.ts — a human-readable export (T46): opens in Numbers/Excel/any
 // text editor, so the data outlives this app. Not re-importable (JSON is the
 // round-trip format).
-import { FLOW_OPTIONS, MOOD_OPTIONS, SYMPTOM_OPTIONS } from './constants';
+import { FLOW_OPTIONS, MOOD_OPTIONS, MUCUS_OPTIONS, SYMPTOM_OPTIONS } from './constants';
 import type { Entry } from './types';
 
 const label = <T extends { id: string; label: string }>(opts: ReadonlyArray<T>, id: string | null) =>
@@ -24,10 +24,12 @@ export function buildCsv(entries: Entry[]): string {
         e.symptoms.map((s) => label(SYMPTOM_OPTIONS, s)).join('; '),
         label(MOOD_OPTIONS, e.mood),
         (e.tags ?? []).join('; '),
+        typeof e.temperature === 'number' ? e.temperature.toFixed(2) + (e.tempDisturbed ? ' (disturbed)' : '') : '',
+        label(MUCUS_OPTIONS, e.mucus ?? null),
         e.note,
       ]
         .map(cell)
         .join(','),
     );
-  return ['Date,Flow,Symptoms,Mood,Tags,Note', ...rows].join('\r\n');
+  return ['Date,Flow,Symptoms,Mood,Tags,Temperature (°C),Mucus,Note', ...rows].join('\r\n');
 }

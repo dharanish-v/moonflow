@@ -34,7 +34,7 @@ describe('resolveInitialDraft', () => {
 
   it('falls back to blank defaults with neither an entry nor a draft', () => {
     const result = resolveInitialDraft('2026-09-05', null, null);
-    expect(result).toEqual({ flow: null, symptoms: [], mood: null, note: '', tags: [], fromDraft: false });
+    expect(result).toEqual({ flow: null, symptoms: [], mood: null, note: '', tags: [], temperature: null, tempDisturbed: false, mucus: null, fromDraft: false });
   });
 });
 

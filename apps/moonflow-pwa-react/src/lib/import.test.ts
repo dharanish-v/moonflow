@@ -130,3 +130,19 @@ describe('parseImportPayload — tags (T68)', () => {
     expect(r.ok && r.payload.entries[0]!.tags).toEqual([]);
   });
 });
+
+describe('parseImportPayload — fertility awareness (T88)', () => {
+  it('keeps valid temperature and mucus, drops impossible ones', () => {
+    const json = JSON.stringify({
+      entries: [
+        { ...ENTRY, temperature: 36.6, mucus: 'creamy', tempDisturbed: false },
+        { ...ENTRY, date: '2026-09-05', temperature: 55 },
+        { ...ENTRY, date: '2026-09-03', mucus: 'lava' },
+      ],
+      settings: {},
+    });
+    const r = parseImportPayload(json);
+    expect(r.ok && r.payload.entries.map((e) => e.temperature)).toEqual([36.6]);
+    expect(r.ok && r.skippedEntries).toBe(2);
+  });
+});

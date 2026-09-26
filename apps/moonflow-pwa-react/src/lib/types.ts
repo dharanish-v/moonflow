@@ -13,6 +13,8 @@ export type SymptomId =
   | 'tender_breasts'
   | 'acne';
 export type MoodId = 'cry' | 'sad' | 'neutral' | 'smile' | 'happy';
+/** Cervical mucus, least to most fertile (sympto-thermal charting, T88). */
+export type MucusId = 'dry' | 'sticky' | 'creamy' | 'watery' | 'eggwhite';
 
 /** What a screen produces when saving/drafting a day's log. */
 export interface LogEntryInput {
@@ -23,6 +25,11 @@ export interface LogEntryInput {
   note: string;
   /** User-defined tags (T68): medication, pill taken, sleep, energy… */
   tags?: string[];
+  /** Waking (basal) temperature in °C, two decimals (T88). */
+  temperature?: number | null;
+  /** Reading may be off: illness, poor sleep, alcohol, late measurement. */
+  tempDisturbed?: boolean;
+  mucus?: MucusId | null;
 }
 
 /** The stored/loaded shape — db.ts stamps `updatedAt` on every write. */
@@ -57,6 +64,9 @@ export interface Settings {
   predictionsPaused: boolean;
   /** The user's own tag vocabulary, offered as chips in the log sheet (T68). */
   customTags: string[];
+  /** Show temperature + cervical mucus logging and charting (T88). */
+  fertilityAwareness: boolean;
+  temperatureUnit: 'C' | 'F';
   /** Long cycles the user said were real, not a missed log (T78). */
   confirmedLongCycles: string[];
   /** Epoch ms of the last successful export (T47). */

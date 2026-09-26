@@ -2,7 +2,7 @@
 // PIN (create-1/create-2) is its own route (PinSetup.tsx) — see that file
 // for why.
 import { forwardRef, useState, type ComponentProps, type ReactNode } from 'react';
-import { Calendar, CalendarClock, Info, Monitor, Moon, PauseCircle, ShieldAlert, Sun, Upload, Zap } from 'lucide-react';
+import { Calendar, CalendarClock, Info, Monitor, Moon, PauseCircle, ShieldAlert, Sun, Thermometer, Upload, Zap } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from 'cn';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -167,6 +167,41 @@ export function SettingsScreen() {
           label="Calendar reminders"
           onClick={() => setRemindersOpen(true)}
         />
+        <Separator />
+        <SettingsRow icon={<Thermometer className="size-4" aria-hidden="true" />} label="Fertility awareness">
+          <Switch
+            checked={settings.fertilityAwareness}
+            onCheckedChange={(v) => void persist({ fertilityAwareness: v })}
+            aria-label="Fertility awareness"
+          />
+        </SettingsRow>
+        {settings.fertilityAwareness && (
+          <div className="px-3.5 pb-3">
+            <p className="mb-2 text-xs text-muted-foreground">
+              Log your waking temperature and cervical mucus to confirm ovulation after the fact and learn your own luteal
+              phase. It is not a contraceptive method on its own — using these signs to avoid pregnancy needs proper
+              training (e.g. a Sensiplan course).
+            </p>
+            <span id="temp-unit-label" className="sr-only">
+              Temperature unit
+            </span>
+            <ToggleGroup
+              type="single"
+              aria-labelledby="temp-unit-label"
+              value={settings.temperatureUnit}
+              onValueChange={(v) => {
+                if (v) void persist({ temperatureUnit: v as 'C' | 'F' });
+              }}
+              className="gap-1.5"
+            >
+              {(['C', 'F'] as const).map((u) => (
+                <ToggleGroupItem key={u} value={u} variant="segment" className="h-11 px-4">
+                  °{u}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+        )}
         <Separator />
         <SettingsRow icon={<PauseCircle className="size-4" aria-hidden="true" />} label="Pause predictions">
           <Switch

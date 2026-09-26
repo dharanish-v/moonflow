@@ -35,13 +35,14 @@ import { MAX_TAG_LENGTH } from '../lib/import';
 import { Textarea } from '../components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { MOOD_ICONS } from '../components/mood-icons';
-import { FLOW_OPTIONS, MOOD_OPTIONS, PERIOD_FLOW_LEVELS, SYMPTOM_OPTIONS } from '../lib/constants';
+import { FLOW_OPTIONS, MOOD_OPTIONS, MUCUS_OPTIONS, PERIOD_FLOW_LEVELS, SYMPTOM_OPTIONS } from '../lib/constants';
+import { displayTemperature, parseTemperature } from '../lib/temperature';
 import { addDays, todayString } from '../lib/cycle-math';
 import { deleteEntryAndClearDraft, saveEntry, saveEntryAndClearDraft } from '../lib/db';
 import { offerUndo } from '../lib/undo-signal';
 import { useSaveSettings } from '../state/useSaveSettings';
 import { formatHeaderDate, resolveInitialDraft } from '../lib/log-entry';
-import type { FlowId, LogEntryInput, MoodId, SymptomId } from '../lib/types';
+import type { FlowId, LogEntryInput, MoodId, MucusId, SymptomId } from '../lib/types';
 import { useDraftAutosave } from '../hooks/useDraftAutosave';
 import { useAppDispatch, useAppState } from '../state/hooks';
 
@@ -73,12 +74,19 @@ export function LogEntryScreen() {
   const [mood, setMood] = useState<MoodId | null>(initial.mood);
   const [note, setNote] = useState(initial.note);
   const [tags, setTags] = useState<string[]>(initial.tags);
+  // Fertility-awareness fields (T88) — only shown when the feature is on.
+  const unit = settings.temperatureUnit;
+  const [tempText, setTempText] = useState(initial.temperature !== null ? displayTemperature(initial.temperature, unit) : '');
+  const [tempDisturbed, setTempDisturbed] = useState(initial.tempDisturbed);
+  const [mucus, setMucus] = useState<MucusId | null>(initial.mucus ?? null);
+  const temperature = tempText.trim() ? parseTemperature(tempText, unit) : null;
+  const tempInvalid = tempText.trim() !== '' && temperature === null;
   const [newTag, setNewTag] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
 
   function currentDraft(overrides: Partial<LogEntryInput> = {}): LogEntryInput {
-    return { date, flow, symptoms, mood, note, tags, ...overrides };
+    return { date, flow, symptoms, mood, note, tags, temperature, tempDisturbed, mucus, ...overrides };
   }
 
   const isDirty =
@@ -87,6 +95,9 @@ export function LogEntryScreen() {
     note !== initial.note ||
     symptoms.length !== initial.symptoms.length ||
     symptoms.some((s) => !initial.symptoms.includes(s)) ||
+    temperature !== initial.temperature ||
+    tempDisturbed !== initial.tempDisturbed ||
+    mucus !== (initial.mucus ?? null) ||
     tags.length !== initial.tags.length ||
     tags.some((t) => !initial.tags.includes(t));
 
@@ -151,7 +162,7 @@ export function LogEntryScreen() {
   async function handleSave() {
     setIsSaving(true);
     setSaveError(false);
-    const saved = await saveEntryAndClearDraft({ date, flow, symptoms, mood, note, tags });
+    const saved = await saveEntryAndClearDraft({ date, flow, symptoms, mood, note, tags, temperature, tempDisturbed, mucus });
     if (!saved) {
       setIsSaving(false);
       setSaveError(true);
@@ -286,6 +297,69 @@ export function LogEntryScreen() {
           </ToggleGroup>
         </div>
 
+        {settings.fertilityAwareness && (
+          <div className="mb-5">
+            <Label htmlFor="log-temp" className="mb-1.5 block text-sm text-muted-foreground">
+              Temperature (°{unit})
+            </Label>
+            <div className="flex items-center gap-3">
+              <Input
+                id="log-temp"
+                inputMode="decimal"
+                autoComplete="off"
+                placeholder={unit === 'F' ? 'e.g. 97.7' : 'e.g. 36.50'}
+                value={tempText}
+                aria-invalid={tempInvalid || undefined}
+                aria-describedby={tempInvalid ? 'log-temp-error' : undefined}
+                onChange={(e) => {
+                  setTempText(e.target.value);
+                  const t = e.target.value.trim() ? parseTemperature(e.target.value, unit) : null;
+                  reportDraft(currentDraft({ temperature: t }));
+                }}
+                className="h-11 w-32"
+              />
+              <label className="flex min-h-11 items-center gap-2 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  checked={tempDisturbed}
+                  onChange={(e) => {
+                    setTempDisturbed(e.target.checked);
+                    reportDraft(currentDraft({ tempDisturbed: e.target.checked }));
+                  }}
+                  className="size-5 accent-[var(--primary)]"
+                />
+                Disturbed (ill, bad sleep, alcohol, late)
+              </label>
+            </div>
+            {tempInvalid && (
+              <p id="log-temp-error" className="mt-1 text-sm text-destructive">
+                That doesn't look like a body temperature in °{unit}.
+              </p>
+            )}
+
+            <span id="log-mucus-label" className="mt-4 mb-1.5 block text-sm text-muted-foreground">
+              Cervical mucus
+            </span>
+            <ToggleGroup
+              type="single"
+              aria-labelledby="log-mucus-label"
+              value={mucus ?? ''}
+              onValueChange={(value) => {
+                const id = value ? (value as MucusId) : null;
+                setMucus(id);
+                reportDraft(currentDraft({ mucus: id }));
+              }}
+              className="w-full flex-wrap justify-start gap-1.5"
+            >
+              {MUCUS_OPTIONS.map((opt) => (
+                <ToggleGroupItem key={opt.id} value={opt.id} variant="chip" title={opt.hint} className="min-h-11 px-3">
+                  {opt.label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+        )}
+
         <div className="mb-5">
           <span id="log-tags-label" className="mb-1.5 block text-sm text-muted-foreground">
             Tags
@@ -372,7 +446,7 @@ export function LogEntryScreen() {
           </Alert>
         )}
 
-        <Button disabled={isSaving} onClick={() => void handleSave()} className="h-11 w-full text-sm">
+        <Button disabled={isSaving || tempInvalid} onClick={() => void handleSave()} className="h-11 w-full text-sm">
           {isSaving ? 'Saving…' : 'Save'}
         </Button>
 

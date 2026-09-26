@@ -2,7 +2,7 @@
 // referenced across multiple screens and cycle-math.ts. Ported verbatim from
 // the vanilla app's constants.js — add a symptom/mood/flow option here once,
 // not in every screen that displays one.
-import type { FlowId, MoodId, SymptomId } from './types';
+import type { FlowId, MoodId, MucusId, SymptomId } from './types';
 
 export const FLOW_OPTIONS: ReadonlyArray<{ id: FlowId; label: string }> = [
   { id: 'none', label: 'None' },
@@ -52,3 +52,11 @@ export const MIN_PERIOD_LENGTH = 1;
 export const MAX_PERIOD_LENGTH = 14;
 export const DEFAULT_CYCLE_LENGTH = 28;
 export const DEFAULT_PERIOD_LENGTH = 5;
+
+export const MUCUS_OPTIONS: ReadonlyArray<{ id: MucusId; label: string; hint: string }> = [
+  { id: 'dry', label: 'Dry', hint: 'nothing noticeable' },
+  { id: 'sticky', label: 'Sticky', hint: 'thick, crumbly' },
+  { id: 'creamy', label: 'Creamy', hint: 'lotion-like, white' },
+  { id: 'watery', label: 'Watery', hint: 'wet, thin' },
+  { id: 'eggwhite', label: 'Egg-white', hint: 'clear, stretchy — most fertile' },
+];

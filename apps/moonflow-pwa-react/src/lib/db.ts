@@ -4,6 +4,7 @@
 
 import Dexie, { type Table } from 'dexie';
 import type { Entry, LogEntryInput, Settings, SettingKey } from './types';
+import { defaultTemperatureUnit } from './temperature';
 
 interface SettingRow<K extends SettingKey = SettingKey> {
   key: K;
@@ -93,6 +94,8 @@ export const SETTINGS_DEFAULTS: Settings = {
   predictionsPaused: false,
   customTags: [],
   confirmedLongCycles: [],
+  fertilityAwareness: false,
+  temperatureUnit: defaultTemperatureUnit(typeof navigator === 'undefined' ? 'en' : navigator.language),
 };
 
 /** Read one setting, falling back to its documented default if never set. */

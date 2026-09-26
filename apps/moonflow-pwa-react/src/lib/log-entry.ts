@@ -10,6 +10,9 @@ export interface ResolvedDraft {
   mood: LogEntryInput['mood'];
   note: string;
   tags: string[];
+  temperature: number | null;
+  tempDisturbed: boolean;
+  mucus: LogEntryInput['mucus'];
   fromDraft: boolean;
 }
 
@@ -31,6 +34,9 @@ export function resolveInitialDraft(
     mood: source?.mood ?? null,
     note: source?.note ?? '',
     tags: source?.tags ?? [],
+    temperature: source?.temperature ?? null,
+    tempDisturbed: source?.tempDisturbed ?? false,
+    mucus: source?.mucus ?? null,
     fromDraft: source === draftEntry && draftEntry !== null,
   };
 }

@@ -219,3 +219,44 @@ describe('LogEntryScreen — shortcut links (T83)', () => {
     expect(validateLogSearch({ flow: 'lava', symptom: 'nope' })).toMatchObject({ flow: undefined, symptom: undefined });
   });
 });
+
+describe('LogEntryScreen — fertility awareness fields (T88)', () => {
+  it('are hidden unless fertility awareness is turned on', async () => {
+    await renderLog();
+    expect(screen.queryByLabelText(/temperature/i)).not.toBeInTheDocument();
+  });
+
+  it('logs a morning temperature (stored in °C) and cervical mucus', async () => {
+    const { SETTINGS_DEFAULTS } = await import('../lib/db');
+    let latest: AppState | null = null;
+    await renderRouted(<LogEntryScreen />, {
+      path: '/log',
+      initialEntries: ['/log?date=2026-09-06'],
+      validateSearch: validateLogSearch,
+      wrapper: (c) => (
+        <StateProvider testState={{ settings: { ...SETTINGS_DEFAULTS, fertilityAwareness: true, temperatureUnit: 'F' } }}>
+          {c}
+          <StateProbe onState={(s) => (latest = s)} />
+        </StateProvider>
+      ),
+    });
+    fireEvent.change(screen.getByLabelText(/temperature \(°F\)/i), { target: { value: '97.9' } });
+    fireEvent.click(screen.getByRole('radio', { name: 'Egg-white' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /disturbed/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(latest!.entries[0]).toMatchObject({ temperature: 36.61, mucus: 'eggwhite', tempDisturbed: true }));
+  });
+
+  it('refuses to save an implausible temperature', async () => {
+    const { SETTINGS_DEFAULTS } = await import('../lib/db');
+    await renderRouted(<LogEntryScreen />, {
+      path: '/log',
+      initialEntries: ['/log?date=2026-09-06'],
+      validateSearch: validateLogSearch,
+      wrapper: (c) => <StateProvider testState={{ settings: { ...SETTINGS_DEFAULTS, fertilityAwareness: true, temperatureUnit: 'C' } }}>{c}</StateProvider>,
+    });
+    fireEvent.change(screen.getByLabelText(/temperature \(°C\)/i), { target: { value: '41.9x' } });
+    expect(screen.getByText(/doesn.t look like a body temperature/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+  });
+});

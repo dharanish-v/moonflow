@@ -60,6 +60,16 @@ describe('SettingsScreen', () => {
     expect(await screen.findByText(/#\/log\?flow=medium/)).toBeInTheDocument();
   });
 
+  it('turns on fertility awareness and picks a temperature unit (T88)', async () => {
+    const state = await renderSettings();
+    fireEvent.click(screen.getByRole('switch', { name: 'Fertility awareness' }));
+    const { waitFor } = await import('@testing-library/react');
+    await waitFor(() => expect(state().settings.fertilityAwareness).toBe(true));
+    expect(await screen.findByText(/not a contraceptive method on its own/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: '°F' }));
+    await waitFor(() => expect(state().settings.temperatureUnit).toBe('F'));
+  });
+
   it('a failed theme write shows an error and leaves the theme unchanged', async () => {
     vi.spyOn(db, 'saveSettings').mockResolvedValue(false);
     const state = await renderSettings();
