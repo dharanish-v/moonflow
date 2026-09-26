@@ -311,3 +311,15 @@ FIGO-based health nudges (lib/health-nudges.ts) read the same forecast.
 **Context:** ADR-043 reported "launch JS 250 → 125KB gzip". That counted only `main-*.js`. Rollup also moves shared code into separate chunks that `index.html` preloads at startup (dexie, motion-dom, React internals).
 **Decision:** The launch metric is the gzip total of every script `dist/index.html` references. It is currently ~211KB gzip across 13 files, down from ~250KB. The native date input (T82) removed react-day-picker and date-fns, shrinking the onboarding chunk from 72KB to 3KB.
 **Consequences:** The PRD's performance line now states the honest number.
+
+### ADR-048: Service-worker behaviour verified end to end (T85)
+**Status:** Accepted 2026-09-26
+**Context:** The audit asked whether an installed app survives its host returning 404 for `service-worker.js` (the Safari 26.6 "missing main script" change), and T77's update-on-consent needed a real two-build test.
+**Decision/Result:** A local harness served build A, then build B, then a 404 for the worker, then shut down entirely. It ran in WebKit 26.6 and Chrome:
+- the first install takes control without a reload or a prompt;
+- after a new deploy the prompt appears, and nothing switches without a tap;
+- "Update" reloads once onto the new build;
+- a 404 on `sw.js` keeps the registration, and the app still launches;
+- with the host completely gone, the app still launches from cache.
+
+It also caught a real bug: update detection was decided once at launch, so an update arriving in the same session as the first install was never announced. Detection is now per worker (an active worker already exists), and the page reloads after any applied update.

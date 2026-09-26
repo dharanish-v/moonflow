@@ -11,6 +11,7 @@ interface Worker {
 }
 
 interface Registration {
+  active?: unknown;
   waiting: Worker | null | unknown;
   installing: Worker | null | unknown;
   addEventListener: (type: 'updatefound', fn: () => void) => void;
@@ -66,9 +67,10 @@ export function registerServiceWorker(deps: RegisterDeps | UpdateReadyHandler = 
   // controllerchange, and reloading then threw away a new user's half-filled
   // onboarding (and cost a 2.4s double load).
   const wasControlled = !!sw.controller;
+  let updateApplied = false;
   let reloadedOnce = false;
   sw.addEventListener('controllerchange', () => {
-    if (!wasControlled || reloadedOnce) return;
+    if (!(wasControlled || updateApplied) || reloadedOnce) return;
     reloadedOnce = true;
     deps.reload();
   });
@@ -78,18 +80,25 @@ export function registerServiceWorker(deps: RegisterDeps | UpdateReadyHandler = 
   // Update, which messages the waiting worker to take over (Workbox's
   // generated worker listens for SKIP_WAITING), then controllerchange above
   // reloads. Untouched, it activates the next time the app is fully closed.
-  const announce = (worker: Worker) => deps.onUpdateReady?.(() => worker.postMessage({ type: 'SKIP_WAITING' }));
+  const announce = (worker: Worker) =>
+    deps.onUpdateReady?.(() => {
+      updateApplied = true;
+      worker.postMessage({ type: 'SKIP_WAITING' });
+    });
 
   deps.onLoad(() => {
     sw.register('./service-worker.js')
       .then((reg) => {
         const registration = reg as Registration;
-        if (registration.waiting && wasControlled) announce(registration.waiting as Worker);
+        // A waiting worker next to an active one is an update. (Decided per
+        // worker, not once at launch: after a first install, the same
+        // session can still receive — and must announce — an update.)
+        if (registration.waiting && registration.active) announce(registration.waiting as Worker);
         registration.addEventListener('updatefound', () => {
           const installing = registration.installing as Worker | null;
+          const isUpdate = !!registration.active || !!sw.controller;
           installing?.addEventListener?.('statechange', () => {
-            // 'installed' with an existing controller = an update, not the first install.
-            if (installing.state === 'installed' && wasControlled) announce(installing);
+            if (installing.state === 'installed' && (isUpdate || !!sw.controller)) announce(installing);
           });
         });
       })

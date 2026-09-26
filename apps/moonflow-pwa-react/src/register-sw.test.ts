@@ -49,6 +49,8 @@ describe('update on consent (T77)', () => {
     const installing = { state: 'installing', addEventListener: vi.fn((_t: string, fn: () => void) => (installingChange = fn)), postMessage: vi.fn() };
     let installingChange: () => void = () => {};
     const registration = {
+      // A waiting worker always sits next to an active one in real browsers.
+      active: waiting ? {} : null,
       waiting,
       installing: null as unknown,
       addEventListener: (t: string, fn: () => void) => (regListeners[t] = fn),
@@ -94,3 +96,36 @@ describe('update on consent (T77)', () => {
   });
 });
 
+
+describe('update detection within the first session (T85 finding)', () => {
+  it('announces an update that arrives after the first install, without a relaunch', async () => {
+    const regListeners: Record<string, () => void> = {};
+    let stateChange: () => void = () => {};
+    const newWorker = { state: 'installing', postMessage: vi.fn(), addEventListener: (_t: string, fn: () => void) => (stateChange = fn) };
+    const registration = { active: { postMessage: vi.fn() }, waiting: null, installing: null as unknown, addEventListener: (t: string, fn: () => void) => (regListeners[t] = fn) };
+    const sw = { controller: null as unknown, addEventListener: vi.fn(), register: vi.fn().mockResolvedValue(registration) };
+    const onUpdateReady = vi.fn();
+    registerServiceWorker({ serviceWorker: sw, reload: vi.fn(), onLoad: (fn) => fn(), isProd: true, onUpdateReady });
+    await vi.waitFor(() => expect(regListeners.updatefound).toBeDefined());
+    sw.controller = {}; // first install finished and claimed the page
+    registration.installing = newWorker;
+    regListeners.updatefound!();
+    newWorker.state = 'installed';
+    stateChange();
+    expect(onUpdateReady).toHaveBeenCalled();
+  });
+
+  it('reloads after the user applies an update even if the session started uncontrolled', async () => {
+    const swListeners: Record<string, () => void> = {};
+    const waiting = { postMessage: vi.fn() };
+    const registration = { active: {}, waiting, installing: null, addEventListener: vi.fn() };
+    const sw = { controller: null, addEventListener: (t: string, fn: () => void) => (swListeners[t] = fn), register: vi.fn().mockResolvedValue(registration) };
+    const reload = vi.fn();
+    const onUpdateReady = vi.fn();
+    registerServiceWorker({ serviceWorker: sw, reload, onLoad: (fn) => fn(), isProd: true, onUpdateReady });
+    await vi.waitFor(() => expect(onUpdateReady).toHaveBeenCalled());
+    onUpdateReady.mock.calls[0]![0]();
+    swListeners.controllerchange!();
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+});
