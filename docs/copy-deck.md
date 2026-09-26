@@ -42,7 +42,7 @@ Moonflow stores everything only on this device. Nothing is uploaded, synced, or 
 
 ## Added 2026-09 (Phases 8–11) — source of truth is the code; key strings
 
-**Home:** "Period started today" · "Still on my period" · "Today: Medium flow · 2 symptoms" · "Edit today" · "Log symptoms, mood or notes" · "Logged medium flow for today — Undo" · "N days late / log your period when it starts" · "Predictions paused / keep logging — resume anytime in Settings" · "Expected 22–26 Aug · cycles vary" · "Estimate only — not birth control." · "Back up your data · You haven't backed up yet" · signature "பிறை"
+**Home:** "Period started today" · "Still on my period" · "Today: Medium flow · 2 symptoms" · "Edit today" · "Log symptoms, mood or notes" · "Logged medium flow for today — Undo" · "N days late / log your period when it starts" · "Predictions paused / keep logging — resume anytime in Settings" · "Expected 22–26 Aug · cycles vary" · "Estimate only — not birth control." · "Back up your data · You haven't backed up yet"
 
 **Log sheet:** "Discard changes?" · "Add a note for today…" / "Add a note…" (past days) · moods "Very low · Low · Okay · Good · Very happy" · "Tags" · "Add your own — e.g. Pill taken"
 

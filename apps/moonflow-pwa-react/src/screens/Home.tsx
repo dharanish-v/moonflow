@@ -28,7 +28,6 @@ import { computeHomeStatus } from '../lib/home-status';
 import { quoteOfTheDay } from '../lib/quotes';
 import { backupNudge } from '../lib/backup-nudge';
 import { moonPhase } from '../lib/lunar';
-import { isDiscreetInstall } from '../lib/install-identity';
 import { useAppDispatch, useAppState } from '../state/store';
 
 /** How long the just-logged acknowledgment stays up before it self-clears. */
@@ -145,13 +144,6 @@ export function HomeScreen() {
         </AnimatePresence>
 
         <PhaseMotif cyclePhase={status.cyclePhase} ring={status.ring} label={ringLabel} />
-        {/* பிறை ("crescent") — a quiet personal signature (design-system.md).
-            Never in the discreet install. */}
-        {!isDiscreetInstall() && (
-          <p lang="ta" aria-hidden="true" className="-mt-3 mb-4 text-center text-xs tracking-widest text-muted-foreground">
-            பிறை
-          </p>
-        )}
 
         <motion.div
           className="rounded-xl"

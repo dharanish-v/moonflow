@@ -18,6 +18,11 @@ describe('accessibility', () => {
     expect(screen.getByRole('img', { name: /cycle day \d+ of \d+/i })).toBeInTheDocument();
   });
 
+  it('Home has no unexplained decorative words (the பிறை signature was removed)', async () => {
+    const { container } = await renderRouted(<HomeScreen />, { wrapper: (c) => <StateProvider testState={{ settings: SETTINGS }}>{c}</StateProvider> });
+    expect(container.textContent).not.toMatch(/[\u0B80-\u0BFF]/); // Tamil block
+  });
+
   it('the "estimated" explainer is a full-size touch target', async () => {
     await renderRouted(<HomeScreen />, { wrapper: (c) => <StateProvider testState={{ settings: SETTINGS }}>{c}</StateProvider> });
     expect(screen.getByRole('button', { name: /why is this estimated/i }).className).toMatch(/min-h-11/);

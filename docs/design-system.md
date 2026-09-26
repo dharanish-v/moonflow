@@ -1,7 +1,7 @@
 > **Current state (2026-09-26), see ADR-034 to ADR-045.** This spec is still the rulebook for palette, tone and the glass rule, with these recorded changes:
 > - **Components:** shadcn/ui (Radix) themed with this palette, not hand-rolled CSS (ADR-035/038).
 > - **Contrast:** light-theme hexes are tuned for AA (a test guards it).
-> - **Home:** one contextual primary action replaces the 3 quick actions (ADR-044). The moon is today's real phase inside a cycle ring, with பிறை under it.
+> - **Home:** one contextual primary action replaces the 3 quick actions (ADR-044). The moon is today's real phase inside a cycle ring (the பிறை signature was dropped, ADR-046).
 > - **Date picker:** react-day-picker rather than the native input.
 > - **Delete:** the log sheet's clear still confirms; Home's one-tap logs use Undo.
 > - **Type:** body text is at least 14px and scales with Dynamic Type (the 12/11/10/9px scale is retired); weights 400/500, plus 700 for the Home headline.

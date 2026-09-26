@@ -300,3 +300,8 @@ FIGO-based health nudges (lib/health-nudges.ts) read the same forecast.
 - **Semantics:** the Calendar is a real grid (swipe between months, announced month heading); PIN entry is an iOS-style keypad with a live lockout countdown; the cycle ring has a text alternative; mood and group labels are real words.
 - **Layout:** 200% text-zoom layouts wrap instead of clipping.
 - **Launch:** no reload on first service-worker install, and `storage.persist()` is requested.
+
+### ADR-046: Drop the பிறை signature
+**Status:** Accepted 2026-09-26 (amends ADR-038)
+**Context:** பிறை ("crescent") was the only Tamil word in the app. It was decorative, unexplained and hidden from VoiceOver, so it read as odd rather than personal.
+**Decision:** Remove it. The moon illustration carries the identity on its own.
