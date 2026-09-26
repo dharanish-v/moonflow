@@ -51,6 +51,9 @@ export interface Settings {
   soundEnabled: boolean;
   draftEntry: LogEntryInput | null;
   themeMode: ThemeMode;
+  /** Pregnancy, breastfeeding, hormonal birth control… — logging continues,
+   * predictions and health nudges stop (T65). */
+  predictionsPaused: boolean;
   /** Epoch ms of the last successful export (T47). */
   lastBackupAt: number | null;
 }

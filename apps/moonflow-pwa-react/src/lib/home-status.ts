@@ -57,11 +57,25 @@ export function formatDateRange(start: string, end: string): string {
 
 export function computeHomeStatus(
   entries: Array<Pick<Entry, 'date' | 'flow'>>,
-  settings: Pick<Settings, 'avgCycleLength' | 'avgPeriodLength' | 'lastPeriodStart'>,
+  settings: Pick<Settings, 'avgCycleLength' | 'avgPeriodLength' | 'lastPeriodStart'> & { predictionsPaused?: boolean },
   today: Date = new Date(),
 ): HomeStatus {
   const todayStr = formatDate(today);
   const f = computeForecast(entries, settings, today);
+
+  if (f.status === 'paused') {
+    return {
+      cycleDay: f.cycleDay,
+      headline: 'Predictions paused',
+      caption: 'keep logging — resume anytime in Settings',
+      detail: null,
+      isEstimated: false,
+      estimateNote: null,
+      isLate: false,
+      cyclePhase: 'unknown',
+      ring: null,
+    };
+  }
 
   if (f.status === 'none' || !f.next || !f.lastStart) {
     return {

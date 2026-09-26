@@ -47,6 +47,13 @@ describe('SettingsScreen', () => {
     expect(screen.getByText(/used for predictions until you've logged two cycles/i)).toBeInTheDocument();
   });
 
+  it('can pause predictions', async () => {
+    const state = await renderSettings();
+    fireEvent.click(screen.getByRole('switch', { name: 'Pause predictions' }));
+    const { waitFor } = await import('@testing-library/react');
+    await waitFor(() => expect(state().settings.predictionsPaused).toBe(true));
+  });
+
   it('a failed theme write shows an error and leaves the theme unchanged', async () => {
     vi.spyOn(db, 'saveSettings').mockResolvedValue(false);
     const state = await renderSettings();

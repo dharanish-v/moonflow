@@ -91,6 +91,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   draftEntry: null,
   themeMode: 'system',
   lastBackupAt: null,
+  predictionsPaused: false,
 };
 
 /** Read one setting, falling back to its documented default if never set. */

@@ -94,3 +94,14 @@ describe('computeHomeStatus', () => {
     expect(status.detail).toMatch(/^Expected 20 Jun–3 Jul · cycles vary$/);
   });
 });
+
+describe('computeHomeStatus — paused (T65)', () => {
+  it('shows no countdown, fertile window or range while predictions are paused', () => {
+    const status = computeHomeStatus(REGULAR, { ...BASE, predictionsPaused: true }, new Date(2026, 7, 9));
+    expect(status.headline).toBe('Predictions paused');
+    expect(status.cyclePhase).toBe('unknown');
+    expect(status.detail).toBeNull();
+    expect(status.ring).toBeNull();
+    expect(status.isEstimated).toBe(false);
+  });
+});

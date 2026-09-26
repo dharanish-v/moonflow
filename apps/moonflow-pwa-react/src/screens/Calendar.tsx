@@ -262,6 +262,10 @@ export function CalendarScreen() {
         </div>
       </motion.div>
 
+      {forecast.status === 'paused' && (
+        <p className="mt-2 text-center text-xs text-muted-foreground">Predictions are paused — only what you've logged is shown.</p>
+      )}
+
       <div className="mt-2 flex justify-center gap-3.5 text-xs text-muted-foreground">
         <span>
           <span className="mr-1 inline-block size-2 rounded-full bg-secondary align-middle" />

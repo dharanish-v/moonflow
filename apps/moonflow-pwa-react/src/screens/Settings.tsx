@@ -2,7 +2,7 @@
 // PIN (create-1/create-2) is its own route (PinSetup.tsx) — see that file
 // for why.
 import { forwardRef, useState, type ComponentProps, type ReactNode } from 'react';
-import { Calendar, Info, Monitor, Moon, ShieldAlert, Sun, Upload } from 'lucide-react';
+import { Calendar, Info, Monitor, Moon, PauseCircle, ShieldAlert, Sun, Upload } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from 'cn';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -154,6 +154,18 @@ export function SettingsScreen() {
             />
           </>
         )}
+        <Separator />
+        <SettingsRow icon={<PauseCircle className="size-4" aria-hidden="true" />} label="Pause predictions">
+          <Switch
+            checked={settings.predictionsPaused}
+            onCheckedChange={(v) => void persist({ predictionsPaused: v })}
+            aria-label="Pause predictions"
+          />
+        </SettingsRow>
+        <p className="px-3.5 pb-2 text-xs text-muted-foreground">
+          For pregnancy, breastfeeding or hormonal birth control — bleeding then doesn't follow a natural cycle, so
+          predictions would mislead. Logging keeps working.
+        </p>
         <Separator />
         <SettingsRowButton
           icon={<Calendar className="size-4" aria-hidden="true" />}

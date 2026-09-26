@@ -35,7 +35,7 @@ const ESTIMATE_RANGE_HALF_DAYS = 3;
  * the start of a period the user also went on to log. */
 const ANCHOR_MERGE_DAYS = 7;
 
-export type ForecastStatus = 'none' | 'on-period' | 'upcoming' | 'due' | 'late';
+export type ForecastStatus = 'none' | 'paused' | 'on-period' | 'upcoming' | 'due' | 'late';
 
 export interface NextPeriod {
   date: string;
@@ -92,7 +92,7 @@ function cycleStarts(periods: Period[], lastPeriodStart: string | null): string[
 
 export function computeForecast(
   entries: Array<Pick<Entry, 'date' | 'flow'>>,
-  settings: Pick<Settings, 'lastPeriodStart' | 'avgCycleLength' | 'avgPeriodLength'>,
+  settings: Pick<Settings, 'lastPeriodStart' | 'avgCycleLength' | 'avgPeriodLength'> & { predictionsPaused?: boolean },
   today: Date = new Date(),
 ): Forecast {
   const todayStr = formatDate(today);
@@ -180,6 +180,18 @@ export function computeForecast(
           peak,
         }
       : null;
+
+  if (settings.predictionsPaused) {
+    return {
+      ...empty,
+      status: 'paused',
+      lastStart,
+      cycleDay: diffDays(lastStart, todayStr) + 1,
+      cycleLengths: cycles.map((c) => c.length),
+      usedCycleLengths,
+      suspectedMissedCycles,
+    };
+  }
 
   return {
     status,

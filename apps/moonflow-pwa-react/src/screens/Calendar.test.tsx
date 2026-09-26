@@ -91,6 +91,12 @@ describe('CalendarScreen', () => {
     expect(screen.getByRole('button', { name: /^(August 5|5 August), logged/ })).toBeInTheDocument();
   });
 
+  it('draws no predictions while paused', async () => {
+    await renderCalendar({ lastPeriodStart: '2026-08-10', predictionsPaused: true }, '2026-09');
+    expect(screen.queryByRole('button', { name: /predicted period|fertile/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/predictions are paused/i)).toBeInTheDocument();
+  });
+
   it('renders without crashing when there is no start date at all', async () => {
     await renderCalendar({ lastPeriodStart: null }, '2026-08');
     expect(screen.getByRole('button', { name: /^(August 20|20 August)/ })).toBeInTheDocument();
