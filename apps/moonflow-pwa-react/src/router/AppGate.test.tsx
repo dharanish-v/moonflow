@@ -105,7 +105,7 @@ describe('AppGate — tab bar never leaks past the gate', () => {
 describe('AppGate — onboarding', () => {
   it('shows onboarding when not yet onboarded, skipping the lock entirely', async () => {
     await renderGated('#/settings', { onboardingComplete: false });
-    expect(screen.getByRole('heading', { name: "Let's set up Moonflow" })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: "Let's set up Moonflow" })).toBeInTheDocument();
   });
 
   it('completing onboarding reveals the app without requiring a separate unlock step', async () => {
@@ -113,7 +113,7 @@ describe('AppGate — onboarding', () => {
     // The date picker is shadcn's Popover+Calendar (react-day-picker), not a
     // native input — open it and pick today, the one day always enabled
     // and locatable without depending on the real wall-clock date's value.
-    fireEvent.click(screen.getByRole('button', { name: /when did your last period start/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /when did your last period start/i }));
     fireEvent.click(await screen.findByRole('button', { name: /^today,/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Get started' }));
     expect(await screen.findByRole('navigation', { name: 'Primary' })).toBeInTheDocument();

@@ -9,16 +9,18 @@
 // rewrite's vanilla-JS predecessor shipped and had to fix (re-locking on
 // every back/forward press even after a correct unlock).
 
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { useLocation, useRouter } from '@tanstack/react-router';
 import { useResolvedTheme } from '../hooks/useResolvedTheme';
 import { PIN_RELOCK_AFTER_MINUTES } from '../lib/constants';
 import { needsUnlock } from '../lib/pin-auth';
 import { switchDatabase } from '../lib/db';
-import { OnboardingScreen } from '../screens/Onboarding';
 import { PinUnlockScreen } from '../screens/PinUnlock';
 import { useAppDispatch, useAppState } from '../state/store';
 import { BootErrorScreen, SplashScreen } from './placeholders';
+
+// First run only — keeps the date-picker library out of every later launch.
+const OnboardingScreen = lazy(() => import('../screens/Onboarding').then((m) => ({ default: m.OnboardingScreen })));
 
 /** Mounted only once unlocked+onboarded — records the last real route so a
  * later re-lock (backgrounding) can return here, not just to the original
@@ -123,7 +125,15 @@ export function AppGate({ children, tabBar }: { children: ReactNode; tabBar?: Re
   if (bootError) return <Frame><BootErrorScreen onRetry={() => dispatch({ type: 'BOOT_RETRY' })} /></Frame>;
   if (!booted || !hasResolvedLock) return <Frame><SplashScreen /></Frame>;
   if (isLocked) return <Frame><PinUnlockScreen onUnlock={(kind) => void handleUnlock(kind)} onErased={handleErased} /></Frame>;
-  if (!settings.onboardingComplete) return <Frame><OnboardingScreen /></Frame>;
+  if (!settings.onboardingComplete) {
+    return (
+      <Frame>
+        <Suspense fallback={<SplashScreen />}>
+          <OnboardingScreen />
+        </Suspense>
+      </Frame>
+    );
+  }
 
   return (
     <Frame tabBar={tabBar}>

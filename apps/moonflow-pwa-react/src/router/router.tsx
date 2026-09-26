@@ -8,16 +8,19 @@
 // reaches for — RouterProvider renders starting at the root route, so this
 // is the one place that can sit "around" every screen (splash/lock/
 // onboarding vs. the real Outlet) while still being inside router context.
-import { Navigate, Outlet, createHashHistory, createRootRoute, createRoute, createRouter } from '@tanstack/react-router';
+import {
+  Navigate,
+  Outlet,
+  createHashHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  lazyRouteComponent,
+} from '@tanstack/react-router';
 import { TabBar } from '../components/TabBar';
-import { CalendarScreen } from '../screens/Calendar';
+// Home is the launch screen and stays in the main bundle; everything else
+// loads on first visit (T62).
 import { HomeScreen } from '../screens/Home';
-import { InsightsScreen } from '../screens/Insights';
-import { LogEntryScreen } from '../screens/LogEntry';
-import { PinSetupScreen } from '../screens/PinSetup';
-import { PinVerifyScreen } from '../screens/PinVerify';
-import { DuressSetupScreen } from '../screens/DuressSetup';
-import { SettingsScreen } from '../screens/Settings';
 import { AppGate } from './AppGate';
 import { isFutureDate, isRealDate } from '../lib/dates';
 import { AppErrorScreen } from './placeholders';
@@ -70,13 +73,13 @@ const indexRoute = createRoute({
   validateSearch: validateHomeSearch,
   component: HomeScreen,
 });
-const calendarRoute = createRoute({ getParentRoute: () => rootRoute, path: '/calendar', component: CalendarScreen });
-const insightsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/insights', component: InsightsScreen });
-const settingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/settings', component: SettingsScreen });
+const calendarRoute = createRoute({ getParentRoute: () => rootRoute, path: '/calendar', component: lazyRouteComponent(() => import('../screens/Calendar'), 'CalendarScreen') });
+const insightsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/insights', component: lazyRouteComponent(() => import('../screens/Insights'), 'InsightsScreen') });
+const settingsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/settings', component: lazyRouteComponent(() => import('../screens/Settings'), 'SettingsScreen') });
 const pinSetupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings/pin-setup',
-  component: PinSetupScreen,
+  component: lazyRouteComponent(() => import('../screens/PinSetup'), 'PinSetupScreen'),
 });
 
 export type LogOrigin = 'home' | 'calendar' | 'insights';
@@ -114,20 +117,20 @@ const pinVerifyRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings/pin-verify',
   validateSearch: validatePinVerifySearch,
-  component: PinVerifyScreen,
+  component: lazyRouteComponent(() => import('../screens/PinVerify'), 'PinVerifyScreen'),
 });
 
 const duressSetupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/settings/duress-setup',
-  component: DuressSetupScreen,
+  component: lazyRouteComponent(() => import('../screens/DuressSetup'), 'DuressSetupScreen'),
 });
 
 const logRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/log',
   validateSearch: validateLogSearch,
-  component: LogEntryScreen,
+  component: lazyRouteComponent(() => import('../screens/LogEntry'), 'LogEntryScreen'),
 });
 
 export const routeTree = rootRoute.addChildren([

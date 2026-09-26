@@ -24,3 +24,8 @@ if (typeof window.matchMedia !== 'function') {
       dispatchEvent: () => false,
     }) as MediaQueryList;
 }
+
+// Lazy-loaded screens (T62) are transformed on first import in the test run,
+// which can take longer than Testing Library's 1s default for findBy*.
+import { configure } from '@testing-library/react';
+configure({ asyncUtilTimeout: 5000 });
