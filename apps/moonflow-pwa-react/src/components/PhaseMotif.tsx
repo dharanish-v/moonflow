@@ -32,14 +32,18 @@ function pointOnRing(angleDegrees: number): { x: number; y: number } {
   return { x: RING_CENTER + RING_RADIUS * Math.cos(rad), y: RING_CENTER + RING_RADIUS * Math.sin(rad) };
 }
 
-export function PhaseMotif({ cyclePhase, ring }: { cyclePhase: CyclePhase; ring: CycleRing | null }) {
+/** @param label the ring's text alternative for VoiceOver (it carries real information). */
+export function PhaseMotif({ cyclePhase, ring, label }: { cyclePhase: CyclePhase; ring: CycleRing | null; label?: string }) {
   const prefersReducedMotion = useReducedMotion();
   const colorClass = PHASE_COLOR_CLASS[cyclePhase];
   const todayPoint = ring ? pointOnRing(ring.todayAngle) : null;
   const fertileSpan = ring ? ((ring.fertileEndAngle - ring.fertileStartAngle) % 360 + 360) % 360 : 0;
 
   return (
-    <div className={`relative mx-auto mb-5 flex size-32 items-center justify-center ${colorClass}`} aria-hidden="true">
+    <div
+      className={`relative mx-auto mb-5 flex size-32 items-center justify-center ${colorClass}`}
+      {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
+    >
       {/* Two glow layers, not one — a single flat blur read as a small
           badge behind the moon; a wider, softer outer layer plus a
           tighter inner one gives the "surrounded by light" feel instead. */}

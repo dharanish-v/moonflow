@@ -81,6 +81,11 @@ export function HomeScreen() {
 
   const dismissUndo = useCallback(() => setUndo(null), []);
   const quote = quoteOfTheDay(status.cyclePhase);
+  const PHASE_WORDS = { period: 'on your period', follicular: 'before your fertile window', fertile: 'in your estimated fertile window', luteal: 'after your fertile window', unknown: '' } as const;
+  const ringLabel =
+    status.ring && status.cycleDay
+      ? `Cycle day ${status.cycleDay} of ${status.ring.totalDays}${PHASE_WORDS[status.cyclePhase] ? `, ${PHASE_WORDS[status.cyclePhase]}` : ''}`
+      : undefined;
   const nudge = backupNudge({ lastBackupAt: settings.lastBackupAt, firstEntryDate: entries[0]?.date ?? null, now: Date.now() });
 
   // Captures the flag at mount, before the effect below clears it from the
@@ -135,7 +140,7 @@ export function HomeScreen() {
           )}
         </AnimatePresence>
 
-        <PhaseMotif cyclePhase={status.cyclePhase} ring={status.ring} />
+        <PhaseMotif cyclePhase={status.cyclePhase} ring={status.ring} label={ringLabel} />
 
         <motion.div
           className="rounded-xl"
@@ -148,7 +153,7 @@ export function HomeScreen() {
         >
           <Card className="mb-5">
             <CardContent className="flex flex-col items-center py-5 text-center">
-              <div className="text-3xl font-bold text-foreground">{status.headline}</div>
+              <h1 className="text-3xl font-bold text-foreground">{status.headline}</h1>
               <div className="mt-1 flex items-center justify-center gap-1 text-xs text-muted-foreground">
                 <span>{status.caption}</span>
                 {status.isEstimated && (
@@ -157,7 +162,7 @@ export function HomeScreen() {
                       <button
                         type="button"
                         aria-label="Why is this estimated?"
-                        className="inline-flex items-center gap-0.5 underline decoration-dotted underline-offset-2"
+                        className="inline-flex min-h-11 items-center gap-0.5 px-1 underline decoration-dotted underline-offset-2"
                       >
                         estimated
                         <Info className="size-3" aria-hidden="true" />

@@ -81,6 +81,14 @@ export function LogEntryScreen() {
     symptoms.length !== initial.symptoms.length ||
     symptoms.some((s) => !initial.symptoms.includes(s));
 
+  // The sheet mounts already open (it's a route), so Radix's open-autofocus
+  // never fires — move focus to its title so screen readers start there.
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    const t = setTimeout(() => titleRef.current?.focus(), 50);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(
     () => () => {
       if (viewportListenerRef.current) window.visualViewport?.removeEventListener('resize', viewportListenerRef.current);
@@ -141,7 +149,9 @@ export function LogEntryScreen() {
     <Drawer open onOpenChange={(open) => { if (!open) requestClose(); }}>
       <DrawerContent className="mx-auto max-w-[26rem] px-4 pb-5">
         <div className="mb-5 flex items-center justify-between px-0 pt-2">
-          <DrawerTitle className="text-base font-medium text-foreground">{formatHeaderDate(date)}</DrawerTitle>
+          <DrawerTitle ref={titleRef} tabIndex={-1} className="text-base font-medium text-foreground outline-none">
+            {formatHeaderDate(date)}
+          </DrawerTitle>
           <DrawerDescription className="sr-only">Log flow, symptoms, mood, and notes for this day</DrawerDescription>
           <DrawerClose asChild>
             <Button variant="ghost" size="icon-touch" aria-label="Close" className="rounded-full text-muted-foreground">
@@ -162,10 +172,10 @@ export function LogEntryScreen() {
               setFlow(id);
               reportDraft(currentDraft({ flow: id }));
             }}
-            className="w-full gap-1.5"
+            className="w-full flex-wrap gap-1.5"
           >
             {FLOW_OPTIONS.map((opt) => (
-              <ToggleGroupItem key={opt.id} value={opt.id} variant="pill" className="min-h-11 flex-1 px-2">
+              <ToggleGroupItem key={opt.id} value={opt.id} variant="pill" className="min-h-11 min-w-[4.5rem] flex-1 px-2">
                 {opt.label}
               </ToggleGroupItem>
             ))}

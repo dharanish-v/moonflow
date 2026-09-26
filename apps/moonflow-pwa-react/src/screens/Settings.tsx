@@ -504,7 +504,7 @@ const SettingsRowButton = forwardRef<
       ref={ref}
       variant="ghost"
       aria-label={value ? `${label}, ${value}` : label}
-      className={cn('h-11 w-full justify-between rounded-none px-3.5 text-left', className)}
+      className={cn('h-auto min-h-11 w-full flex-wrap justify-between gap-y-1 rounded-none px-3.5 py-2 text-left whitespace-normal', className)}
       {...props}
     >
       <span className="flex items-center gap-2 text-muted-foreground">
