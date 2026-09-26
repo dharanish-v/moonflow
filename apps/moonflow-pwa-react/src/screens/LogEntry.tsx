@@ -65,8 +65,11 @@ export function LogEntryScreen() {
   const viewportListenerRef = useRef<(() => void) | null>(null);
 
   const initial = resolveInitialDraft(date, existingEntry, settings.draftEntry);
-  const [flow, setFlow] = useState<FlowId | null>(initial.flow);
-  const [symptoms, setSymptoms] = useState<SymptomId[]>(initial.symptoms);
+  // A shortcut link's flow/symptom pre-select on top of whatever is logged.
+  const [flow, setFlow] = useState<FlowId | null>(search.flow ?? initial.flow);
+  const [symptoms, setSymptoms] = useState<SymptomId[]>(
+    search.symptom && !initial.symptoms.includes(search.symptom) ? [...initial.symptoms, search.symptom] : initial.symptoms,
+  );
   const [mood, setMood] = useState<MoodId | null>(initial.mood);
   const [note, setNote] = useState(initial.note);
   const [tags, setTags] = useState<string[]>(initial.tags);

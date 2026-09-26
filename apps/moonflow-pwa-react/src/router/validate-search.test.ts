@@ -9,8 +9,8 @@ describe('validateLogSearch', () => {
   afterEach(() => vi.useRealTimers());
 
   it('keeps a real past or current date', () => {
-    expect(validateLogSearch({ date: '2026-09-25' })).toEqual({ date: '2026-09-25', from: undefined });
-    expect(validateLogSearch({ date: '2025-01-31', from: 'calendar' })).toEqual({ date: '2025-01-31', from: 'calendar' });
+    expect(validateLogSearch({ date: '2026-09-25' })).toMatchObject({ date: '2026-09-25', from: undefined });
+    expect(validateLogSearch({ date: '2025-01-31', from: 'calendar' })).toMatchObject({ date: '2025-01-31', from: 'calendar' });
     expect(validateLogSearch({ from: 'evil' }).from).toBeUndefined();
   });
 

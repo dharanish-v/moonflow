@@ -20,6 +20,8 @@ import {
 import { HomeScreen } from '../screens/Home';
 import { NotFound, RootLayout } from './RootLayout';
 import { isFutureDate, isRealDate } from '../lib/dates';
+import { FLOW_OPTIONS, SYMPTOM_OPTIONS } from '../lib/constants';
+import type { FlowId, SymptomId } from '../lib/types';
 import { AppErrorScreen } from './placeholders';
 
 export const rootRoute = createRootRoute({
@@ -75,6 +77,10 @@ export interface LogSearch {
   date?: string;
   /** Where the sheet was opened from — closing/saving returns there. */
   from?: LogOrigin;
+  /** Shortcut links (T83): pre-select a flow / a symptom, e.g. from an iOS
+   * Shortcut or the Action Button — `#/log?flow=medium&symptom=cramps`. */
+  flow?: FlowId;
+  symptom?: SymptomId;
 }
 
 const LOG_ORIGINS: ReadonlySet<string> = new Set(['home', 'calendar', 'insights']);
@@ -89,6 +95,8 @@ export function validateLogSearch(search: Record<string, unknown>): LogSearch {
   return {
     date: isRealDate(search.date) && !isFutureDate(search.date) ? search.date : undefined,
     from: typeof search.from === 'string' && LOG_ORIGINS.has(search.from) ? (search.from as LogOrigin) : undefined,
+    flow: FLOW_OPTIONS.some((f) => f.id === search.flow) ? (search.flow as FlowId) : undefined,
+    symptom: SYMPTOM_OPTIONS.some((o) => o.id === search.symptom) ? (search.symptom as SymptomId) : undefined,
   };
 }
 

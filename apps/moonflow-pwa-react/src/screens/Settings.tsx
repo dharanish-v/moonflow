@@ -2,7 +2,7 @@
 // PIN (create-1/create-2) is its own route (PinSetup.tsx) — see that file
 // for why.
 import { forwardRef, useState, type ComponentProps, type ReactNode } from 'react';
-import { Calendar, CalendarClock, Info, Monitor, Moon, PauseCircle, ShieldAlert, Sun, Upload } from 'lucide-react';
+import { Calendar, CalendarClock, Info, Monitor, Moon, PauseCircle, ShieldAlert, Sun, Upload, Zap } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from 'cn';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -56,6 +56,7 @@ export function SettingsScreen() {
   const navigate = useNavigate();
   const [discreetOpen, setDiscreetOpen] = useState(false);
   const [dataMoveOpen, setDataMoveOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [editField, setEditField] = useState<EditField>(null);
   const [draftValue, setDraftValue] = useState(0);
   const [saveError, setSaveError] = useState(false);
@@ -222,6 +223,22 @@ export function SettingsScreen() {
             <SettingsRowButton icon={<Upload className="size-4" aria-hidden="true" />} label="Import data" onClick={pick} />
           )}
         </ImportBackup>
+        <Separator />
+        <Collapsible open={shortcutsOpen} onOpenChange={setShortcutsOpen}>
+          <CollapsibleTrigger asChild>
+            <SettingsRowButton icon={<Zap className="size-4" aria-hidden="true" />} label="Shortcut links" />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <p className="px-3.5 pb-1 text-xs text-muted-foreground">
+              Open this link from the Shortcuts app (e.g. on the Action Button or Back Tap) to jump straight to today's log
+              with a flow already picked. Change <code>medium</code> to <code>light</code> or <code>heavy</code>, or add{' '}
+              <code>&amp;symptom=cramps</code>.
+            </p>
+            <p className="px-3.5 pb-2 text-xs break-all text-foreground">
+              {`${window.location.origin}${window.location.pathname}#/log?flow=medium`}
+            </p>
+          </CollapsibleContent>
+        </Collapsible>
         <Separator />
         <Collapsible open={dataMoveOpen} onOpenChange={setDataMoveOpen}>
           <CollapsibleTrigger asChild>

@@ -202,3 +202,20 @@ describe('LogEntryScreen — faster logging (T80)', () => {
     await waitFor(() => expect(state().entries.map((x) => x.flow)).toEqual(['light']));
   });
 });
+
+describe('LogEntryScreen — shortcut links (T83)', () => {
+  it('pre-selects flow and symptoms from the link', async () => {
+    await renderRouted(<LogEntryScreen />, {
+      path: '/log',
+      initialEntries: ['/log?date=2026-09-06&flow=heavy&symptom=cramps'],
+      validateSearch: validateLogSearch,
+      wrapper: (c) => <StateProvider testState={{}}>{c}</StateProvider>,
+    });
+    expect(screen.getByRole('radio', { name: 'Heavy' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('button', { name: 'Cramps' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('ignores unknown values in the link', () => {
+    expect(validateLogSearch({ flow: 'lava', symptom: 'nope' })).toMatchObject({ flow: undefined, symptom: undefined });
+  });
+});

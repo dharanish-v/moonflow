@@ -54,6 +54,12 @@ describe('SettingsScreen', () => {
     await waitFor(() => expect(state().settings.predictionsPaused).toBe(true));
   });
 
+  it('explains shortcut links for iOS Shortcuts / Action Button (T83)', async () => {
+    await renderSettings();
+    fireEvent.click(screen.getByRole('button', { name: /shortcut links/i }));
+    expect(await screen.findByText(/#\/log\?flow=medium/)).toBeInTheDocument();
+  });
+
   it('a failed theme write shows an error and leaves the theme unchanged', async () => {
     vi.spyOn(db, 'saveSettings').mockResolvedValue(false);
     const state = await renderSettings();

@@ -76,3 +76,4 @@ Most behaviour is covered by the automated suite (`npm test`, 300+ Vitest/Testin
 - [ ] Airplane mode: every screen still works after first load
 - [ ] Deleting the icon really removes the data (confirms the in-app warning)
 - [ ] Does IndexedDB survive an iCloud restore / Quick Start migration? (unknown — record the result in ADR log)
+- [ ] Shortcut link (`#/log?flow=medium`) from the Shortcuts app: does it open the installed app or Safari? (Safari has separate storage — if it opens Safari, the link isn't useful and should be documented as such)
