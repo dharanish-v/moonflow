@@ -161,7 +161,7 @@ export function LogEntryScreen() {
         </div>
 
         <div className="mb-5">
-          <span id="log-flow-label" className="mb-1.5 block text-xs text-muted-foreground">Flow</span>
+          <span id="log-flow-label" className="mb-1.5 block text-sm text-muted-foreground">Flow</span>
           <ToggleGroup
             type="single"
             aria-labelledby="log-flow-label"
@@ -183,7 +183,7 @@ export function LogEntryScreen() {
         </div>
 
         <div className="mb-5">
-          <span id="log-symptoms-label" className="mb-1.5 block text-xs text-muted-foreground">Symptoms</span>
+          <span id="log-symptoms-label" className="mb-1.5 block text-sm text-muted-foreground">Symptoms</span>
           <ToggleGroup
             type="multiple"
             role="group"
@@ -205,7 +205,7 @@ export function LogEntryScreen() {
         </div>
 
         <div className="mb-5">
-          <span id="log-mood-label" className="mb-1.5 block text-xs text-muted-foreground">Mood</span>
+          <span id="log-mood-label" className="mb-1.5 block text-sm text-muted-foreground">Mood</span>
           <ToggleGroup
             type="single"
             aria-labelledby="log-mood-label"
@@ -229,7 +229,7 @@ export function LogEntryScreen() {
         </div>
 
         <div className="mb-5">
-          <Label htmlFor="log-note" className="mb-1.5 block text-xs text-muted-foreground">
+          <Label htmlFor="log-note" className="mb-1.5 block text-sm text-muted-foreground">
             Notes
           </Label>
           <Textarea

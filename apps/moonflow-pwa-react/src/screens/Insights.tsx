@@ -140,7 +140,7 @@ export function InsightsScreen() {
               <div className="mb-2 mt-5 text-xs text-muted-foreground">Most logged symptoms</div>
               {data.topSymptoms.map((s, i) => (
                 <div key={s.id} className="mb-2">
-                  <div className="mb-1 flex justify-between text-xs text-foreground">
+                  <div className="mb-1 flex justify-between text-sm text-foreground">
                     <span>{s.label}</span>
                     <span>{s.percent}%</span>
                   </div>
@@ -170,7 +170,7 @@ export function InsightsScreen() {
                   onClick={() => navigate({ to: '/log', search: { date: entry.date, from: 'insights' } })}
                   className="h-11 w-full justify-between rounded-none px-3.5 text-left"
                 >
-                  <span className="text-xs text-foreground">
+                  <span className="text-sm text-foreground">
                     {parseDate(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </span>
                   <span className="flex items-center gap-1 text-muted-foreground">

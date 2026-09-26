@@ -103,7 +103,13 @@
     outline-offset: 2px;
   }
   html {
-    @apply font-sans;
+    /* Dynamic Type (T57): WebKit sizes -apple-system-body from the iOS
+       Settings → Display → Text Size slider (17px at the default). Every
+       Tailwind size is rem, so the whole UI scales with it. The shorthand
+       resets the family, so set ours again right after. Other browsers
+       ignore the keyword and keep their 16px default. */
+    font: -apple-system-body;
+    font-family: var(--font-sans);
     color-scheme: dark;
     /* No grey flash on tap (iOS), and no double-tap-to-zoom delay on
        rapid taps (stepper +/−, month arrows). */

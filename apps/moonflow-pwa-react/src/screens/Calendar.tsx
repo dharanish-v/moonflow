@@ -247,7 +247,7 @@ export function CalendarScreen() {
                   disabled={isFuture}
                   onClick={() => handleSelectDate(dateStr)}
                   aria-label={spokenParts.join(', ')}
-                  className={`relative flex size-10 items-center justify-center rounded-full text-xs text-foreground disabled:cursor-default ${stateClass} ${isFuture && !stateClass ? 'text-muted-foreground' : ''} ${isToday ? 'border-[1.5px] border-foreground' : ''}`}
+                  className={`relative flex size-10 items-center justify-center rounded-full text-sm text-foreground disabled:cursor-default ${stateClass} ${isFuture && !stateClass ? 'text-muted-foreground' : ''} ${isToday ? 'border-[1.5px] border-foreground' : ''}`}
                 >
                   {dayNum}
                   {loggedOtherDates.has(dateStr) && !loggedPeriodDates.has(dateStr) && (

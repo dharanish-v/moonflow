@@ -186,7 +186,7 @@ export function SettingsScreen() {
       <h1 className="mb-3.5 text-left text-base font-medium text-foreground">Settings</h1>
 
       <div className="mb-3.5">
-        <span id="theme-label" className="mb-1.5 block text-xs text-muted-foreground">
+        <span id="theme-label" className="mb-1.5 block text-sm text-muted-foreground">
           Appearance
         </span>
         <ToggleGroup
@@ -480,7 +480,7 @@ function SettingsRow({ icon, label, children }: { icon: ReactNode; label: string
     <div className="flex min-h-11 items-center justify-between gap-2 px-3.5 py-3">
       <div className="flex items-center gap-2 text-muted-foreground">
         {icon}
-        <span className="text-xs text-foreground">{label}</span>
+        <span className="text-sm text-foreground">{label}</span>
       </div>
       {children}
     </div>
@@ -509,7 +509,7 @@ const SettingsRowButton = forwardRef<
     >
       <span className="flex items-center gap-2 text-muted-foreground">
         {icon}
-        <span className="text-xs text-foreground">{label}</span>
+        <span className="text-sm text-foreground">{label}</span>
       </span>
       <span className="flex items-center gap-1 text-muted-foreground">
         {value && <span className="text-xs">{value}</span>}

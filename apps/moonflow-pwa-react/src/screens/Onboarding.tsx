@@ -62,7 +62,7 @@ export function OnboardingScreen() {
       </p>
 
       <div className="mb-5">
-        <Label id="onboarding-date-label" className="mb-1.5 block text-xs text-muted-foreground">
+        <Label id="onboarding-date-label" className="mb-1.5 block text-sm text-muted-foreground">
           When did your last period start?
         </Label>
         <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>

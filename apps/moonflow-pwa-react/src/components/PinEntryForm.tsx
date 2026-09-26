@@ -48,7 +48,7 @@ export function PinEntryForm({ title, error, onComplete, onCancel, footer }: Pin
       </Alert>
 
       <div className="mb-5">
-        <Label htmlFor="pin-input" className="mb-1.5 block text-xs text-muted-foreground">
+        <Label htmlFor="pin-input" className="mb-1.5 block text-sm text-muted-foreground">
           {title}
         </Label>
         <Input
