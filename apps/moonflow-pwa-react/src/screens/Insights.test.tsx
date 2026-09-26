@@ -94,3 +94,31 @@ describe('InsightsScreen — symptom timing (T69)', () => {
     expect(item).toHaveTextContent('Cramps usually around day 1');
   });
 });
+
+describe('InsightsScreen — search (T70)', () => {
+  it('searches every logged day by note, tag or symptom', async () => {
+    const { renderRouted } = await import('../test/render-with-router');
+    const { StateProvider } = await import('../state/store');
+    const { InsightsScreen } = await import('./Insights');
+    const { fireEvent, screen } = await import('@testing-library/react');
+    const e = (date: string, extra: object) => ({ date, flow: null, symptoms: [], mood: null, note: '', updatedAt: 0, ...extra });
+    const entries = [
+      e('2025-01-10', { note: 'Dentist, felt dizzy' }),
+      ...Array.from({ length: 15 }, (_, i) => e(`2026-02-${String(i + 1).padStart(2, '0')}`, { note: 'ok' })),
+      e('2026-03-01', { tags: ['Ibuprofen'] }),
+      e('2026-03-02', { symptoms: ['headache'] }),
+    ];
+    await renderRouted(
+      <StateProvider testState={{ entries }}>
+        <InsightsScreen />
+      </StateProvider>,
+    );
+    const box = screen.getByRole('searchbox', { name: /search your logs/i });
+    fireEvent.change(box, { target: { value: 'dizzy' } });
+    expect(screen.getAllByRole('button', { name: /10 Jan 2025|Jan 10, 2025/ })).toHaveLength(1);
+    fireEvent.change(box, { target: { value: 'ibuprofen' } });
+    expect(screen.getByText(/1 day found/)).toBeInTheDocument();
+    fireEvent.change(box, { target: { value: 'headache' } });
+    expect(screen.getByText(/1 day found/)).toBeInTheDocument();
+  });
+});

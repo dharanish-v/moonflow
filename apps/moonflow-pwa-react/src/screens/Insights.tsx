@@ -7,18 +7,21 @@
 // green, a real cross-browser risk this app's own "every color comes from
 // our tokens" rule can't accept.
 import { animate, useReducedMotion } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Progress } from '../components/ui/progress';
 import { Separator } from '../components/ui/separator';
 import { ChartBarIcon, ChevronRightIcon } from '../components/icons';
-import { parseDate } from '../lib/cycle-math';
 import { computeInsights, cycleBarHeight } from '../lib/insights';
 import { describeEntry } from '../lib/entry-summary';
 import { HEAVY_BLEEDING_ADVICE, healthNudges } from '../lib/health-nudges';
 import { symptomTiming } from '../lib/symptom-timing';
+import { searchEntries } from '../lib/search';
+import { formatHeaderDate } from '../lib/log-entry';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 import { useAppState } from '../state/store';
 
 /** Matches the chart container's h-16. */
@@ -30,12 +33,14 @@ export function InsightsScreen() {
   const data = computeInsights(entries);
   const nudges = healthNudges(entries, settings);
   const timing = symptomTiming(entries);
+  const [query, setQuery] = useState('');
   const prefersReducedMotion = useReducedMotion();
   const barRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fillRefs = useRef<Array<HTMLDivElement | null>>([]);
   // Most-recent-first, capped at 10 — the only way to browse your own
   // history today is paging Calendar month-by-month one day at a time.
   const recentEntries = [...entries].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)).slice(0, 10);
+  const shownEntries = query.trim() ? searchEntries(entries, query) : recentEntries;
 
   useEffect(() => {
     if (prefersReducedMotion) {
@@ -202,11 +207,24 @@ export function InsightsScreen() {
         Report for your doctor
       </Button>
 
-      {recentEntries.length > 0 && (
+      {entries.length > 0 && (
         <div>
-          <div className="mb-2 text-xs text-muted-foreground">Recent logs</div>
+          <Label htmlFor="log-search" className="sr-only">
+            Search your logs
+          </Label>
+          <Input
+            id="log-search"
+            type="search"
+            value={query}
+            placeholder="Search notes, tags, symptoms…"
+            onChange={(e) => setQuery(e.target.value)}
+            className="mb-2 h-11"
+          />
+          <div className="mb-2 text-xs text-muted-foreground" aria-live="polite">
+            {query.trim() ? `${shownEntries.length} ${shownEntries.length === 1 ? 'day' : 'days'} found` : 'Recent logs'}
+          </div>
           <Card className="gap-0 p-0 ring-border/60">
-            {recentEntries.map((entry, i) => (
+            {shownEntries.map((entry, i) => (
               <div key={entry.date}>
                 <Button
                   variant="ghost"
@@ -214,14 +232,14 @@ export function InsightsScreen() {
                   className="h-11 w-full justify-between rounded-none px-3.5 text-left"
                 >
                   <span className="text-sm text-foreground">
-                    {parseDate(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    {formatHeaderDate(entry.date)}
                   </span>
                   <span className="flex items-center gap-1 text-muted-foreground">
                     <span className="text-xs">{describeEntry(entry)}</span>
                     <ChevronRightIcon className="size-4" />
                   </span>
                 </Button>
-                {i < recentEntries.length - 1 && <Separator />}
+                {i < shownEntries.length - 1 && <Separator />}
               </div>
             ))}
           </Card>
