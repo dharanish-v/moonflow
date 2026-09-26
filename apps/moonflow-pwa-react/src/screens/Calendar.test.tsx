@@ -113,6 +113,33 @@ describe('CalendarScreen', () => {
     expect(day.querySelector('[data-marker="flow"]')).not.toBeNull();
   });
 
+  it('marks a whole period by picking its first and last day (T81)', async () => {
+    const { db } = await import('../lib/db');
+    await db.entries.clear();
+    const existing = { date: '2026-08-04', flow: null, symptoms: ['cramps' as const], mood: null, note: 'kept', updatedAt: 0 };
+    await db.entries.put(existing);
+    await renderCalendar({ lastPeriodStart: '2026-07-10' }, '2026-08', [existing]);
+    fireEvent.click(screen.getByRole('button', { name: 'Mark a period' }));
+    fireEvent.click(screen.getByRole('button', { name: /^(August 3|3 August)/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^(August 6|6 August)/ }));
+    expect(screen.getByText('4 days selected')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Save as period' }));
+    const { waitFor } = await import('@testing-library/react');
+    await waitFor(async () => expect(await db.entries.count()).toBe(4));
+    const kept = await db.entries.get('2026-08-04');
+    expect(kept?.flow).toBe('medium');
+    expect(kept?.symptoms).toEqual(['cramps']);
+    expect(kept?.note).toBe('kept');
+  });
+
+  it('range picking never selects future days, and can be cancelled', async () => {
+    await renderCalendar({ lastPeriodStart: '2026-07-10' }, '2026-08');
+    fireEvent.click(screen.getByRole('button', { name: 'Mark a period' }));
+    expect(screen.getByRole('button', { name: /^(August 25|25 August)/ })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.getByRole('button', { name: 'Mark a period' })).toBeInTheDocument();
+  });
+
   it('renders without crashing when there is no start date at all', async () => {
     await renderCalendar({ lastPeriodStart: null }, '2026-08');
     expect(screen.getByRole('button', { name: /^(August 20|20 August)/ })).toBeInTheDocument();

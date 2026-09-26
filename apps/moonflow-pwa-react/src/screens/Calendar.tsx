@@ -9,6 +9,8 @@ import { Card, CardContent } from '../components/ui/card';
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
 import { addDays, derivePeriods, diffDays, formatDate, parseDate } from '../lib/cycle-math';
 import { computeForecast } from '../lib/forecast';
+import { markPeriodDays, restoreDays } from '../lib/db';
+import { offerUndo } from '../lib/undo-signal';
 import { FLOW_OPTIONS } from '../lib/constants';
 import { FERTILE_DISCLAIMER, formatDateRange } from '../lib/home-status';
 import { useAppDispatch, useAppState } from '../state/hooks';
@@ -129,7 +131,57 @@ export function CalendarScreen() {
   // the leading blanks already use, so everything below the grid stays put.
   while (cells.length < 42) cells.push(null);
 
+  // T81: mark a whole period by picking its first and last day — a tap
+  // range rather than a drag, so it can't fight the month swipe and works
+  // with VoiceOver.
+  const [marking, setMarking] = useState(false);
+  const [rangeStart, setRangeStart] = useState<string | null>(null);
+  const [rangeEnd, setRangeEnd] = useState<string | null>(null);
+  const [markError, setMarkError] = useState(false);
+  const selected = new Set<string>();
+  if (rangeStart) {
+    const [a, b] = rangeEnd && rangeEnd < rangeStart ? [rangeEnd, rangeStart] : [rangeStart, rangeEnd ?? rangeStart];
+    for (let d = a; diffDays(d, b) >= 0; d = addDays(d, 1)) selected.add(d);
+  }
+
+  function stopMarking() {
+    setMarking(false);
+    setRangeStart(null);
+    setRangeEnd(null);
+  }
+
+  async function saveMarkedPeriod() {
+    const dates = [...selected].sort();
+    const result = await markPeriodDays(dates);
+    if (!result) {
+      setMarkError(true);
+      return;
+    }
+    setMarkError(false);
+    for (const entry of result.saved) dispatch({ type: 'UPSERT_ENTRY', entry });
+    stopMarking();
+    offerUndo({
+      message: `Marked ${dates.length} day${dates.length === 1 ? '' : 's'} as a period`,
+      undo: async () => {
+        if (!(await restoreDays(dates, result.previous))) return;
+        dates.forEach((date, i) => {
+          const prev = result.previous[i];
+          dispatch(prev ? { type: 'UPSERT_ENTRY', entry: prev } : { type: 'REMOVE_ENTRY', date });
+        });
+      },
+    });
+  }
+
   function handleSelectDate(dateStr: string) {
+    if (marking) {
+      if (!rangeStart || rangeEnd) {
+        setRangeStart(dateStr);
+        setRangeEnd(null);
+      } else {
+        setRangeEnd(dateStr);
+      }
+      return;
+    }
     navigate({ to: '/log', search: { date: dateStr, from: 'calendar' } });
   }
 
@@ -242,6 +294,7 @@ export function CalendarScreen() {
 
             const spokenParts = [parseDate(dateStr).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })];
             if (stateLabel) spokenParts.push(stateLabel);
+            if (selected.has(dateStr)) spokenParts.push('selected');
             if (isToday) spokenParts.push('today');
 
             return (
@@ -251,7 +304,7 @@ export function CalendarScreen() {
                   disabled={isFuture}
                   onClick={() => handleSelectDate(dateStr)}
                   aria-label={spokenParts.join(', ')}
-                  className={`relative flex size-10 items-center justify-center rounded-full text-sm text-foreground disabled:cursor-default ${stateClass} ${isFuture && !stateClass ? 'text-muted-foreground' : ''} ${isToday ? 'outline-2 outline-offset-2 outline-foreground' : ''}`}
+                  className={`relative flex size-10 items-center justify-center rounded-full text-sm text-foreground disabled:cursor-default ${stateClass} ${isFuture && !stateClass ? 'text-muted-foreground' : ''} ${isToday ? 'outline-2 outline-offset-2 outline-foreground' : ''} ${selected.has(dateStr) ? 'bg-accent/25 ring-2 ring-accent' : ''}`}
                 >
                   {dayNum}
                   {loggedPeriodDates.has(dateStr) && (
@@ -271,6 +324,29 @@ export function CalendarScreen() {
         ))}
         </div>
       </motion.div>
+
+      <div className="mt-3">
+        {marking ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-center text-sm text-muted-foreground" aria-live="polite">
+              {selected.size === 0 ? 'Tap the first and last day of the period' : `${selected.size} day${selected.size === 1 ? '' : 's'} selected`}
+            </p>
+            <div className="flex gap-2">
+              <Button disabled={selected.size === 0} onClick={() => void saveMarkedPeriod()} className="h-11 flex-1 text-sm">
+                Save as period
+              </Button>
+              <Button variant="ghost" onClick={stopMarking} className="h-11 flex-1 text-sm">
+                Cancel
+              </Button>
+            </div>
+            {markError && <p className="text-center text-sm text-destructive">Couldn't save — try again</p>}
+          </div>
+        ) : (
+          <Button variant="outline" onClick={() => setMarking(true)} className="h-11 w-full text-sm">
+            Mark a period
+          </Button>
+        )}
+      </div>
 
       {forecast.status === 'paused' && (
         <p className="mt-2 text-center text-xs text-muted-foreground">Predictions are paused — only what you've logged is shown.</p>

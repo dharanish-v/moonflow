@@ -200,6 +200,51 @@ export async function deleteEntry(date: string): Promise<boolean> {
   }
 }
 
+/** Mark a run of days as a period in one transaction (T81). Days already
+ * logged keep everything but get a period flow (unless they already have
+ * one); new days get 'medium'. Returns what was there before, for Undo. */
+export async function markPeriodDays(
+  dates: string[],
+): Promise<{ saved: Entry[]; previous: Array<Entry | undefined> } | null> {
+  try {
+    return await db.transaction('rw', db.entries, async () => {
+      const previous = await Promise.all(dates.map((d) => db.entries.get(d)));
+      const saved: Entry[] = dates.map((date, i) => {
+        const prev = previous[i];
+        const hasPeriodFlow = prev?.flow === 'light' || prev?.flow === 'medium' || prev?.flow === 'heavy';
+        return {
+          ...(prev ?? { date, symptoms: [], mood: null, note: '', tags: [] }),
+          date,
+          flow: hasPeriodFlow ? prev!.flow : 'medium',
+          updatedAt: Date.now(),
+        };
+      });
+      await db.entries.bulkPut(saved);
+      return { saved, previous };
+    });
+  } catch (err) {
+    console.error('markPeriodDays failed:', err);
+    return null;
+  }
+}
+
+/** Undo for markPeriodDays: put back what was there, remove what wasn't. */
+export async function restoreDays(dates: string[], previous: Array<Entry | undefined>): Promise<boolean> {
+  try {
+    await db.transaction('rw', db.entries, async () => {
+      for (let i = 0; i < dates.length; i++) {
+        const prev = previous[i];
+        if (prev) await db.entries.put(prev);
+        else await db.entries.delete(dates[i]!);
+      }
+    });
+    return true;
+  } catch (err) {
+    console.error('restoreDays failed:', err);
+    return false;
+  }
+}
+
 /** Forgot-PIN recovery: erase every entry and setting on this device. */
 export async function eraseAllData(): Promise<boolean> {
   try {
