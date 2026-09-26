@@ -178,6 +178,10 @@ export function InsightsScreen() {
         </section>
       )}
 
+      <Button variant="outline" onClick={() => navigate({ to: '/insights/report' })} className="mb-5 h-11 w-full text-sm">
+        Report for your doctor
+      </Button>
+
       {recentEntries.length > 0 && (
         <div>
           <div className="mb-2 text-xs text-muted-foreground">Recent logs</div>

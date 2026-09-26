@@ -235,3 +235,12 @@
   display: flex;
   flex-direction: column;
 }
+
+/* T66 printable report: print only the report, on white, no app chrome. */
+@media print {
+  html, body, #phone-frame { background: #fff !important; color: #000 !important; height: auto !important; }
+  #phone-frame { position: static !important; overflow: visible !important; transform: none !important; box-shadow: none !important; }
+  #app-content { position: static !important; overflow: visible !important; padding: 0 !important; }
+  nav[aria-label='Primary'], .no-print { display: none !important; }
+  .report, .report * { color: #000 !important; border-color: #999 !important; }
+}

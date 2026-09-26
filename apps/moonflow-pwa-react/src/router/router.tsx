@@ -132,6 +132,12 @@ const duressSetupRoute = createRoute({
   component: lazyRouteComponent(() => import('../screens/DuressSetup'), 'DuressSetupScreen'),
 });
 
+const reportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/insights/report',
+  component: lazyRouteComponent(() => import('../screens/Report'), 'ReportScreen'),
+});
+
 const logRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/log',
@@ -147,6 +153,7 @@ export const routeTree = rootRoute.addChildren([
   pinSetupRoute,
   pinVerifyRoute,
   duressSetupRoute,
+  reportRoute,
   logRoute,
 ]);
 
