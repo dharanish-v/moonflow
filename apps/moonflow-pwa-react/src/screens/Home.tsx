@@ -10,7 +10,7 @@
 // unilateral call (see the conversation this was decided in).
 import { AnimatePresence, motion } from 'framer-motion';
 import { Droplet, Info, NotebookPen, ShieldAlert } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { PhaseMotif } from '../components/PhaseMotif';
 import { PHASE_COLOR_CLASS } from '../lib/phase-colors';
@@ -23,7 +23,7 @@ import { deleteEntry, saveEntry } from '../lib/db';
 import { describeEntry } from '../lib/entry-summary';
 import type { Entry, FlowId } from '../lib/types';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import { UndoToast } from '../components/UndoToast';
+import { offerUndo } from '../lib/undo-signal';
 import { computeHomeStatus } from '../lib/home-status';
 import { quoteOfTheDay } from '../lib/quotes';
 import { backupNudge } from '../lib/backup-nudge';
@@ -53,7 +53,6 @@ export function HomeScreen() {
   const latestPeriodDay = [...entries].reverse().find((e) => e.flow && PERIOD_FLOW_LEVELS.includes(e.flow));
   const stillOnPeriod = !!latestPeriodDay && diffDays(latestPeriodDay.date, today) <= PERIOD_GAP_TOLERANCE_DAYS;
   const quickFlow: FlowId = stillOnPeriod && latestPeriodDay?.flow ? latestPeriodDay.flow : 'medium';
-  const [undo, setUndo] = useState<{ message: string; date: string } | null>(null);
   const [quickLogError, setQuickLogError] = useState(false);
 
   function openSheet() {
@@ -73,19 +72,14 @@ export function HomeScreen() {
       return;
     }
     const label = FLOW_OPTIONS.find((f) => f.id === flow)?.label ?? flow;
-    setUndo({ message: `Logged ${label.toLowerCase()} flow for today`, date: today });
+    offerUndo({
+      message: `Logged ${label.toLowerCase()} flow for today`,
+      undo: async () => {
+        if (await deleteEntry(today)) dispatch({ type: 'REMOVE_ENTRY', date: today });
+        else setQuickLogError(true);
+      },
+    });
   }
-
-  async function handleUndo() {
-    if (!undo) return;
-    const { date } = undo;
-    setUndo(null);
-    const ok = await deleteEntry(date);
-    if (ok) dispatch({ type: 'REMOVE_ENTRY', date });
-    else setQuickLogError(true);
-  }
-
-  const dismissUndo = useCallback(() => setUndo(null), []);
   const quote = quoteOfTheDay(status.cyclePhase);
   const PHASE_WORDS = { period: 'on your period', follicular: 'before your fertile window', fertile: 'in your estimated fertile window', luteal: 'after your fertile window', unknown: '' } as const;
   const moonName = moonPhase().name.toLowerCase();
@@ -252,7 +246,6 @@ export function HomeScreen() {
           </Link>
         )}
       </motion.div>
-      {undo && <UndoToast message={undo.message} onUndo={() => void handleUndo()} onDismiss={dismissUndo} />}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { renderRouted } from '../test/render-with-router';
 import { StateProbe } from '../test/state-probe';
 import { StateProvider } from '../state/store';
 import { HomeScreen } from './Home';
+import { GlobalUndoToast } from '../components/GlobalUndoToast';
 
 const TODAY = '2026-09-26';
 const e = (date: string, flow: Entry['flow'], extra: Partial<Entry> = {}): Entry => ({ date, flow, symptoms: [], mood: null, note: '', updatedAt: 1, ...extra });
@@ -18,6 +19,7 @@ async function renderHome(entries: Entry[]) {
     wrapper: (children) => (
       <StateProvider testState={{ entries, settings: { ...SETTINGS_DEFAULTS, onboardingComplete: true, lastPeriodStart: '2026-09-01', lastBackupAt: Date.now() } }}>
         {children}
+        <GlobalUndoToast />
         <StateProbe onState={(s) => (latest = s)} />
       </StateProvider>
     ),

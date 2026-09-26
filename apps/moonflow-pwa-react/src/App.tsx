@@ -5,6 +5,7 @@ import { createAppRouter } from './router/router';
 import { StateProvider } from './state/store';
 import { usePrivacyScreen } from './hooks/usePrivacyScreen';
 import { UpdatePrompt } from './components/UpdatePrompt';
+import { GlobalUndoToast } from './components/GlobalUndoToast';
 
 // #phone-frame is static chrome, unrelated to routing. #app-content lives
 // inside RootLayout (router/router.tsx), not here — it has to sit alongside
@@ -22,6 +23,7 @@ function App() {
         <div id="phone-frame">
           <RouterProvider router={router} />
           <UpdatePrompt />
+          <GlobalUndoToast />
         </div>
       </StateProvider>
     </MotionConfig>

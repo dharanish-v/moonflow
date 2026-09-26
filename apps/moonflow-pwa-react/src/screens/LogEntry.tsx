@@ -26,7 +26,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '../components/ui/alert-dialog';
 import { Button } from '../components/ui/button';
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerTitle } from '../components/ui/drawer';
@@ -38,7 +37,8 @@ import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { MOOD_ICONS } from '../components/mood-icons';
 import { FLOW_OPTIONS, MOOD_OPTIONS, PERIOD_FLOW_LEVELS, SYMPTOM_OPTIONS } from '../lib/constants';
 import { todayString } from '../lib/cycle-math';
-import { deleteEntryAndClearDraft, saveEntryAndClearDraft } from '../lib/db';
+import { deleteEntryAndClearDraft, saveEntry, saveEntryAndClearDraft } from '../lib/db';
+import { offerUndo } from '../lib/undo-signal';
 import { useSaveSettings } from '../state/useSaveSettings';
 import { formatHeaderDate, resolveInitialDraft } from '../lib/log-entry';
 import type { FlowId, LogEntryInput, MoodId, SymptomId } from '../lib/types';
@@ -171,6 +171,15 @@ export function LogEntryScreen() {
     clearDraft();
     dispatch({ type: 'REMOVE_ENTRY', date });
     dispatch({ type: 'PATCH_SETTINGS', patch: { draftEntry: null } });
+    const removed = existingEntry;
+    if (removed) {
+      offerUndo({
+        message: `Cleared ${formatHeaderDate(date)}`,
+        undo: async () => {
+          if (await saveEntry(removed)) dispatch({ type: 'UPSERT_ENTRY', entry: { ...removed, updatedAt: Date.now() } });
+        },
+      });
+    }
     navigate({ to: returnTo, replace: true });
   }
 
@@ -336,31 +345,6 @@ export function LogEntryScreen() {
           />
         </div>
 
-        {existingEntry && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="link"
-                className="mb-1.5 h-11 justify-start px-0 text-xs text-secondary no-underline"
-              >
-                Clear this day's log
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Clear this day's log?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This removes everything logged for {formatHeaderDate(date)} — flow, symptoms, mood, and notes. This
-                  can't be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogAction onClick={() => void handleClear()}>Clear log</AlertDialogAction>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
 
         {saveError && (
           <Alert className="mb-2">
@@ -371,6 +355,14 @@ export function LogEntryScreen() {
         <Button disabled={isSaving} onClick={() => void handleSave()} className="h-11 w-full text-sm">
           {isSaving ? 'Saving…' : 'Save'}
         </Button>
+
+        {/* Destructive, so kept well away from Save — and undoable, so no
+            "are you sure?" dialog (design-system.md's "Cleared — Undo"). */}
+        {existingEntry && (
+          <Button variant="ghost" onClick={() => void handleClear()} className="mt-6 h-11 w-full text-sm text-destructive">
+            Clear this day's log
+          </Button>
+        )}
         <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
           <AlertDialogContent>
             <AlertDialogHeader>

@@ -139,3 +139,41 @@ describe('LogEntryScreen — custom tags (T68)', () => {
     expect(screen.getByRole('button', { name: 'Add tag' })).toBeDisabled();
   });
 });
+
+describe('LogEntryScreen — clear with undo (T79)', () => {
+  it('clears at once (no confirm dialog) and offers Undo, which restores the day', async () => {
+    const { GlobalUndoToast } = await import('../components/GlobalUndoToast');
+    const { db, saveEntry } = await import('../lib/db');
+    await db.entries.clear();
+    const existing = { date: '2026-09-06', flow: 'heavy' as const, symptoms: [], mood: null, note: 'keep me', tags: [] };
+    await saveEntry(existing);
+    let latest: AppState | null = null;
+    await renderRouted(<LogEntryScreen />, {
+      path: '/log',
+      initialEntries: ['/log?date=2026-09-06&from=calendar'],
+      validateSearch: validateLogSearch,
+      wrapper: (children) => (
+        <StateProvider testState={{ entries: [{ ...existing, updatedAt: 1 }] }}>
+          {children}
+          <GlobalUndoToast />
+          <StateProbe onState={(s) => (latest = s)} />
+        </StateProvider>
+      ),
+    });
+    fireEvent.click(screen.getByRole('button', { name: /clear this day/i }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    await waitFor(() => expect(latest!.entries).toEqual([]));
+    fireEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(latest!.entries.map((x) => x.note)).toEqual(['keep me']));
+    expect((await db.entries.get('2026-09-06'))?.note).toBe('keep me');
+  });
+
+  it('keeps Clear away from Save', async () => {
+    await renderLog();
+    const save = screen.getByRole('button', { name: 'Save' });
+    const clear = screen.queryByRole('button', { name: /clear this day/i });
+    // no entry → no clear button at all on a fresh day
+    expect(clear).toBeNull();
+    expect(save).toBeInTheDocument();
+  });
+});
