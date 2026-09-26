@@ -115,3 +115,27 @@ describe('LogEntryScreen — form behaviour (T54)', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/calendar'));
   });
 });
+
+describe('LogEntryScreen — custom tags (T68)', () => {
+  it('creates a tag, selects it, and saves it with the day', async () => {
+    const { state } = await renderLog('2026-09-06');
+    fireEvent.change(screen.getByLabelText('New tag'), { target: { value: 'Took ibuprofen' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add tag' }));
+    const chip = await screen.findByRole('button', { name: 'Took ibuprofen', pressed: true });
+    expect(chip).toBeInTheDocument();
+    await waitFor(() => expect(state().settings.customTags).toEqual(['Took ibuprofen']));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(state().entries[0]?.tags).toEqual(['Took ibuprofen']));
+  });
+
+  it('ignores blank and duplicate tags', async () => {
+    const { state } = await renderLog('2026-09-06');
+    fireEvent.change(screen.getByLabelText('New tag'), { target: { value: '   ' } });
+    expect(screen.getByRole('button', { name: 'Add tag' })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('New tag'), { target: { value: 'Sleep' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add tag' }));
+    await waitFor(() => expect(state().settings.customTags).toEqual(['Sleep']));
+    fireEvent.change(screen.getByLabelText('New tag'), { target: { value: 'sleep' } });
+    expect(screen.getByRole('button', { name: 'Add tag' })).toBeDisabled();
+  });
+});

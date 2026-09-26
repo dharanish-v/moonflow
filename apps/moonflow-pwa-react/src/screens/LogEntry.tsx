@@ -30,7 +30,9 @@ import {
 } from '../components/ui/alert-dialog';
 import { Button } from '../components/ui/button';
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerTitle } from '../components/ui/drawer';
+import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { MAX_TAG_LENGTH } from '../lib/import';
 import { Textarea } from '../components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { MOOD_ICONS } from '../components/icons';
@@ -67,11 +69,13 @@ export function LogEntryScreen() {
   const [symptoms, setSymptoms] = useState<SymptomId[]>(initial.symptoms);
   const [mood, setMood] = useState<MoodId | null>(initial.mood);
   const [note, setNote] = useState(initial.note);
+  const [tags, setTags] = useState<string[]>(initial.tags);
+  const [newTag, setNewTag] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
 
   function currentDraft(overrides: Partial<LogEntryInput> = {}): LogEntryInput {
-    return { date, flow, symptoms, mood, note, ...overrides };
+    return { date, flow, symptoms, mood, note, tags, ...overrides };
   }
 
   const isDirty =
@@ -79,7 +83,28 @@ export function LogEntryScreen() {
     mood !== initial.mood ||
     note !== initial.note ||
     symptoms.length !== initial.symptoms.length ||
-    symptoms.some((s) => !initial.symptoms.includes(s));
+    symptoms.some((s) => !initial.symptoms.includes(s)) ||
+    tags.length !== initial.tags.length ||
+    tags.some((t) => !initial.tags.includes(t));
+
+  const trimmedTag = newTag.trim().slice(0, MAX_TAG_LENGTH);
+  const canAddTag = trimmedTag.length > 0 && !settings.customTags.some((t) => t.toLowerCase() === trimmedTag.toLowerCase());
+
+  function toggleTag(tag: string) {
+    const next = tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag];
+    setTags(next);
+    reportDraft(currentDraft({ tags: next }));
+  }
+
+  async function addTag() {
+    if (!canAddTag) return;
+    const tag = trimmedTag;
+    setNewTag('');
+    await saveSettingsPatch({ customTags: [...settings.customTags, tag] });
+    const next = [...tags, tag];
+    setTags(next);
+    reportDraft(currentDraft({ tags: next }));
+  }
 
   // The sheet mounts already open (it's a route), so Radix's open-autofocus
   // never fires — move focus to its title so screen readers start there.
@@ -112,7 +137,7 @@ export function LogEntryScreen() {
   async function handleSave() {
     setIsSaving(true);
     setSaveError(false);
-    const saved = await saveEntryAndClearDraft({ date, flow, symptoms, mood, note });
+    const saved = await saveEntryAndClearDraft({ date, flow, symptoms, mood, note, tags });
     if (!saved) {
       setIsSaving(false);
       setSaveError(true);
@@ -230,6 +255,48 @@ export function LogEntryScreen() {
               );
             })}
           </ToggleGroup>
+        </div>
+
+        <div className="mb-5">
+          <span id="log-tags-label" className="mb-1.5 block text-sm text-muted-foreground">
+            Tags
+          </span>
+          <div role="group" aria-labelledby="log-tags-label" className="mb-2 flex flex-wrap gap-1.5">
+            {settings.customTags.map((tag) => (
+              <Button
+                key={tag}
+                type="button"
+                variant="outline"
+                aria-pressed={tags.includes(tag)}
+                onClick={() => toggleTag(tag)}
+                className="min-h-11 rounded-lg px-3 text-sm aria-pressed:border-accent/40 aria-pressed:bg-accent/15 aria-pressed:text-accent"
+              >
+                {tag}
+              </Button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Label htmlFor="log-new-tag" className="sr-only">
+              New tag
+            </Label>
+            <Input
+              id="log-new-tag"
+              value={newTag}
+              maxLength={MAX_TAG_LENGTH}
+              placeholder="Add your own — e.g. Pill taken"
+              onChange={(e) => setNewTag(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void addTag();
+                }
+              }}
+              className="h-11"
+            />
+            <Button type="button" variant="outline" disabled={!canAddTag} onClick={() => void addTag()} className="h-11 px-4 text-sm">
+              Add tag
+            </Button>
+          </div>
         </div>
 
         <div className="mb-5">

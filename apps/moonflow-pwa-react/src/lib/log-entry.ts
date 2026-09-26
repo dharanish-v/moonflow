@@ -9,6 +9,7 @@ export interface ResolvedDraft {
   symptoms: LogEntryInput['symptoms'];
   mood: LogEntryInput['mood'];
   note: string;
+  tags: string[];
   fromDraft: boolean;
 }
 
@@ -29,6 +30,7 @@ export function resolveInitialDraft(
     symptoms: source?.symptoms ?? [],
     mood: source?.mood ?? null,
     note: source?.note ?? '',
+    tags: source?.tags ?? [],
     fromDraft: source === draftEntry && draftEntry !== null,
   };
 }

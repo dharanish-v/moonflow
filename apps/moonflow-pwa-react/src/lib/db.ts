@@ -92,6 +92,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   themeMode: 'system',
   lastBackupAt: null,
   predictionsPaused: false,
+  customTags: [],
 };
 
 /** Read one setting, falling back to its documented default if never set. */

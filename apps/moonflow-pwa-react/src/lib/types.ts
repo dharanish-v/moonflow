@@ -21,6 +21,8 @@ export interface LogEntryInput {
   symptoms: SymptomId[];
   mood: MoodId | null;
   note: string;
+  /** User-defined tags (T68): medication, pill taken, sleep, energy… */
+  tags?: string[];
 }
 
 /** The stored/loaded shape — db.ts stamps `updatedAt` on every write. */
@@ -54,6 +56,8 @@ export interface Settings {
   /** Pregnancy, breastfeeding, hormonal birth control… — logging continues,
    * predictions and health nudges stop (T65). */
   predictionsPaused: boolean;
+  /** The user's own tag vocabulary, offered as chips in the log sheet (T68). */
+  customTags: string[];
   /** Epoch ms of the last successful export (T47). */
   lastBackupAt: number | null;
 }

@@ -16,6 +16,8 @@ import type { Entry, FlowId, MoodId, SymptomId } from './types';
 /** Far beyond any real history (decades of daily logs is ~2MB). */
 const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
 export const MAX_NOTE_LENGTH = 10_000;
+export const MAX_TAG_LENGTH = 40;
+const MAX_TAGS_PER_DAY = 30;
 
 const FLOW_IDS: ReadonlySet<string> = new Set(['none', 'spotting', 'light', 'medium', 'heavy']);
 const MOOD_IDS: ReadonlySet<string> = new Set(['cry', 'sad', 'neutral', 'smile', 'happy']);
@@ -55,12 +57,21 @@ function normalizeEntry(value: unknown): Entry | null {
   if (!Array.isArray(e.symptoms) || !e.symptoms.every((s) => SYMPTOM_IDS.has(s as string))) return null;
   if (e.mood !== null && !MOOD_IDS.has(e.mood as string)) return null;
   if (typeof e.note !== 'string' || e.note.length > MAX_NOTE_LENGTH) return null;
+  const tags = e.tags === undefined ? [] : e.tags;
+  if (
+    !Array.isArray(tags) ||
+    tags.length > MAX_TAGS_PER_DAY ||
+    !tags.every((t) => typeof t === 'string' && t.trim().length > 0 && t.length <= MAX_TAG_LENGTH)
+  ) {
+    return null;
+  }
   return {
     date: e.date,
     flow: e.flow as FlowId | null,
     symptoms: e.symptoms as SymptomId[],
     mood: e.mood as MoodId | null,
     note: e.note,
+    tags: tags as string[],
     updatedAt: typeof e.updatedAt === 'number' ? e.updatedAt : Date.now(),
   };
 }

@@ -3,7 +3,7 @@ import { buildExportPayload } from './export';
 import { parseImportPayload } from './import';
 import type { Entry, Settings } from './types';
 
-const ENTRY: Entry = { date: '2026-09-04', flow: 'medium', symptoms: ['cramps'], mood: 'neutral', note: 'hi', updatedAt: 123 };
+const ENTRY: Entry = { date: '2026-09-04', flow: 'medium', symptoms: ['cramps'], mood: 'neutral', note: 'hi', tags: [], updatedAt: 123 };
 
 describe('parseImportPayload', () => {
   it('round-trips a real export payload', () => {
@@ -111,5 +111,22 @@ describe('parseImportPayload — hardening (T38)', () => {
     const json = JSON.stringify({ entries: [{ ...ENTRY, note: 'a'.repeat(10_001) }], settings: {} });
     const result = parseImportPayload(json);
     expect(result.ok && result.skippedEntries).toBe(1);
+  });
+});
+
+describe('parseImportPayload — tags (T68)', () => {
+  it('keeps valid tags and drops entries with malformed ones', () => {
+    const json = JSON.stringify({
+      entries: [{ ...ENTRY, tags: ['Pill taken'] }, { ...ENTRY, date: '2026-09-05', tags: [42] }],
+      settings: {},
+    });
+    const r = parseImportPayload(json);
+    expect(r.ok && r.payload.entries.map((e) => e.tags)).toEqual([['Pill taken']]);
+    expect(r.ok && r.skippedEntries).toBe(1);
+  });
+
+  it('treats entries from before tags existed as having none', () => {
+    const r = parseImportPayload(JSON.stringify({ entries: [ENTRY], settings: {} }));
+    expect(r.ok && r.payload.entries[0]!.tags).toEqual([]);
   });
 });

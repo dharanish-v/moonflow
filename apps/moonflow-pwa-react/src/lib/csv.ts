@@ -18,9 +18,16 @@ export function buildCsv(entries: Entry[]): string {
   const rows = [...entries]
     .sort((a, b) => (a.date < b.date ? -1 : 1))
     .map((e) =>
-      [e.date, label(FLOW_OPTIONS, e.flow), e.symptoms.map((s) => label(SYMPTOM_OPTIONS, s)).join('; '), label(MOOD_OPTIONS, e.mood), e.note]
+      [
+        e.date,
+        label(FLOW_OPTIONS, e.flow),
+        e.symptoms.map((s) => label(SYMPTOM_OPTIONS, s)).join('; '),
+        label(MOOD_OPTIONS, e.mood),
+        (e.tags ?? []).join('; '),
+        e.note,
+      ]
         .map(cell)
         .join(','),
     );
-  return ['Date,Flow,Symptoms,Mood,Note', ...rows].join('\r\n');
+  return ['Date,Flow,Symptoms,Mood,Tags,Note', ...rows].join('\r\n');
 }
