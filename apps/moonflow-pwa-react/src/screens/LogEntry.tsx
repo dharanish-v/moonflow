@@ -265,7 +265,7 @@ export function LogEntryScreen() {
             }}
             className="flex-wrap justify-start gap-1.5"
           >
-            {SYMPTOM_OPTIONS.map((opt) => (
+            {SYMPTOM_OPTIONS.filter((opt) => !opt.perimenopause || settings.perimenopauseMode || symptoms.includes(opt.id)).map((opt) => (
               <ToggleGroupItem key={opt.id} value={opt.id} variant="chip" className="min-h-11 px-3">
                 {opt.label}
               </ToggleGroupItem>

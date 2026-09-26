@@ -61,3 +61,20 @@ describe('healthNudges (FIGO 2018 criteria)', () => {
     expect(healthNudges(e, { ...BASE, predictionsPaused: true }, new Date(2026, 3, 5))).toEqual([]);
   });
 });
+
+describe('healthNudges — perimenopause mode (T91)', () => {
+  it('stops flagging irregularity (expected in the transition) but keeps the red flags', () => {
+    const e = [
+      ...periods(['2026-01-01', '2026-01-25', '2026-03-02', '2026-03-28']), // irregular
+      ...periods(['2026-05-01'], 10), // long period
+    ];
+    const on = healthNudges(e, { ...BASE, perimenopauseMode: true }, new Date(2026, 4, 20)).map((n) => n.id);
+    expect(on).not.toContain('irregular');
+    expect(on).toContain('long-period');
+  });
+
+  it('always flags bleeding after 12 months without a period', () => {
+    const e = [...periods(['2025-01-10']), { date: '2026-03-02', flow: 'spotting' as const }];
+    expect(healthNudges(e, BASE, new Date(2026, 2, 5)).map((n) => n.id)).toContain('postmenopausal-bleeding');
+  });
+});

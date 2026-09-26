@@ -19,6 +19,8 @@ import { HEAVY_BLEEDING_ADVICE, healthNudges } from '../lib/health-nudges';
 import { symptomTiming } from '../lib/symptom-timing';
 import { searchEntries } from '../lib/search';
 import { BbtChart } from '../components/BbtChart';
+import { STAGE_TEXT, perimenopauseStage, suggestPerimenopauseMode } from '../lib/perimenopause';
+import { useSaveSettings } from '../state/useSaveSettings';
 import { formatHeaderDate } from '../lib/log-entry';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -33,6 +35,9 @@ export function InsightsScreen() {
   const data = computeInsights(entries);
   const nudges = healthNudges(entries, settings);
   const timing = symptomTiming(entries);
+  const stage = perimenopauseStage(entries);
+  const suggestMode = suggestPerimenopauseMode(entries, settings);
+  const saveSettingsPatch = useSaveSettings();
   const [query, setQuery] = useState('');
   // Most-recent-first, capped at 10 — the only way to browse your own
   // history today is paging Calendar month-by-month one day at a time.
@@ -113,6 +118,40 @@ export function InsightsScreen() {
             </>
           )}
         </div>
+      )}
+
+      {suggestMode && (
+        <Card className="mb-5 gap-2 px-4 py-3">
+          <p className="text-sm text-foreground">
+            Your cycles show changes that are common around perimenopause. Perimenopause mode adds related symptoms and stops
+            flagging irregular cycles as unusual.
+          </p>
+          <Button variant="outline" onClick={() => void saveSettingsPatch({ perimenopauseMode: true })} className="h-11 text-sm">
+            Turn on perimenopause mode
+          </Button>
+        </Card>
+      )}
+
+      {settings.perimenopauseMode && (
+        <section aria-labelledby="meno-heading" className="mb-5">
+          <h2 id="meno-heading" className="mb-2 text-sm font-medium text-foreground">
+            Perimenopause
+          </h2>
+          <Card className="gap-1 px-4 py-3">
+            {stage ? (
+              <>
+                <p className="text-sm font-medium text-foreground">{STAGE_TEXT[stage].title}</p>
+                <p className="text-sm text-muted-foreground">{STAGE_TEXT[stage].body}</p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">No transition pattern in your recent cycles yet.</p>
+            )}
+            <p className="mt-1 text-xs text-muted-foreground">
+              Based on the STRAW+10 staging criteria, from your own logs. Not a diagnosis — a clinician can confirm where you
+              are and talk through options for symptoms.
+            </p>
+          </Card>
+        </section>
       )}
 
       {settings.fertilityAwareness && (

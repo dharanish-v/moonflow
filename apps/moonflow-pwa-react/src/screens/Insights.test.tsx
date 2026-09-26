@@ -139,3 +139,23 @@ describe('InsightsScreen — temperature chart (T90)', () => {
     expect(screen.getByRole('heading', { name: 'Temperature' })).toBeInTheDocument();
   });
 });
+
+describe('InsightsScreen — perimenopause (T91)', () => {
+  const late = ['2026-01-01', '2026-01-29', '2026-04-10', '2026-05-08'].map((date) => ({ date, flow: 'medium' as const, symptoms: [], mood: null, note: '', updatedAt: 0 }));
+
+  it('suggests perimenopause mode at 40+ when the pattern fits, and turning it on shows the stage', async () => {
+    const { renderRouted } = await import('../test/render-with-router');
+    const { StateProvider } = await import('../state/store');
+    const { InsightsScreen } = await import('./Insights');
+    const { SETTINGS_DEFAULTS } = await import('../lib/db');
+    const { fireEvent, screen } = await import('@testing-library/react');
+    await renderRouted(
+      <StateProvider testState={{ entries: late, settings: { ...SETTINGS_DEFAULTS, birthYear: 1978 } }}>
+        <InsightsScreen />
+      </StateProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /turn on perimenopause mode/i }));
+    expect(await screen.findByRole('heading', { name: 'Perimenopause' })).toBeInTheDocument();
+    expect(screen.getByText(/gap of two months or more/i)).toBeInTheDocument();
+  });
+});

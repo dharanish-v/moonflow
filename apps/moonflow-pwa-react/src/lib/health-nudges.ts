@@ -7,8 +7,9 @@
 import { derivePeriods, diffDays, formatDate } from './cycle-math';
 import { computeForecast } from './forecast';
 import type { Entry, Settings } from './types';
+import { menopauseNudges } from './perimenopause';
 
-export type NudgeId = 'cycle-length' | 'irregular' | 'long-period' | 'intermenstrual' | 'no-period-90';
+export type NudgeId = 'cycle-length' | 'irregular' | 'long-period' | 'intermenstrual' | 'no-period-90' | 'postmenopausal-bleeding';
 
 export interface HealthNudge {
   id: NudgeId;
@@ -21,7 +22,10 @@ const CAVEAT = "This is not a diagnosis — cycles vary, and a clinician can tel
 
 export function healthNudges(
   entries: Array<Pick<Entry, 'date' | 'flow'>>,
-  settings: Pick<Settings, 'lastPeriodStart' | 'avgCycleLength' | 'avgPeriodLength'> & { predictionsPaused?: boolean },
+  settings: Pick<Settings, 'lastPeriodStart' | 'avgCycleLength' | 'avgPeriodLength'> & {
+    predictionsPaused?: boolean;
+    perimenopauseMode?: boolean;
+  },
   today: Date = new Date(),
 ): HealthNudge[] {
   if (settings.predictionsPaused) return [];
@@ -83,6 +87,12 @@ export function healthNudges(
     });
   }
 
+  // Bleeding after a year without periods matters in every mode.
+  nudges.push(...menopauseNudges(entries, today));
+  // In perimenopause, changing and missing cycles are expected: don't nag.
+  if (settings.perimenopauseMode) {
+    return nudges.filter((n) => n.id !== 'irregular' && n.id !== 'cycle-length' && n.id !== 'no-period-90');
+  }
   return nudges;
 }
 

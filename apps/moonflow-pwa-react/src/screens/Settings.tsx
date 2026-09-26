@@ -2,7 +2,7 @@
 // PIN (create-1/create-2) is its own route (PinSetup.tsx) — see that file
 // for why.
 import { forwardRef, useState, type ComponentProps, type ReactNode } from 'react';
-import { Calendar, CalendarClock, Info, Monitor, Moon, PauseCircle, ShieldAlert, Sun, Thermometer, Upload, Zap } from 'lucide-react';
+import { Calendar, CalendarClock, Info, Monitor, Moon, PauseCircle, ShieldAlert, Sun, Sunset, Thermometer, Upload, Zap } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from 'cn';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -57,6 +57,21 @@ export function SettingsScreen() {
   const [discreetOpen, setDiscreetOpen] = useState(false);
   const [dataMoveOpen, setDataMoveOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [birthYearText, setBirthYearText] = useState(settings.birthYear ? String(settings.birthYear) : '');
+  const [birthYearError, setBirthYearError] = useState(false);
+
+  async function saveBirthYear() {
+    const t = birthYearText.trim();
+    if (!t) {
+      setBirthYearError(false);
+      if (settings.birthYear !== null) await persist({ birthYear: null });
+      return;
+    }
+    const year = Number(t);
+    const valid = /^\d{4}$/.test(t) && year >= 1920 && year <= new Date().getFullYear() - 10;
+    setBirthYearError(!valid);
+    if (valid && year !== settings.birthYear) await persist({ birthYear: year });
+  }
   const [editField, setEditField] = useState<EditField>(null);
   const [draftValue, setDraftValue] = useState(0);
   const [saveError, setSaveError] = useState(false);
@@ -202,6 +217,39 @@ export function SettingsScreen() {
             </ToggleGroup>
           </div>
         )}
+        <Separator />
+        <SettingsRow icon={<Sunset className="size-4" aria-hidden="true" />} label="Perimenopause mode">
+          <Switch
+            checked={settings.perimenopauseMode}
+            onCheckedChange={(v) => void persist({ perimenopauseMode: v })}
+            aria-label="Perimenopause mode"
+          />
+        </SettingsRow>
+        <div className="px-3.5 pb-3">
+          <p className="mb-2 text-xs text-muted-foreground">
+            Adds hot flashes, night sweats and other related symptoms, shows your likely stage of the transition, and stops
+            flagging irregular cycles as unusual.
+          </p>
+          <Label htmlFor="birth-year" className="mb-1 block text-sm">
+            Birth year (optional)
+          </Label>
+          <Input
+            id="birth-year"
+            inputMode="numeric"
+            autoComplete="off"
+            placeholder="e.g. 1980"
+            value={birthYearText}
+            onChange={(e) => setBirthYearText(e.target.value)}
+            onBlur={() => void saveBirthYear()}
+            aria-invalid={birthYearError || undefined}
+            className="h-11 w-32"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            {birthYearError
+              ? `Enter a year between 1920 and ${new Date().getFullYear() - 10}, or leave it empty.`
+              : 'Only used to suggest perimenopause mode from age 40. Stays on this phone.'}
+          </p>
+        </div>
         <Separator />
         <SettingsRow icon={<PauseCircle className="size-4" aria-hidden="true" />} label="Pause predictions">
           <Switch

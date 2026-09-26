@@ -70,6 +70,19 @@ describe('SettingsScreen', () => {
     await waitFor(() => expect(state().settings.temperatureUnit).toBe('F'));
   });
 
+  it('sets an optional birth year and perimenopause mode (T91)', async () => {
+    const state = await renderSettings();
+    const { waitFor } = await import('@testing-library/react');
+    fireEvent.change(screen.getByLabelText(/birth year/i), { target: { value: '1979' } });
+    fireEvent.blur(screen.getByLabelText(/birth year/i));
+    await waitFor(() => expect(state().settings.birthYear).toBe(1979));
+    fireEvent.change(screen.getByLabelText(/birth year/i), { target: { value: '1850' } });
+    fireEvent.blur(screen.getByLabelText(/birth year/i));
+    expect(await screen.findByText(/enter a year between/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('switch', { name: 'Perimenopause mode' }));
+    await waitFor(() => expect(state().settings.perimenopauseMode).toBe(true));
+  });
+
   it('a failed theme write shows an error and leaves the theme unchanged', async () => {
     vi.spyOn(db, 'saveSettings').mockResolvedValue(false);
     const state = await renderSettings();

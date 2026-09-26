@@ -17,7 +17,7 @@ export const FLOW_OPTIONS: ReadonlyArray<{ id: FlowId; label: string }> = [
 // edge-case rules in design-system.md and ADR-012.
 export const PERIOD_FLOW_LEVELS: ReadonlyArray<FlowId> = ['light', 'medium', 'heavy'];
 
-export const SYMPTOM_OPTIONS: ReadonlyArray<{ id: SymptomId; label: string }> = [
+export const SYMPTOM_OPTIONS: ReadonlyArray<{ id: SymptomId; label: string; perimenopause?: true }> = [
   { id: 'cramps', label: 'Cramps' },
   { id: 'headache', label: 'Headache' },
   { id: 'bloating', label: 'Bloating' },
@@ -26,6 +26,12 @@ export const SYMPTOM_OPTIONS: ReadonlyArray<{ id: SymptomId; label: string }> = 
   { id: 'nausea', label: 'Nausea' },
   { id: 'tender_breasts', label: 'Tender breasts' },
   { id: 'acne', label: 'Acne' },
+  { id: 'hot_flashes', label: 'Hot flashes', perimenopause: true },
+  { id: 'night_sweats', label: 'Night sweats', perimenopause: true },
+  { id: 'poor_sleep', label: 'Poor sleep', perimenopause: true },
+  { id: 'brain_fog', label: 'Brain fog', perimenopause: true },
+  { id: 'joint_aches', label: 'Joint aches', perimenopause: true },
+  { id: 'vaginal_dryness', label: 'Vaginal dryness', perimenopause: true },
 ];
 
 export const MOOD_OPTIONS: ReadonlyArray<{ id: MoodId; icon: string; label: string }> = [

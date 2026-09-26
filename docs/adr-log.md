@@ -339,3 +339,13 @@ It also caught a real bug: update detection was decided once at launch, so an up
 - **Reduce Motion:** one `prefers-reduced-motion` rule disables all animations and view transitions.
 
 **Consequences:** One less dependency. Launch JS is ~211 → 168KB gzip. Without View Transitions support, changes simply apply instantly.
+
+### ADR-051: Fertility awareness (sympto-thermal) and perimenopause mode
+**Status:** Accepted 2026-09-26 (owner's request; supersedes the "skip" in the audit and the PRD's V2 deferral of BBT)
+**Decision:**
+- **Fertility awareness:** opt-in; logs waking temperature (stored in °C) and cervical mucus. Ovulation is confirmed retrospectively with the Sensiplan rules the open-source drip app uses (temperature shift over a 6-reading coverline, mucus peak plus 3 days, both required). Confirmed ovulations provide a personal luteal length for predictions.
+  - Framed as a charting aid: it never labels future days "safe" and says plainly that avoiding pregnancy with these signs needs proper training.
+- **Perimenopause mode:** opt-in, with an optional birth year used only to suggest the mode from 40.
+  - Adds six related symptoms and STRAW+10 stage hints (7+ day swings, 60+ day gaps, 12 months without a period).
+  - Silences the irregularity nudges.
+  - Bleeding after 12 months without a period is always flagged, in every mode, to see a clinician.

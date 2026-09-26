@@ -11,7 +11,14 @@ export type SymptomId =
   | 'backache'
   | 'nausea'
   | 'tender_breasts'
-  | 'acne';
+  | 'acne'
+  // Perimenopause (T91) — offered in the log sheet only in that mode.
+  | 'hot_flashes'
+  | 'night_sweats'
+  | 'poor_sleep'
+  | 'brain_fog'
+  | 'joint_aches'
+  | 'vaginal_dryness';
 export type MoodId = 'cry' | 'sad' | 'neutral' | 'smile' | 'happy';
 /** Cervical mucus, least to most fertile (sympto-thermal charting, T88). */
 export type MucusId = 'dry' | 'sticky' | 'creamy' | 'watery' | 'eggwhite';
@@ -64,6 +71,9 @@ export interface Settings {
   predictionsPaused: boolean;
   /** The user's own tag vocabulary, offered as chips in the log sheet (T68). */
   customTags: string[];
+  /** Optional; only used to suggest perimenopause mode at 40+ (T91). */
+  birthYear: number | null;
+  perimenopauseMode: boolean;
   /** Show temperature + cervical mucus logging and charting (T88). */
   fertilityAwareness: boolean;
   temperatureUnit: 'C' | 'F';

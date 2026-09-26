@@ -33,6 +33,12 @@ const SYMPTOM_IDS: ReadonlySet<string> = new Set([
   'nausea',
   'tender_breasts',
   'acne',
+  'hot_flashes',
+  'night_sweats',
+  'poor_sleep',
+  'brain_fog',
+  'joint_aches',
+  'vaginal_dryness',
 ]);
 
 export interface ImportedSettings {

@@ -95,6 +95,8 @@ export const SETTINGS_DEFAULTS: Settings = {
   customTags: [],
   confirmedLongCycles: [],
   fertilityAwareness: false,
+  birthYear: null,
+  perimenopauseMode: false,
   temperatureUnit: defaultTemperatureUnit(typeof navigator === 'undefined' ? 'en' : navigator.language),
 };
 

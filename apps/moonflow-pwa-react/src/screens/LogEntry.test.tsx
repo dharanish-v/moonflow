@@ -260,3 +260,22 @@ describe('LogEntryScreen — fertility awareness fields (T88)', () => {
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
 });
+
+describe('LogEntryScreen — perimenopause symptoms (T91)', () => {
+  it('shows the menopause-related symptoms only in perimenopause mode', async () => {
+    const { SETTINGS_DEFAULTS } = await import('../lib/db');
+    const { unmount } = await renderRouted(<LogEntryScreen />, {
+      path: '/log', initialEntries: ['/log?date=2026-09-06'], validateSearch: validateLogSearch,
+      wrapper: (c) => <StateProvider testState={{}}>{c}</StateProvider>,
+    });
+    expect(screen.queryByRole('button', { name: 'Hot flashes' })).not.toBeInTheDocument();
+    unmount();
+    await renderRouted(<LogEntryScreen />, {
+      path: '/log', initialEntries: ['/log?date=2026-09-06'], validateSearch: validateLogSearch,
+      wrapper: (c) => <StateProvider testState={{ settings: { ...SETTINGS_DEFAULTS, perimenopauseMode: true } }}>{c}</StateProvider>,
+    });
+    for (const s of ['Hot flashes', 'Night sweats', 'Poor sleep', 'Brain fog', 'Joint aches', 'Vaginal dryness']) {
+      expect(screen.getByRole('button', { name: s })).toBeInTheDocument();
+    }
+  });
+});
