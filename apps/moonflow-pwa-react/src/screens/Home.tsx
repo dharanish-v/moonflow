@@ -27,6 +27,8 @@ import { UndoToast } from '../components/UndoToast';
 import { computeHomeStatus } from '../lib/home-status';
 import { quoteOfTheDay } from '../lib/quotes';
 import { backupNudge } from '../lib/backup-nudge';
+import { moonPhase } from '../lib/lunar';
+import { isDiscreetInstall } from '../lib/install-identity';
 import { useAppDispatch, useAppState } from '../state/store';
 
 /** How long the just-logged acknowledgment stays up before it self-clears. */
@@ -82,10 +84,11 @@ export function HomeScreen() {
   const dismissUndo = useCallback(() => setUndo(null), []);
   const quote = quoteOfTheDay(status.cyclePhase);
   const PHASE_WORDS = { period: 'on your period', follicular: 'before your fertile window', fertile: 'in your estimated fertile window', luteal: 'after your fertile window', unknown: '' } as const;
+  const moonName = moonPhase().name.toLowerCase();
   const ringLabel =
     status.ring && status.cycleDay
-      ? `Cycle day ${status.cycleDay} of ${status.ring.totalDays}${PHASE_WORDS[status.cyclePhase] ? `, ${PHASE_WORDS[status.cyclePhase]}` : ''}`
-      : undefined;
+      ? `Cycle day ${status.cycleDay} of ${status.ring.totalDays}${PHASE_WORDS[status.cyclePhase] ? `, ${PHASE_WORDS[status.cyclePhase]}` : ''}. Tonight: ${moonName}.`
+      : `Tonight: ${moonName}.`;
   const nudge = backupNudge({ lastBackupAt: settings.lastBackupAt, firstEntryDate: entries[0]?.date ?? null, now: Date.now() });
 
   // Captures the flag at mount, before the effect below clears it from the
@@ -142,6 +145,13 @@ export function HomeScreen() {
         </AnimatePresence>
 
         <PhaseMotif cyclePhase={status.cyclePhase} ring={status.ring} label={ringLabel} />
+        {/* பிறை ("crescent") — a quiet personal signature (design-system.md).
+            Never in the discreet install. */}
+        {!isDiscreetInstall() && (
+          <p lang="ta" aria-hidden="true" className="-mt-3 mb-4 text-center text-xs tracking-widest text-muted-foreground">
+            பிறை
+          </p>
+        )}
 
         <motion.div
           className="rounded-xl"

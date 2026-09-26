@@ -225,7 +225,7 @@ export function LogEntryScreen() {
               const Icon = MOOD_ICONS[opt.id];
               return (
                 <ToggleGroupItem key={opt.id} value={opt.id} variant="mood" aria-label={opt.label} className="size-11 p-0">
-                  <Icon className="size-7" />
+                  <Icon />
                 </ToggleGroupItem>
               );
             })}

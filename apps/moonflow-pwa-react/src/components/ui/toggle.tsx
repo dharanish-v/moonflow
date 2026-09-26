@@ -17,7 +17,10 @@ const toggleVariants = cva(
         // each call site, not baked in here — see LogEntry.tsx.
         pill: "rounded-lg border border-border/60 font-medium text-muted-foreground hover:border-border hover:text-foreground data-[state=on]:border-transparent data-[state=on]:bg-secondary data-[state=on]:text-secondary-foreground",
         chip: "rounded-lg border border-border/60 font-medium text-muted-foreground hover:border-border hover:text-foreground data-[state=on]:border-accent/40 data-[state=on]:bg-accent/15 data-[state=on]:text-accent",
-        mood: "rounded-full text-muted-foreground hover:text-foreground data-[state=on]:bg-primary/15 data-[state=on]:text-primary [&_svg]:size-5",
+        mood: "rounded-full text-muted-foreground hover:text-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground [&_svg]:size-7",
+        // Neutral selection for non-data choices (theme): rose/gold/blue each
+        // carry a cycle meaning, so they're not used for plain settings.
+        segment: "rounded-lg border border-border font-medium text-muted-foreground hover:text-foreground data-[state=on]:border-transparent data-[state=on]:bg-foreground data-[state=on]:text-background",
       },
       size: {
         default:

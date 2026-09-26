@@ -9,6 +9,19 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import type { CyclePhase, CycleRing } from '../lib/home-status';
 import { PHASE_COLOR_CLASS } from '../lib/phase-colors';
+import { moonPhase } from '../lib/lunar';
+
+const MOON_R = 10;
+
+/** Lit region for illumination k (0–1), drawn waxing (lit on the right):
+ * the right half-limb, then back up along the terminator — an ellipse whose
+ * x-radius shrinks to 0 at the quarter and bulges left past it (gibbous). */
+function litPath(k: number): string {
+  const r = MOON_R;
+  const rx = Math.abs(1 - 2 * k) * r;
+  const bulgeLeft = k > 0.5 ? 1 : 0;
+  return `M 0 ${-r} A ${r} ${r} 0 0 1 0 ${r} A ${rx} ${r} 0 0 ${bulgeLeft} 0 ${-r} Z`;
+}
 
 // Ring geometry — a full lap = one predicted cycle (see CycleRing's own
 // doc). Sized to sit inside the size-32 (128px) motif with room for the
@@ -35,6 +48,7 @@ function pointOnRing(angleDegrees: number): { x: number; y: number } {
 /** @param label the ring's text alternative for VoiceOver (it carries real information). */
 export function PhaseMotif({ cyclePhase, ring, label }: { cyclePhase: CyclePhase; ring: CycleRing | null; label?: string }) {
   const prefersReducedMotion = useReducedMotion();
+  const moon = moonPhase();
   const colorClass = PHASE_COLOR_CLASS[cyclePhase];
   const todayPoint = ring ? pointOnRing(ring.todayAngle) : null;
   const fertileSpan = ring ? ((ring.fertileEndAngle - ring.fertileStartAngle) % 360 + 360) % 360 : 0;
@@ -94,14 +108,25 @@ export function PhaseMotif({ cyclePhase, ring, label }: { cyclePhase: CyclePhase
           )}
         </svg>
       )}
+      {/* Today's real moon (ADR-019), offset-circle style: an unlit disc,
+          the lit part bounded by the limb and an elliptical terminator,
+          with a faint dot grain for an illustrated rather than flat look. */}
       <motion.svg
-        viewBox="0 0 24 24"
-        fill="none"
+        viewBox="-12 -12 24 24"
         className="relative size-16"
-        animate={prefersReducedMotion ? undefined : { scale: [1, 1.06, 1] }}
+        animate={prefersReducedMotion ? undefined : { scale: [1, 1.04, 1] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
       >
-        <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36A5.4 5.4 0 0 1 12 3z" fill="currentColor" />
+        <defs>
+          <pattern id="moon-grain" width="1.6" height="1.6" patternUnits="userSpaceOnUse">
+            <circle cx="0.4" cy="0.4" r="0.22" fill="var(--primary-foreground)" fillOpacity="0.18" />
+          </pattern>
+        </defs>
+        <circle r={MOON_R} fill="var(--muted)" />
+        <g transform={moon.waxing ? undefined : 'scale(-1 1)'}>
+          <path d={litPath(moon.illumination)} fill="var(--primary)" />
+          <path d={litPath(moon.illumination)} fill="url(#moon-grain)" />
+        </g>
       </motion.svg>
     </div>
   );

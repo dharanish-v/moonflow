@@ -125,7 +125,7 @@ export function SettingsScreen() {
           className="w-full gap-1.5"
         >
           {THEME_OPTIONS.map(({ id, label, Icon }) => (
-            <ToggleGroupItem key={id} value={id} variant="pill" className="h-11 flex-1 gap-1 px-2">
+            <ToggleGroupItem key={id} value={id} variant="segment" className="h-11 flex-1 gap-1 px-2">
               <Icon className="size-4" aria-hidden="true" />
               {label}
             </ToggleGroupItem>
