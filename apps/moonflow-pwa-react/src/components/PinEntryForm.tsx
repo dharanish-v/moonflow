@@ -121,7 +121,7 @@ export function PinEntryForm({ title, error, onComplete, onCancel, lockedUntil, 
               aria-label="Delete"
               disabled={disabled || value.length === 0}
               onClick={() => update(value.slice(0, -1))}
-              className="h-16 rounded-full text-foreground"
+              className="size-18 justify-self-center rounded-full text-foreground"
             >
               <Delete className="size-6" aria-hidden="true" />
             </Button>
@@ -131,7 +131,7 @@ export function PinEntryForm({ title, error, onComplete, onCancel, lockedUntil, 
               variant="outline"
               disabled={disabled}
               onClick={() => update(value + k)}
-              className="h-16 rounded-full text-2xl font-normal"
+              className="size-18 justify-self-center rounded-full text-2xl font-normal"
             >
               {k}
             </Button>

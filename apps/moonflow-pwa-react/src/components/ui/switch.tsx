@@ -18,7 +18,7 @@ function Switch({ className, ...props }: React.ComponentProps<typeof SwitchPrimi
     >
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
-        className="pointer-events-none block size-[27px] rounded-full bg-foreground shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-[20px] data-[state=unchecked]:translate-x-0.5"
+        className="pointer-events-none block size-[27px] rounded-full bg-white shadow-md ring-0 transition-transform data-[state=checked]:translate-x-[20px] data-[state=unchecked]:translate-x-0.5"
       />
     </SwitchPrimitive.Root>
   );
