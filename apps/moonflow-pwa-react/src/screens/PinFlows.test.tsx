@@ -80,6 +80,22 @@ describe('PIN flows', () => {
     await waitFor(async () => expect(await getSetting('pinHash')).toMatch(/^pbkdf2-sha256\$/), { timeout: 5000 });
   });
 
+  it('warns when only a couple of tries are left, then locks with a live countdown', async () => {
+    await renderApp('#/', { ...BASE, pinLockEnabled: true, pinHash: LEGACY_1234 });
+    const settled = () => waitFor(() => expect(screen.getByLabelText(/enter your pin/i)).toBeEnabled());
+    for (let i = 0; i < 3; i++) {
+      await typePin(/enter your pin/i, '0000');
+      await screen.findByText(/wrong pin/i);
+      await settled();
+    }
+    expect(await screen.findByText('Wrong PIN — 2 tries left')).toBeInTheDocument();
+    await typePin(/enter your pin/i, '0000');
+    await settled();
+    await typePin(/enter your pin/i, '0000');
+    expect(await screen.findByText(/too many attempts — try again in \d+s/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '1' })).toBeDisabled();
+  });
+
   it('forgot PIN: erasing after a clear warning wipes everything and starts over', async () => {
     await saveEntry({ date: '2026-08-01', flow: 'medium', symptoms: [], mood: null, note: '' });
     await renderApp('#/', { ...BASE, pinLockEnabled: true, pinHash: LEGACY_1234 });

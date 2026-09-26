@@ -2,6 +2,7 @@
 // the "confirm your current PIN" screen: verify, apply lockout rules, persist
 // the attempt counter, and upgrade a legacy hash after a correct entry.
 import { useState } from 'react';
+import { PIN_LOCKOUT_AFTER_ATTEMPTS } from '../lib/constants';
 import { evaluatePinAttempt, hashPin, verifyPin } from '../lib/pin-auth';
 import { useAppState } from '../state/store';
 import { useSaveSettings } from '../state/useSaveSettings';
@@ -16,8 +17,21 @@ export function usePinAttempt({ allowDuress = false }: { allowDuress?: boolean }
   const dispatch = useAppDispatch();
   const saveSettingsPatch = useSaveSettings();
   const [error, setError] = useState<string | null>(null);
+  // One check at a time: a second PIN entered while the first is still being
+  // verified/saved would read a stale attempt counter.
+  const [busy, setBusy] = useState(false);
 
   async function attempt(pin: string): Promise<PinOutcome> {
+    if (busy) return null;
+    setBusy(true);
+    try {
+      return await check(pin);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function check(pin: string): Promise<PinOutcome> {
     setError(null);
     const stored = settings.pinHash ?? '';
     const real = stored ? await verifyPin(pin, stored) : { ok: false, needsUpgrade: false };
@@ -44,9 +58,15 @@ export function usePinAttempt({ allowDuress = false }: { allowDuress?: boolean }
       if (needsUpgrade) void hashPin(pin).then((pinHash) => saveSettingsPatch({ pinHash }));
       return 'real';
     }
-    setError(result.locked ? `Too many attempts — try again in ${result.secondsRemaining}s` : 'Wrong PIN');
+    if (result.locked) {
+      setError(null); // the form shows its own live countdown from lockedUntil
+      return null;
+    }
+    const left = PIN_LOCKOUT_AFTER_ATTEMPTS - (result.patch?.pinFailedAttempts ?? 0);
+    setError(left <= 2 ? `Wrong PIN — ${left} ${left === 1 ? 'try' : 'tries'} left` : 'Wrong PIN');
     return null;
   }
 
-  return { attempt, error };
+  const lockedUntil = settings.pinLockoutUntil && settings.pinLockoutUntil > Date.now() ? settings.pinLockoutUntil : null;
+  return { attempt, error, lockedUntil, busy };
 }

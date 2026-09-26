@@ -22,7 +22,7 @@ import { eraseAllData } from '../lib/db';
 import { usePinAttempt } from '../hooks/usePinAttempt';
 
 export function PinUnlockScreen({ onUnlock, onErased }: { onUnlock: (kind: 'real' | 'duress') => void; onErased?: () => void }) {
-  const { attempt, error } = usePinAttempt({ allowDuress: true });
+  const { attempt, error, lockedUntil, busy } = usePinAttempt({ allowDuress: true });
   const [eraseFailed, setEraseFailed] = useState(false);
 
   async function handleComplete(pin: string) {
@@ -43,6 +43,8 @@ export function PinUnlockScreen({ onUnlock, onErased }: { onUnlock: (kind: 'real
     <PinEntryForm
       title="Enter your PIN"
       error={eraseFailed ? "Couldn't erase — try again" : error}
+      lockedUntil={lockedUntil}
+      busy={busy}
       onComplete={(pin) => void handleComplete(pin)}
       footer={
         <AlertDialog>

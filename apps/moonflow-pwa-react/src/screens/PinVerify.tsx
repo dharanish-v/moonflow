@@ -9,7 +9,7 @@ import { useSaveSettings } from '../state/useSaveSettings';
 export function PinVerifyScreen() {
   const navigate = useNavigate();
   const { intent } = useSearch({ from: '/settings/pin-verify' });
-  const { attempt, error } = usePinAttempt();
+  const { attempt, error, lockedUntil, busy } = usePinAttempt();
   const saveSettingsPatch = useSaveSettings();
 
   async function handleComplete(pin: string) {
@@ -26,6 +26,8 @@ export function PinVerifyScreen() {
     <PinEntryForm
       title="Enter your current PIN"
       error={error}
+      lockedUntil={lockedUntil}
+      busy={busy}
       onComplete={(pin) => void handleComplete(pin)}
       onCancel={() => navigate({ to: '/settings', replace: true })}
     />
