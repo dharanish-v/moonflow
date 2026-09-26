@@ -115,3 +115,20 @@ describe('backup bookkeeping', () => {
     expect(await screen.findByText(/removing the app from your home screen deletes everything/i)).toBeInTheDocument();
   });
 });
+
+describe('calendar reminders (T67)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('exports an .ics of upcoming periods with neutral titles by default', async () => {
+    const files = captureShare();
+    await renderSettings();
+    fireEvent.click(screen.getByRole('button', { name: /calendar reminders/i }));
+    expect(await screen.findByRole('switch', { name: /neutral titles/i })).toBeChecked();
+    fireEvent.click(screen.getByRole('button', { name: 'Add to Calendar' }));
+    await waitFor(() => expect(files).toHaveLength(1));
+    expect(files[0]!.name).toMatch(/\.ics$/);
+    const text = await files[0]!.text();
+    expect(text.match(/BEGIN:VEVENT/g)?.length).toBe(6);
+    expect(text).toContain('SUMMARY:Reminder');
+  });
+});

@@ -2,7 +2,7 @@
 // PIN (create-1/create-2) is its own route (PinSetup.tsx) — see that file
 // for why.
 import { forwardRef, useState, type ComponentProps, type ReactNode } from 'react';
-import { Calendar, Info, Monitor, Moon, PauseCircle, ShieldAlert, Sun, Upload } from 'lucide-react';
+import { Calendar, CalendarClock, Info, Monitor, Moon, PauseCircle, ShieldAlert, Sun, Upload } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from 'cn';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -31,6 +31,7 @@ import { useSaveSettings } from '../state/useSaveSettings';
 import { isDiscreetInstall } from '../lib/install-identity';
 import { lastBackupLabel } from '../lib/backup-nudge';
 import { ExportSheet } from '../components/ExportSheet';
+import { RemindersSheet } from '../components/RemindersSheet';
 import { ImportBackup } from '../components/ImportBackup';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -55,6 +56,7 @@ export function SettingsScreen() {
   const [draftValue, setDraftValue] = useState(0);
   const [saveError, setSaveError] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [remindersOpen, setRemindersOpen] = useState(false);
   const [removeDuressOpen, setRemoveDuressOpen] = useState(false);
   const [eraseOpen, setEraseOpen] = useState(false);
   const [eraseConfirm, setEraseConfirm] = useState('');
@@ -154,6 +156,12 @@ export function SettingsScreen() {
             />
           </>
         )}
+        <Separator />
+        <SettingsRowButton
+          icon={<CalendarClock className="size-4" aria-hidden="true" />}
+          label="Calendar reminders"
+          onClick={() => setRemindersOpen(true)}
+        />
         <Separator />
         <SettingsRow icon={<PauseCircle className="size-4" aria-hidden="true" />} label="Pause predictions">
           <Switch
@@ -335,6 +343,8 @@ export function SettingsScreen() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <RemindersSheet open={remindersOpen} onOpenChange={setRemindersOpen} entries={entries} settings={settings} />
 
       <ExportSheet
         open={exportOpen}
