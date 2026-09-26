@@ -103,7 +103,7 @@ Depends on: T1–T24
 
 ---
 
-## Phase 7 — React rewrite: the log→prediction feedback loop (in progress)
+## Phase 7 — React rewrite: the log→prediction feedback loop ✅ done
 *Surfaced via a UX riff tracing real onboarding→log→prediction flows in the React rewrite (`apps/moonflow-pwa-react/`). The through-line: the app hands you a countdown before you've ever logged anything, never explains that logging is what sharpens it, and gives zero acknowledgment when a save actually improves a prediction — the core retention loop is never taught or reinforced.*
 
 **T27 — Onboarding explains the log→prediction loop** (S) ✅
@@ -158,8 +158,8 @@ Review (WebKit 26.6, production build): export sheet → encrypted file (no plai
 
 Review (WebKit 26.6, both themes, production build): lazy onboarding with install warning + restore, Home real moon (today = full) + பிறை + one-tap log + Undo, glass sheet with discard guard, keypad PIN, segment theme control. Launch JS 250 → 125 KB gzip. Calendar swipe verified by unit test only — desktop WebKit can't synthesize Touch events; confirm on a real iPhone.
 
-## Phase 11 — Features
-**T64** FIGO health nudges · **T65** Pause predictions mode · **T66** Printable doctor report · **T67** `.ics` export of predictions with reminders (replaces dead Reminders toggle) · **T68** Custom tags · **T69** Symptom × cycle-day insights, cycle-length trend · **T70** Notes search · **T71** Docs refresh (README, ADRs 034+, design-system, technical-design, qa-checklist, copy-deck) + CI lint.
+## Phase 11 — Features ✅ done
+**T64** ✅ FIGO health nudges · **T65** ✅ Pause predictions mode · **T66** ✅ Printable doctor report · **T67** ✅ `.ics` export of predictions with reminders (replaces dead Reminders toggle) · **T68** ✅ Custom tags · **T69** ✅ Symptom × cycle-day insights, cycle-length trend · **T70** ✅ Notes search · **T71** ✅ Docs refresh (README, ADRs 034+, design-system, technical-design, qa-checklist, copy-deck) + CI lint.
 
 ---
 

@@ -1,3 +1,5 @@
+> **Historical (closed).** This recorded the vanilla → React migration. The deploy cutover happened (Pages deploys the React app). Several rows are now superseded: the 3D moon was removed (ADR-037), light/dark switching shipped (ADR-034), Insights isn't centred, and the static shell (ADR-017) was replaced by lazy screens (ADR-043). The current state lives in `adr-log.md` (ADR-034 to ADR-045) and `task-board.md` Phases 8–11.
+
 # React rewrite — ADR migration checklist
 
 Tracks which of the vanilla app's (`apps/moonflow-pwa/`) 32 ADR-log entries need

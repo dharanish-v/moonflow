@@ -1,3 +1,12 @@
+> **Current state (2026-09-26):** the React app in `apps/moonflow-pwa-react` supersedes the vanilla-JS design below where they differ. Key points:
+> - **Forecast:** `src/lib/forecast.ts` is the single prediction engine (ADR-039); `home-status.ts`, Calendar, Insights, health nudges, the report and `.ics` all read it.
+> - **Settings keys** (Dexie `settings` table, one row per key): `onboardingComplete, lastPeriodStart, avgCycleLength, avgPeriodLength, pinHash (pbkdf2-sha256$iter$salt$hash), duressPinHash, pinLockEnabled, pinFailedAttempts, pinLockoutUntil, soundEnabled, draftEntry, themeMode, lastBackupAt, predictionsPaused, customTags`.
+> - **Entries:** `{date (PK), flow, symptoms[], mood, note, tags?[], updatedAt}`.
+> - **Databases:** `MoonflowDB` (real) and `PlannerData` (duress decoy), same schema (ADR-040).
+> - **Writes:** all go through `useSaveSettings` or the transactional helpers in `db.ts` — write first, dispatch on success.
+> - **Export format:** `{schemaVersion: 1, exportedAt, settings: {lastPeriodStart, avgCycleLength, avgPeriodLength}, entries}`. Encrypted backups wrap it in `{format: "moonflow-encrypted-backup", version: 1, kdf: "PBKDF2-SHA256", iterations, salt, iv, ciphertext}` (AES-256-GCM).
+> - **Theming:** a `.light` class on `<html>` (ADR-034), not `data-theme`.
+
 # Moonflow — Technical Design Doc
 
 The concrete blueprint that bridges the ADR log's decisions and the design system's rules into actual code structure.

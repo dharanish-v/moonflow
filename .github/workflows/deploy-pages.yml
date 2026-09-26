@@ -36,6 +36,10 @@ jobs:
         working-directory: apps/moonflow-pwa-react
       # No CI existed for this app until the React rewrite — a real test
       # gate before the deploy step, not just a build check.
+      - run: npm run lint
+        working-directory: apps/moonflow-pwa-react
+      - run: npx tsc -b
+        working-directory: apps/moonflow-pwa-react
       - run: npm test
         working-directory: apps/moonflow-pwa-react
       - run: npm run build

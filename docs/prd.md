@@ -32,13 +32,13 @@ One person, on their own iPhone 17 (iOS 26). Values privacy strongly, prefers a 
 - View a monthly calendar showing logged periods, the predicted next period, and the fertile window
 - View basic statistics — average cycle/period length, variability, most-logged symptoms — once enough history exists
 - Lock the app behind a PIN
-- Export all data as a JSON file at any time
+- Export all data at any time (encrypted backup by default, plus JSON and CSV), and import it on another device
 - Work fully offline; install without an App Store account
 - On first run, collect just enough information (last period date, average lengths) to produce a reasonable estimate before any real history exists
 - Offer a discreet alternate home-screen icon, chosen at install time
 
 ## Non-Functional Requirements
-- **Performance:** total app footprint (including both dependencies) stays under ~150KB; initial load feels instant on a modern iPhone
+- **Performance:** launch JS ≤ ~125KB gzip with other screens lazy-loaded (ADR-043); initial load feels instant on a modern iPhone
 - **Privacy:** zero data leaves the device in V1 — no analytics, no tracking, no third-party network calls at runtime
 - **Accessibility:** usable with VoiceOver, respects Safari's text-zoom, meets WCAG AA contrast
 - **Reliability:** a draft log entry survives the app being backgrounded mid-entry; a failed save never silently loses data

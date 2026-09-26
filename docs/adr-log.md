@@ -205,3 +205,98 @@ Unlike `design-system.md` (the current spec — *what* we're building), this is 
 **Context:** Home's moon (real photo texture + PBR shading, apps/moonflow-pwa-react) still read as flat because the sky around it was a static CSS gradient. Product direction is now explicitly poetic and cinematic for Home specifically — the moon+sky as one animated scene, not a glance-and-go read: "she is like the sky, her cycle reflects the sky... peak ovulation has a full moon with a beautiful sky and a romantic sky with clouds all animated... like out of a high budget romantic fairy tale fantasy magical mystery movie."
 **Decision:** Home's moon canvas (`HomeScene.tsx`, formerly `MoonPhase3D.tsx`) grows into a shared scene: drei's `Sky`/`Stars`/`Cloud` layered with the existing moon sphere+light, animated continuously (cloud drift, star twinkle), color-graded per `cyclePhase` (period=night, follicular=dawn, fertile=peak bright day, luteal=dusk, unknown=neutral twilight). Scoped to Home only — Calendar/Insights/Settings keep the existing flat CSS `CycleSky` unchanged. Cloud style is painterly/procedural (a soft radial-gradient puff texture generated on an offscreen canvas), not photoreal volumetric — cheaper, and closer to the fairy-tale brief than a photo-real render would be; also consistent with `StaticMoonFallback.tsx`'s existing stylized SVG/grain-texture language. The moon and sky share one scene/camera/light rather than two stacked canvases, and a soft additive glow sprite behind the moon bridges its photoreal texture into the stylized sky (the same technique real film compositing uses: unify real + stylized elements via light and color grading, not by matching render technique).
 **Consequences:** Supersedes design-system.md's "flat and opaque everywhere data lives" (line 12) and "a five-second daily glance — not a dashboard to study" (line 13) for Home's moon element specifically — this one screen is now deliberately something to linger on. The Glass Rule (line 87) is untouched — no navigation-chrome translucency changes. Home's WebGL bundle grows further (the `MoonPhase3D` chunk was already 883.73KB / gzip 234.96KB before this change); the canvas moves from `frameloop="demand"` to continuous while Home is mounted — a real, accepted battery-cost tradeoff for this one screen, gated the same way the 3D moon itself already was (WebGL2 support + `prefers-reduced-motion`, via `useRenderMode`) — reduced motion freezes the scene to one static, fully color-graded frame rather than degrading it. The moon's own real-astronomy phase (ADR-019, `moon-phase.ts`) is unaffected — the sky's mood and the moon's phase remain two independent signals, computed by two independent functions. Full-scene bloom post-processing was considered and explicitly deferred — a separate future enhancement to be evaluated on its own perf merits, not bundled into this already-substantial change.
+
+### ADR-034: Light theme ships now, via a `.light` class (System / Light / Dark)
+**Status:** Accepted (retroactively recorded 2026-09-26; cited in `useResolvedTheme.ts` since it shipped)
+**Context:** The light theme was listed as V2. It shipped early during the React rewrite, as a Settings → Appearance control.
+**Decision:** `:root` stays the dark (navy) palette; a `.light` class on `<html>` overrides it, chosen from System (follows `prefers-color-scheme`), Light or Dark. Tailwind's `dark:` variant is bound to "not `.light`" (`@custom-variant`), so it follows the app, not the OS. `theme-color` follows the resolved theme.
+**Consequences:** ADR-016's `data-theme` attribute plan is replaced by the class. The light theme paints a navy band under the status bar, because the status-bar style is fixed at install time (see ADR-040).
+
+### ADR-035: React 19 + TypeScript + shadcn/ui rewrite (supersedes ADR-004, 005, 006, 029–032)
+**Status:** Accepted (retroactively recorded)
+**Context:** Repeated hand-rolled UI bugs, and a stated priority of "best UX, easy to maintain" over minimal size.
+**Decision:** Rewrite in React 19 + strict TypeScript with shadcn/ui (Radix, vaul) components, Tailwind v4, Framer Motion, Vitest + Testing Library + jest-axe. Same Dexie database name and schema, so on-device data carried over.
+**Consequences:** More dependencies, but they're maintained, accessible primitives. The owner explicitly chose maintainability over a minimal dependency count (2026-09-25). The ~150KB PRD target is replaced by ADR-043.
+
+### ADR-036: TanStack Router with hash history (supersedes the rewrite's react-router)
+**Status:** Accepted (retroactively recorded)
+**Decision:** Code-based TanStack Router routes and `createHashHistory` (GitHub Pages has no rewrite rules). `validateSearch` on every route is the input boundary (see ADR-040).
+**Consequences:** Typed search params. Screens are lazy route components (ADR-043).
+
+### ADR-037: Remove the 3D/"cinematic sky" Home scene (supersedes ADR-033)
+**Status:** Accepted (retroactively recorded)
+**Context:** The React Three Fiber scene cost ~234KB and a WebGL context for a five-second glance, against the design system's own "flat, quiet" philosophy.
+**Decision:** Remove it. Home returns to a flat illustration (ADR-038).
+
+### ADR-038: Hybrid identity — shadcn structure, original navy/gold palette, real moon
+**Status:** Accepted 2026-09-25
+**Context:** The rewrite silently adopted shadcn's neutral grey palette. The owner wanted shadcn kept for maintainability.
+**Decision:** Keep shadcn's token *names* and components, but set them to design-system.md's palette (navy `#14132B`, gold, rose, blue) as plain hex. Every text/background pair in both themes is ≥ WCAG AA, enforced by `build/contrast.test.ts`, which also forbids fading text with opacity modifiers. Home's moon is today's actual lunar phase (ADR-019 restored) inside the cycle ring, with பிறை as the signature (not in the Planner install). The log sheet is glass. Rose, gold and blue carry cycle meanings only; neutral controls (theme) use a "segment" style.
+**Consequences:** The design spec and the code agree again. Contrast can't silently regress.
+
+### ADR-039: Prediction engine v2 — one forecast for every screen
+**Status:** Accepted 2026-09-25
+**Context:** A median over all history, "confirmed" from a single cycle, no bounds, "any day now" forever once past due, and Home and Calendar disagreeing about what was predicted.
+**Decision:** `computeForecast()` (lib/forecast.ts) is the single source of truth:
+- only 15–90-day cycles count, from the last 6 valid ones;
+- a cycle ≥1.6× the median is treated as a missed log and excluded;
+- "confirmed" needs ≥2 valid cycles;
+- there is always a range, and spread ≥8 days is "irregular" (FIGO);
+- past the range the state is "late · N days";
+- ovulation is taken as 13 days before the period (mean luteal phase 12.4 days, Bull et al. 2019), with the fertile window widened by the range;
+- the period in progress doesn't count toward typical period length;
+- a "paused" status covers pregnancy and hormonal birth control.
+
+FIGO-based health nudges (lib/health-nudges.ts) read the same forecast.
+**Consequences:** No crash with no start date ("none" status). Settings averages only drive predictions until two cycles exist, and Settings says so.
+
+### ADR-040: Security & privacy hardening
+**Status:** Accepted 2026-09-25
+**Decision:**
+- **PIN:** salted PBKDF2-SHA256 at 600k iterations (legacy SHA-256 hashes upgrade on the next unlock). Turning the lock off needs the current PIN; turning it on always sets a fresh PIN. Forgot PIN means erase. The lockout is capped against clock rollback.
+- **Duress PIN:** opens a separate decoy database (`PlannerData`); the real data isn't loaded again until relaunch.
+- **Export:** carries only cycle data — never the PIN hash, lockout state, draft or theme.
+- **CSP:** a build-time meta CSP with `connect-src 'none'`, so the page can't make network requests at all.
+- **Privacy cover:** the screen is blanked while backgrounded (app-switcher snapshot).
+- **Planner install:** never names Moonflow anywhere.
+- **Input boundaries:** real, non-future dates only; imports are clamped, size-capped, schema-versioned and written in one transaction.
+- **Writes:** failed writes are never ignored (`useSaveSettings`: write, then update state).
+- **Boot:** a failed boot read shows a retry screen, never onboarding.
+
+**Consequences:** The PIN still gates the UI, not encryption at rest; iOS already encrypts the device. Backups are encrypted (ADR-041).
+
+### ADR-041: Encrypted backups, CSV, and calendar reminders instead of a push relay
+**Status:** Accepted 2026-09-25 (supersedes the V2 "push reminder relay" backlog item and ADR-028's reason for a second app)
+**Decision:**
+- **Encrypted backup (the default export):** AES-256-GCM with a PBKDF2 key, in a self-describing JSON envelope.
+- **CSV:** a readable copy, safe against formula injection.
+- **Reminders:** an `.ics` file of the next 6 predicted periods with alarms, so iOS Calendar notifies natively. Titles are neutral by default, because events sync to iCloud.
+- **Backup nudges:** "Last backup N days ago", plus warnings that deleting the icon deletes the data and that each icon keeps separate storage.
+
+**Consequences:** Reminders need no server, which keeps the no-network guarantee.
+
+### ADR-042: Stay on `dharanish-v.github.io/moonflow` (free) for now
+**Status:** Accepted 2026-09-25
+**Context:** A custom domain costs money. On a `github.io` user site, every Pages repo on the account shares one origin (desktop/Android browsers could read each other's storage; iOS isolates each home-screen icon's storage). If the account is ever renamed or deleted, someone else can claim the name and serve code into installed apps.
+**Decision:** Keep the current origin. Never rename or delete the `dharanish-v` account. The free fix, when wanted, is a GitHub organisation (its own `*.github.io` origin), done *before* adding passkeys/Face ID, which bind to the origin. Moving means one export and one import.
+
+### ADR-043: Lazy-load every screen but Home (replaces the ~150KB PRD target)
+**Status:** Accepted 2026-09-26
+**Decision:** Router screens use `lazyRouteComponent`; onboarding (react-day-picker) is `React.lazy`. All chunks stay in the service-worker precache.
+**Consequences:** Launch JS went from 250KB to 125KB gzip; offline use is unchanged.
+
+### ADR-044: A contextual Home action replaces three quick actions
+**Status:** Accepted 2026-09-26 (supersedes design-system.md's "3 quick actions")
+**Decision:**
+- Home's primary button follows the day: "Period started today" or "Still on my period" (one tap, optimistic, with a 6s Undo toast), or once today is logged, a summary plus "Edit today".
+- The full log sheet stays one tap away.
+- The sheet returns to the screen that opened it, lets you deselect options, and asks before discarding changes.
+
+### ADR-045: Accessibility & iOS polish baseline
+**Status:** Accepted 2026-09-26
+**Decision:**
+- **Text size:** Dynamic Type via `font: -apple-system-body` (all sizes are rem); body text at least `text-sm`; fields at 16px (no zoom on focus).
+- **Motion and focus:** `MotionConfig reducedMotion="user"`; a 2px focus ring.
+- **Semantics:** the Calendar is a real grid (swipe between months, announced month heading); PIN entry is an iOS-style keypad with a live lockout countdown; the cycle ring has a text alternative; mood and group labels are real words.
+- **Layout:** 200% text-zoom layouts wrap instead of clipping.
+- **Launch:** no reload on first service-worker install, and `storage.persist()` is requested.

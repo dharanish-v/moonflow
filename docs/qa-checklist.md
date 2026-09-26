@@ -1,11 +1,13 @@
 # Moonflow — QA / Test Checklist
 
-No automated test suite is planned at this scale (see ADR log) — this checklist is the actual safety net before calling V1 done. Run through it manually on a real iPhone.
+Most behaviour is covered by the automated suite (`npm test`, 300+ Vitest/Testing Library/jest-axe tests plus build guards, run in CI on every push). This checklist covers what only a real iPhone can confirm. Run it on-device before calling a release done.
 
 ## Onboarding & first run
 - [ ] Fresh install with zero data shows the onboarding screen, not a broken/empty home screen
 - [ ] Completing onboarding produces a reasonable first prediction, clearly marked as estimated
-- [ ] The date field uses iOS's native wheel picker correctly
+- [ ] The date picker opens and only allows past dates
+- [ ] Opened in a Safari tab, onboarding warns to Add to Home Screen first
+- [ ] "Restore from a backup" imports an encrypted backup on a fresh install
 
 ## Logging
 - [ ] Logging today and reopening the app reflects it correctly on the home screen's moon-phase illustration
@@ -57,3 +59,20 @@ No automated test suite is planned at this scale (see ADR log) — this checklis
 - [ ] No console errors or warnings on any screen
 - [ ] `grep -rn '#[0-9a-fA-F]\{3,6\}' css/components.css css/screens.css` returns zero matches — confirms no hardcoded color broke the theming pattern (ADR-016)
 - [ ] Chrome DevTools Lighthouse (not the npm CLI) shows a 100 performance score, with LCP, INP, and CLS each in the "Good" range (ADR-018)
+
+## Added in the 2026-09 audit (Phases 8–11) — on-device only
+- [ ] Add to Home Screen from both links: correct icon/name; Planner never shows "Moonflow" (onboarding, export filename, share title)
+- [ ] Status bar text readable in both themes (light theme paints a navy band under it)
+- [ ] Settings → Text Size larger/smaller: the app's text follows (Dynamic Type)
+- [ ] Notes field doesn't zoom the page on focus
+- [ ] Swiping the calendar left/right changes month; vertical scrolling still works
+- [ ] App switcher shows a blank navy screen, not data
+- [ ] PIN keypad: no iOS keyboard pops up; wrong PIN shakes; lockout countdown ticks
+- [ ] Duress PIN opens an empty-looking app; relaunch + real PIN shows real data
+- [ ] Export → encrypted backup → Share Sheet → Files; import it back with the passphrase
+- [ ] Calendar reminders: the .ics opens in Calendar, events are titled "Reminder", alarm fires 9am the day before
+- [ ] Doctor report: Print / Save as PDF produces a clean black-on-white page
+- [ ] VoiceOver: Home announces the headline and "Cycle day N of M… Tonight: <moon phase>"; calendar days read their state; moods read "Very low"…"Very happy"
+- [ ] Airplane mode: every screen still works after first load
+- [ ] Deleting the icon really removes the data (confirms the in-app warning)
+- [ ] Does IndexedDB survive an iCloud restore / Quick Start migration? (unknown — record the result in ADR log)

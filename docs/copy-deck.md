@@ -39,3 +39,17 @@ Warm, calm, plain language. Short sentences. No exclamation marks. No medical ja
 ## Privacy Statement
 
 Moonflow stores everything only on this device. Nothing is uploaded, synced, or shared — there's no account and no server involved at any point. The only way data ever leaves your phone is if you choose to export it yourself.
+
+## Added 2026-09 (Phases 8–11) — source of truth is the code; key strings
+
+**Home:** "Period started today" · "Still on my period" · "Today: Medium flow · 2 symptoms" · "Edit today" · "Log symptoms, mood or notes" · "Logged medium flow for today — Undo" · "N days late / log your period when it starts" · "Predictions paused / keep logging — resume anytime in Settings" · "Expected 22–26 Aug · cycles vary" · "Estimate only — not birth control." · "Back up your data · You haven't backed up yet" · signature "பிறை"
+
+**Log sheet:** "Discard changes?" · "Add a note for today…" / "Add a note…" (past days) · moods "Very low · Low · Okay · Good · Very happy" · "Tags" · "Add your own — e.g. Pill taken"
+
+**PIN:** "Enter your PIN" · "Wrong PIN — 2 tries left" · "Too many attempts — try again in Ns" · "Forgot PIN?" → "Erase everything and start over?" · "Enter your current PIN" · "Set a duress PIN" · "Must be different from your real PIN"
+
+**Settings:** "Backed up N days ago / Never backed up" · "Duress PIN — On/Off" · "Calendar reminders" · "Pause predictions" · "Used for predictions until you've logged two cycles — after that, your own history takes over." · "Erase all data — Type ERASE to confirm" · medical line: "Predictions are estimates from your own logs. This app is not a medical device, can't diagnose anything, and must never be used as birth control."
+
+**Insights:** "Worth knowing" (FIGO nudges, each ending "This is not a diagnosis — …a clinician can tell you whether it's worth looking into.") · "When symptoms show up" · "Search notes, tags, symptoms…" · "N days found" · "Report for your doctor"
+
+**Tone rules (unchanged, reinforced):** calm, never alarming; health notes never say "warning"; neutral words in anything that can leave the app (filenames, calendar titles) when in the discreet install.

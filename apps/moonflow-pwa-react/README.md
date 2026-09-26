@@ -1,39 +1,28 @@
-# Moonflow (React + TypeScript rewrite)
+# Moonflow app
 
-A full rewrite of the vanilla-JS Moonflow PWA (`../moonflow-pwa/`) in React 19
-+ TypeScript, shadcn/ui, Framer Motion, and React Three Fiber. Same product:
-a local-only, offline-first period tracker — no backend, no accounts, no
-cloud sync.
-
-See `../../docs/rewrite-migration-checklist.md` for what changed, what was
-re-verified from the vanilla app's ADR log, and every real bug found during
-the rewrite's own live testing.
+The whole product lives here: a React 19 + TypeScript PWA. See the root `README.md` for install instructions and features, and `../../docs/` for the design and decision records.
 
 ## Stack
 
-- **Vite** + **React 19** + **TypeScript** (strict mode)
-- **Tailwind v4** + **shadcn/ui** (Radix UI primitives) for components
-- **Framer Motion** for animation and gestures
-- **React Three Fiber** for Home's real 3D moon-phase illustration (lazy-loaded, WebGL2/reduced-motion-gated, with a 2D SVG fallback)
-- **react-router-dom** (`HashRouter`) for real, deep-linkable per-screen URLs — hash-based, since this deploys to a static host with no server-side rewrite rule
-- **Dexie** (IndexedDB) — unchanged DB name/schema from the vanilla app, so on-device data carries over on a same-origin deploy
-- **Vitest** + **React Testing Library** + **jest-axe** + **fake-indexeddb** for testing
-- **vite-plugin-pwa** (`generateSW`) for the service worker
+- **App:** Vite 8, React 19, TypeScript (strict), TanStack Router (hash history, lazy route components).
+- **UI:** Tailwind v4 with shadcn/ui (Radix, vaul), themed with Moonflow's own navy/gold tokens (`src/index.css`); Framer Motion honours reduced motion.
+- **Data:** Dexie over IndexedDB, holding a real database and a separate decoy database (duress PIN).
+- **Offline:** vite-plugin-pwa (`generateSW`) precaches every chunk.
+- **Tests:** Vitest, Testing Library, jest-axe and fake-indexeddb. Build guards in `build/*.test.ts` check contrast, CSP, Dynamic Type, iOS polish and code splitting.
+
+## Layout
+
+```
+src/lib/        pure logic: forecast, health nudges, symptom timing, crypto, import/export, ics, csv
+src/state/      store (Context + reducer), useSaveSettings (write-then-dispatch)
+src/router/     routes, AppGate (boot / lock / onboarding gate), placeholders
+src/screens/    one file per screen
+src/components/ shared UI (PinEntryForm, ExportSheet, ImportBackup, RemindersSheet, UndoToast, ui/*)
+build/          build-time CSP plugin + static guard tests
+```
 
 ## Commands
 
 ```bash
-npm run dev       # dev server
-npm test          # vitest run — full suite, CI-friendly
-npm run test:watch
-npx tsc -b        # typecheck
-npm run build     # production build (both index.html and planner.html entries)
-npm run preview   # serve the production build locally
+npm run dev | npm test | npm run lint | npx tsc -b | npm run build | npm run preview
 ```
-
-## Two install identities
-
-Like the vanilla app (ADR-011), this builds two HTML entries sharing one JS
-bundle: `index.html` (Moonflow) and `planner.html` (a neutral "Planner"
-identity with its own manifest/icon, for a discreet home-screen icon). See
-`vite.config.ts`'s `build.rollupOptions.input`.
