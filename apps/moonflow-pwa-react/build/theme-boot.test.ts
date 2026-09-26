@@ -14,7 +14,7 @@ function boot(stored: string | null, prefersLight: boolean) {
     localStorage: { getItem: () => stored },
     matchMedia: () => ({ matches: prefersLight }),
     document: {
-      documentElement: { classList: { toggle: (c: string, on: boolean) => (on ? classes.add(c) : classes.delete(c)) } },
+      documentElement: { style: {}, classList: { toggle: (c: string, on: boolean) => (on ? classes.add(c) : classes.delete(c)) } },
       querySelector: () => meta,
     },
   });

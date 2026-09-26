@@ -12,6 +12,8 @@
   }
   var light = mode === 'light' || (mode !== 'dark' && matchMedia('(prefers-color-scheme: light)').matches);
   document.documentElement.classList.toggle('light', light);
+  // First-frame background, so the launch shell matches the theme too.
+  document.documentElement.style.background = light ? '#F7F5EF' : '#14132B';
   var meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = light ? '#F7F5EF' : '#14132B';
 })();

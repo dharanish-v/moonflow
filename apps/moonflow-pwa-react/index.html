@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" style="background: #14132B">
   <head>
     <meta charset="UTF-8" />
     <!-- interactive-widget=resizes-content: without it, the on-screen
@@ -37,7 +37,13 @@
     <script src="theme-boot.js"></script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Static launch shell (T84): painted from the first frame, before any
+           JS; React replaces it on mount. -->
+      <div style="display:flex;min-height:100dvh;align-items:center;justify-content:center">
+        <svg aria-hidden="true" width="64" height="64" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="#E8C874" /></svg>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

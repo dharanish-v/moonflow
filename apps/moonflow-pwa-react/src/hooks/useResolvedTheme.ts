@@ -41,6 +41,8 @@ export function useResolvedTheme(themeMode: ThemeMode): ResolvedTheme {
     }
     // Browser UI tint (Safari tab bar, Android status bar) follows the theme.
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_BACKGROUND[resolved]);
+    // The launch shell's first-frame background (index.html / theme-boot.js).
+    document.documentElement.style.background = THEME_BACKGROUND[resolved];
   }, [resolved, themeMode]);
 
   return resolved;
