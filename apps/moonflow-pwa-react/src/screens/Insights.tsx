@@ -14,27 +14,13 @@ import { Card, CardContent } from '../components/ui/card';
 import { Progress } from '../components/ui/progress';
 import { Separator } from '../components/ui/separator';
 import { ChartBarIcon, ChevronRightIcon } from '../components/icons';
-import { FLOW_OPTIONS } from '../lib/constants';
 import { parseDate } from '../lib/cycle-math';
 import { computeInsights, cycleBarHeight } from '../lib/insights';
+import { describeEntry } from '../lib/entry-summary';
+import { useAppState } from '../state/store';
 
 /** Matches the chart container's h-16. */
 const CHART_HEIGHT_PX = 64;
-import type { Entry } from '../lib/types';
-import { useAppState } from '../state/store';
-
-/** A short "what happened" label for one recent-logs row — flow first (the
- * most meaningful single fact about a day), falling back to a symptom count,
- * then a generic "Logged" for a mood/note-only day. */
-function summarizeEntry(entry: Entry): string {
-  if (entry.flow && entry.flow !== 'none') {
-    return FLOW_OPTIONS.find((f) => f.id === entry.flow)?.label ?? entry.flow;
-  }
-  if (entry.symptoms.length > 0) {
-    return `${entry.symptoms.length} symptom${entry.symptoms.length === 1 ? '' : 's'}`;
-  }
-  return 'Logged';
-}
 
 export function InsightsScreen() {
   const { entries } = useAppState();
@@ -188,7 +174,7 @@ export function InsightsScreen() {
                     {parseDate(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </span>
                   <span className="flex items-center gap-1 text-muted-foreground">
-                    <span className="text-xs">{summarizeEntry(entry)}</span>
+                    <span className="text-xs">{describeEntry(entry)}</span>
                     <ChevronRightIcon className="size-4" />
                   </span>
                 </Button>

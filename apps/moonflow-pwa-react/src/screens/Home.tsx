@@ -9,28 +9,76 @@
 // didn't actually exist — a real UX debate before this landed, not a
 // unilateral call (see the conversation this was decided in).
 import { AnimatePresence, motion } from 'framer-motion';
-import { Info, NotebookPen, ShieldAlert } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Droplet, Info, NotebookPen, ShieldAlert } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
 import { PHASE_COLOR_CLASS, PhaseMotif } from '../components/PhaseMotif';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
-import { todayString } from '../lib/cycle-math';
+import { diffDays, todayString } from '../lib/cycle-math';
+import { FLOW_OPTIONS, PERIOD_FLOW_LEVELS, PERIOD_GAP_TOLERANCE_DAYS } from '../lib/constants';
+import { deleteEntry, saveEntry } from '../lib/db';
+import { describeEntry } from '../lib/entry-summary';
+import type { Entry, FlowId } from '../lib/types';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import { UndoToast } from '../components/UndoToast';
 import { computeHomeStatus } from '../lib/home-status';
 import { quoteOfTheDay } from '../lib/quotes';
 import { backupNudge } from '../lib/backup-nudge';
-import { useAppState } from '../state/store';
+import { useAppDispatch, useAppState } from '../state/store';
 
 /** How long the just-logged acknowledgment stays up before it self-clears. */
 const LOGGED_ACK_DURATION_MS = 2600;
 
 export function HomeScreen() {
   const { entries, settings } = useAppState();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const search = useSearch({ from: '/' });
 
   const status = computeHomeStatus(entries, settings);
+  const today = todayString();
+  const todayEntry = entries.find((e) => e.date === today) ?? null;
+
+  // Still on a period = the latest real period day was within the missed-log
+  // tolerance of today; one tap then repeats that day's flow for today.
+  const latestPeriodDay = [...entries].reverse().find((e) => e.flow && PERIOD_FLOW_LEVELS.includes(e.flow));
+  const stillOnPeriod = !!latestPeriodDay && diffDays(latestPeriodDay.date, today) <= PERIOD_GAP_TOLERANCE_DAYS;
+  const quickFlow: FlowId = stillOnPeriod && latestPeriodDay?.flow ? latestPeriodDay.flow : 'medium';
+  const [undo, setUndo] = useState<{ message: string; date: string } | null>(null);
+  const [quickLogError, setQuickLogError] = useState(false);
+
+  function openSheet() {
+    navigate({ to: '/log', search: { date: today, from: 'home' } });
+  }
+
+  /** One-tap log, optimistic: the UI updates instantly, the write follows;
+   * a failed write rolls the UI back. Undo is offered instead of a confirm. */
+  async function quickLog(flow: FlowId) {
+    setQuickLogError(false);
+    const entry: Entry = { date: today, flow, symptoms: [], mood: null, note: '', updatedAt: Date.now() };
+    dispatch({ type: 'UPSERT_ENTRY', entry });
+    const ok = await saveEntry(entry);
+    if (!ok) {
+      dispatch({ type: 'REMOVE_ENTRY', date: today });
+      setQuickLogError(true);
+      return;
+    }
+    const label = FLOW_OPTIONS.find((f) => f.id === flow)?.label ?? flow;
+    setUndo({ message: `Logged ${label.toLowerCase()} flow for today`, date: today });
+  }
+
+  async function handleUndo() {
+    if (!undo) return;
+    const { date } = undo;
+    setUndo(null);
+    const ok = await deleteEntry(date);
+    if (ok) dispatch({ type: 'REMOVE_ENTRY', date });
+    else setQuickLogError(true);
+  }
+
+  const dismissUndo = useCallback(() => setUndo(null), []);
   const quote = quoteOfTheDay(status.cyclePhase);
   const nudge = backupNudge({ lastBackupAt: settings.lastBackupAt, firstEntryDate: entries[0]?.date ?? null, now: Date.now() });
 
@@ -125,13 +173,31 @@ export function HomeScreen() {
           </Card>
         </motion.div>
 
-        <Button
-          onClick={() => navigate({ to: '/log', search: { date: todayString(), from: 'home' } })}
-          className="h-11 w-full gap-1.5 text-sm"
-        >
-          <NotebookPen className="size-4" aria-hidden="true" />
-          Log
-        </Button>
+        {todayEntry ? (
+          <>
+            <p className="mb-2 text-center text-sm text-foreground">Today: {describeEntry(todayEntry)}</p>
+            <Button onClick={openSheet} className="h-11 w-full gap-1.5 text-sm">
+              <NotebookPen className="size-4" aria-hidden="true" />
+              Edit today
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button onClick={() => void quickLog(quickFlow)} className="h-11 w-full gap-1.5 text-sm">
+              <Droplet className="size-4" aria-hidden="true" />
+              {stillOnPeriod ? 'Still on my period' : 'Period started today'}
+            </Button>
+            <Button variant="outline" onClick={openSheet} className="mt-2 h-11 w-full gap-1.5 text-sm">
+              <NotebookPen className="size-4" aria-hidden="true" />
+              Log symptoms, mood or notes
+            </Button>
+          </>
+        )}
+        {quickLogError && (
+          <Alert className="mt-2">
+            <AlertDescription>Couldn't save — try again</AlertDescription>
+          </Alert>
+        )}
 
         <p className="mt-5 text-center text-xs text-muted-foreground italic">"{quote}"</p>
 
@@ -147,6 +213,7 @@ export function HomeScreen() {
           </Link>
         )}
       </motion.div>
+      {undo && <UndoToast message={undo.message} onUndo={() => void handleUndo()} onDismiss={dismissUndo} />}
     </div>
   );
 }
