@@ -67,9 +67,33 @@ describe('OnboardingScreen — native date wheel (T82)', () => {
     const input = screen.getByLabelText(/when did your last period start/i);
     expect(input).toHaveAttribute('type', 'date');
     expect(input.getAttribute('max')).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(screen.getByRole('button', { name: 'Get started' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
     const { fireEvent } = await import('@testing-library/react');
     fireEvent.change(input, { target: { value: '2026-09-01' } });
+    expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled();
+  });
+});
+
+describe('OnboardingScreen — three steps (T93)', () => {
+  it('walks through cycle → privacy → safety, with back and a step counter', async () => {
+    const { fireEvent } = await import('@testing-library/react');
+    render(
+      <StateProvider testState={{}}>
+        <OnboardingScreen />
+      </StateProvider>,
+    );
+    expect(screen.getByText('Step 1 of 3')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled(); // needs a date first
+    fireEvent.change(screen.getByLabelText(/when did your last period start/i), { target: { value: '2026-09-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('Step 2 of 3')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /private by design/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByLabelText(/when did your last period start/i)).toHaveValue('2026-09-01');
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('Step 3 of 3')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /set up a pin lock/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Get started' })).toBeEnabled();
   });
 });
