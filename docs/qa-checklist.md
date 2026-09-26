@@ -77,3 +77,6 @@ Most behaviour is covered by the automated suite (`npm test`, 300+ Vitest/Testin
 - [ ] Deleting the icon really removes the data (confirms the in-app warning)
 - [ ] Does IndexedDB survive an iCloud restore / Quick Start migration? (unknown — record the result in ADR log)
 - [ ] Shortcut link (`#/log?flow=medium`) from the Shortcuts app: does it open the installed app or Safari? (Safari has separate storage — if it opens Safari, the link isn't useful and should be documented as such)
+
+## Performance baseline (T94, 2026-09-26)
+Chrome with 4× CPU throttle, iPhone 15 Pro viewport, 400 days of history with temperatures. Worst event duration (INP-style): open log sheet 64 ms · flow pill 32 · symptom chip 24 · save 40 · Calendar tab 16 · next month 24 · Insights 40. All well under the 200 ms "good" INP threshold (log sheet was 144 ms before T87). Launch JS ~168 KB gzip across all preloaded chunks.
