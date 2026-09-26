@@ -149,7 +149,9 @@ export const routeTree = rootRoute.addChildren([
 /** A factory, not a shared singleton — tests each need their own isolated
  * router/history instance; production calls this once (see App.tsx). */
 export function createAppRouter() {
-  return createRouter({ routeTree, history: createHashHistory() });
+  // Route changes cross-fade via the View Transitions API where supported
+  // (index.css); Reduce Motion switches it off.
+  return createRouter({ routeTree, history: createHashHistory(), defaultViewTransition: true });
 }
 
 declare module '@tanstack/react-router' {

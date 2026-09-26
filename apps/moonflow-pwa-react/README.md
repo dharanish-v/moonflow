@@ -5,7 +5,7 @@ The whole product lives here: a React 19 + TypeScript PWA. See the root `README.
 ## Stack
 
 - **App:** Vite 8, React 19, TypeScript (strict), TanStack Router (hash history, lazy route components).
-- **UI:** Tailwind v4 with shadcn/ui (Radix, vaul), themed with Moonflow's own navy/gold tokens (`src/index.css`); Framer Motion honours reduced motion.
+- **UI:** Tailwind v4 with shadcn/ui (Radix, vaul), themed with Moonflow's own navy/gold tokens (`src/index.css`); motion is platform-native (View Transitions, CSS keyframes, the Web Animations API) and honours Reduce Motion.
 - **Data:** Dexie over IndexedDB, holding a real database and a separate decoy database (duress PIN).
 - **Offline:** vite-plugin-pwa (`generateSW`) precaches every chunk.
 - **Tests:** Vitest, Testing Library, jest-axe and fake-indexeddb. Build guards in `build/*.test.ts` check contrast, CSP, Dynamic Type, iOS polish and code splitting.

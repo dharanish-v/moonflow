@@ -6,9 +6,8 @@ import { toHaveNoViolations } from 'jest-axe';
 expect.extend(toHaveNoViolations);
 
 // jsdom has no matchMedia at all — every real browser does, so this is a
-// test-environment gap, not app-code defensiveness. framer-motion's own
-// useReducedMotion() already guards `if (window.matchMedia)` internally and
-// degrades gracefully; code that calls matchMedia directly (useResolvedTheme)
+// test-environment gap, not app-code defensiveness. lib/motion.ts guards for a
+// missing matchMedia and degrades gracefully; code that calls matchMedia directly (useResolvedTheme)
 // needs this polyfill or it throws in an effect with no error boundary,
 // silently unmounting the whole tree.
 if (typeof window.matchMedia !== 'function') {

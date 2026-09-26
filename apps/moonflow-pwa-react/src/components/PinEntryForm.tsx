@@ -2,10 +2,10 @@
 // setup/verify and duress setup. An on-screen keypad with progress dots, like
 // the iOS passcode screen (T61). A labelled input stays for hardware
 // keyboards and assistive tech, with inputMode="none" so it doesn't summon
-// the iOS keyboard over the keypad. Wrong-PIN shake via framer-motion.
-import { animate, useReducedMotion } from 'framer-motion';
+// the iOS keyboard over the keypad. Wrong-PIN shake via the Web Animations API.
 import { Delete } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { shake } from '../lib/motion';
 import { Alert, AlertDescription } from './ui/alert';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
@@ -41,7 +41,6 @@ export function PinEntryForm({ title, error, onComplete, onCancel, lockedUntil, 
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const dotsRef = useRef<HTMLDivElement>(null);
-  const prefersReducedMotion = useReducedMotion();
   const secondsLeft = useSecondsLeft(lockedUntil);
   const locked = secondsLeft > 0;
   const disabled = locked || busy;
@@ -51,10 +50,8 @@ export function PinEntryForm({ title, error, onComplete, onCancel, lockedUntil, 
   }, []);
 
   useEffect(() => {
-    if (error && dotsRef.current && !prefersReducedMotion) {
-      animate(dotsRef.current, { x: [0, 8, -8, 8, -8, 8, -8, 0] }, { duration: 0.42, ease: 'easeInOut' });
-    }
-  }, [error, prefersReducedMotion]);
+    if (error && dotsRef.current) shake(dotsRef.current);
+  }, [error]);
 
   function update(next: string) {
     const digits = next.replace(/\D/g, '').slice(0, PIN_LENGTH);

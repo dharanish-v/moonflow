@@ -1,4 +1,3 @@
-import { MotionConfig } from 'framer-motion';
 import { useState } from 'react';
 import { RouterProvider } from '@tanstack/react-router';
 import { createAppRouter } from './router/router';
@@ -18,7 +17,6 @@ function App() {
   usePrivacyScreen();
 
   return (
-    <MotionConfig reducedMotion="user">
       <StateProvider>
         <div id="phone-frame">
           <RouterProvider router={router} />
@@ -26,7 +24,6 @@ function App() {
           <GlobalUndoToast />
         </div>
       </StateProvider>
-    </MotionConfig>
   );
 }
 

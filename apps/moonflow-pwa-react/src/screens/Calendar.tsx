@@ -1,7 +1,7 @@
 // src/screens/Calendar.tsx — ported from screens/calendar.js. The day grid
 // has no shadcn/Radix equivalent (no component library ships a
 // cycle-tracking calendar) — stays hand-built, same as the vanilla app.
-import { motion } from 'framer-motion';
+import { flushSync } from 'react-dom';
 import { type TouchEvent, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '../components/ui/button';
@@ -11,6 +11,7 @@ import { addDays, derivePeriods, diffDays, formatDate, parseDate } from '../lib/
 import { computeForecast } from '../lib/forecast';
 import { markPeriodDays, restoreDays } from '../lib/db';
 import { offerUndo } from '../lib/undo-signal';
+import { withViewTransition } from '../lib/motion';
 import { FLOW_OPTIONS } from '../lib/constants';
 import { FERTILE_DISCLAIMER, formatDateRange } from '../lib/home-status';
 import { useAppDispatch, useAppState } from '../state/hooks';
@@ -19,8 +20,6 @@ const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 /** Minimum horizontal travel for a swipe to count as a month change. */
 const SWIPE_MIN_PX = 50;
-
-type NavDirection = 'prev' | 'next' | null;
 
 /** One stat in the summary card. The label is a small-caps "kicker" tinted
  * with the same color family the legend/grid already use for that state
@@ -37,18 +36,11 @@ function SummaryStat({ accentClassName, label, value, caption }: { accentClassNa
   );
 }
 
-const SLIDE_VARIANTS = {
-  enter: (direction: NavDirection) => ({ opacity: 0, x: direction === 'prev' ? -24 : direction === 'next' ? 24 : 0 }),
-  center: { opacity: 1, x: 0 },
-};
 
 export function CalendarScreen() {
   const { calendarMonth, entries, settings } = useAppState();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  // Direction of the last month change, for the slide-in animation. State,
-  // not a ref read during render (which React may not re-render for).
-  const [direction, setDirection] = useState<NavDirection>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const [yearStr, monthStr] = calendarMonth.split('-');
@@ -185,10 +177,14 @@ export function CalendarScreen() {
     navigate({ to: '/log', search: { date: dateStr, from: 'calendar' } });
   }
 
+  // The new month slides in from the side it came from: a view transition
+  // on the grid (index.css reads data-vt-dir), flushed synchronously so the
+  // browser can snapshot old and new DOM.
   function handleChangeMonth(dir: 'prev' | 'next') {
-    setDirection(dir);
     const next = new Date(year, month - 1 + (dir === 'next' ? 1 : -1), 1);
-    dispatch({ type: 'SET_CALENDAR_MONTH', month: `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}` });
+    const value = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`;
+    document.documentElement.dataset.vtDir = dir;
+    withViewTransition(() => flushSync(() => dispatch({ type: 'SET_CALENDAR_MONTH', month: value })));
   }
 
   const monthLabel = firstOfMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
@@ -240,14 +236,7 @@ export function CalendarScreen() {
         </Button>
       </div>
 
-      <motion.div
-        key={calendarMonth}
-        custom={direction}
-        variants={SLIDE_VARIANTS}
-        initial="enter"
-        animate="center"
-        transition={{ duration: 0.22, ease: 'easeOut' }}
-      >
+      <div className="calendar-grid">
         <div role="grid" aria-labelledby="calendar-month" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div role="row" className="grid grid-cols-7">
           {WEEKDAY_LABELS.map((l, i) => (
@@ -323,7 +312,7 @@ export function CalendarScreen() {
         </div>
         ))}
         </div>
-      </motion.div>
+      </div>
 
       <div className="mt-3">
         {marking ? (

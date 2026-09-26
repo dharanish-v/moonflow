@@ -12,7 +12,7 @@ import type { Plugin } from 'vite';
 export const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "script-src 'self'",
-  // Radix/vaul/framer-motion set inline styles; styles can't exfiltrate data
+  // Radix and vaul set inline styles; styles can't exfiltrate data
   // when connect-src and img-src are locked down.
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",

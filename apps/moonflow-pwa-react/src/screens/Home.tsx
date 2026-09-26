@@ -8,7 +8,6 @@
 // tapped. Three same-weight buttons implied three separate actions that
 // didn't actually exist — a real UX debate before this landed, not a
 // unilateral call (see the conversation this was decided in).
-import { AnimatePresence, motion } from 'framer-motion';
 import { Droplet, Info, NotebookPen, ShieldAlert } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
@@ -126,33 +125,19 @@ export function HomeScreen() {
         aria-hidden="true"
       />
 
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease: 'easeOut' }}>
-        <AnimatePresence>
-          {showLoggedAck && (
-            <motion.p
+      <div className="mf-fade-up">
+        {showLoggedAck && (
+            <p
               role="status"
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="mb-3 text-center text-xs font-medium text-primary"
+              className="mf-fade-in mb-3 text-center text-xs font-medium text-primary"
             >
               {ackText}
-            </motion.p>
+            </p>
           )}
-        </AnimatePresence>
 
         <PhaseMotif cyclePhase={status.cyclePhase} ring={status.ring} label={ringLabel} />
 
-        <motion.div
-          className="rounded-xl"
-          animate={
-            showLoggedAck
-              ? { boxShadow: ['0 0 0 0px transparent', '0 0 0 3px var(--primary)', '0 0 0 0px transparent'] }
-              : undefined
-          }
-          transition={{ duration: 1.8, ease: 'easeOut' }}
-        >
+        <div className={`rounded-xl ${showLoggedAck ? 'mf-pulse-ring' : ''}`}>
           <Card className="mb-5">
             <CardContent className="flex flex-col items-center py-5 text-center">
               <h1 className="text-3xl font-bold text-foreground">{status.headline}</h1>
@@ -179,7 +164,7 @@ export function HomeScreen() {
               {status.detail && <div className="mt-2 text-xs text-muted-foreground">{status.detail}</div>}
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
 
         {todayEntry ? (
           <>
@@ -245,7 +230,7 @@ export function HomeScreen() {
             </span>
           </Link>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }

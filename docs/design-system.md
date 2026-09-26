@@ -103,7 +103,7 @@ Icons are lucide plus a few custom SVGs (`components/icons.tsx`). Every icon-onl
 
 ## Motion & feedback
 
-- `MotionConfig reducedMotion="user"`: every animation honours the OS setting.
+- Motion is platform-native (ADR-050): View Transitions for route changes and calendar months, CSS keyframes for ambient motion, and the Web Animations API for the wrong-PIN shake. A single `prefers-reduced-motion` rule switches all of it off.
 - The Home entrance fades once; calendar months slide in the direction of travel; a wrong PIN shakes.
 - Acknowledge, then offer a way back: Undo toasts for one-tap logs, clears and marked periods. Confirmation dialogs are only for the irreversible.
 - The static launch shell paints the theme background plus a glyph from the first frame, and there's no theme flash (`theme-boot.js`).
@@ -132,4 +132,4 @@ Icons are lucide plus a few custom SVGs (`components/icons.tsx`). Every icon-onl
 
 ## Tech stack
 
-React 19, TypeScript (strict), Vite, Tailwind v4, shadcn/ui, TanStack Router (hash), Dexie, Framer Motion, vite-plugin-pwa, Vitest + Testing Library + jest-axe. See `apps/moonflow-pwa-react/README.md`.
+React 19, TypeScript (strict), Vite, Tailwind v4, shadcn/ui, TanStack Router (hash), Dexie, vite-plugin-pwa, Vitest + Testing Library + jest-axe. See `apps/moonflow-pwa-react/README.md`.

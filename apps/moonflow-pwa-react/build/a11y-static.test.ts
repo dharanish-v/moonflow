@@ -11,9 +11,7 @@ describe('accessibility (static)', () => {
     expect(read('screens/Settings.tsx')).toMatch(/min-h-11 w-full flex-wrap[^']*whitespace-normal/);
   });
 
-  it('honours reduced motion app-wide (MotionConfig reducedMotion="user")', () => {
-    expect(read('App.tsx')).toMatch(/<MotionConfig reducedMotion="user">/);
-  });
+
 
   it('flow options wrap instead of clipping at large text sizes', () => {
     expect(read('screens/LogEntry.tsx')).toMatch(/aria-labelledby="log-flow-label"[\s\S]{0,400}className="w-full flex-wrap/);

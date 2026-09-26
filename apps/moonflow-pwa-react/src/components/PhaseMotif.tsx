@@ -4,9 +4,9 @@
 // accent=follicular, primary=fertile — Calendar's fertile-peak ring and
 // TabBar's active tab already use primary this way; muted-foreground for
 // luteal/unknown, no new token invented for one small motif). Pure SVG +
-// Framer Motion, no image asset — same "no custom nothing except what the
+// plain CSS keyframes (index.css), no image asset — same "no custom nothing except what the
 // stack already provides" spirit as the rest of this rebuild.
-import { motion, useReducedMotion } from 'framer-motion';
+import type * as React from 'react';
 import type { CyclePhase, CycleRing } from '../lib/home-status';
 import { PHASE_COLOR_CLASS } from '../lib/phase-colors';
 import { moonPhase } from '../lib/lunar';
@@ -47,7 +47,6 @@ function pointOnRing(angleDegrees: number): { x: number; y: number } {
 
 /** @param label the ring's text alternative for VoiceOver (it carries real information). */
 export function PhaseMotif({ cyclePhase, ring, label }: { cyclePhase: CyclePhase; ring: CycleRing | null; label?: string }) {
-  const prefersReducedMotion = useReducedMotion();
   const moon = moonPhase();
   const colorClass = PHASE_COLOR_CLASS[cyclePhase];
   const todayPoint = ring ? pointOnRing(ring.todayAngle) : null;
@@ -61,15 +60,13 @@ export function PhaseMotif({ cyclePhase, ring, label }: { cyclePhase: CyclePhase
       {/* Two glow layers, not one — a single flat blur read as a small
           badge behind the moon; a wider, softer outer layer plus a
           tighter inner one gives the "surrounded by light" feel instead. */}
-      <motion.div
-        className="absolute size-32 rounded-full bg-current opacity-10 blur-2xl"
-        animate={prefersReducedMotion ? undefined : { opacity: [0.08, 0.18, 0.08], scale: [1, 1.1, 1] }}
-        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+      <div
+        className="mf-breathe absolute size-32 rounded-full bg-current opacity-10 blur-2xl"
+        style={{ '--breathe-lo': 0.08, '--breathe-hi': 0.18 } as React.CSSProperties}
       />
-      <motion.div
-        className="absolute size-20 rounded-full bg-current opacity-20 blur-lg"
-        animate={prefersReducedMotion ? undefined : { opacity: [0.15, 0.3, 0.15], scale: [1, 1.15, 1] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+      <div
+        className="mf-breathe absolute size-20 rounded-full bg-current opacity-20 blur-lg"
+        style={{ '--breathe-lo': 0.15, '--breathe-hi': 0.3, animationDuration: '4s' } as React.CSSProperties}
       />
       {/* The ring itself — static, not breathing like the glow/moon, since
           it's carrying real information (period/fertile arcs, today's
@@ -111,12 +108,7 @@ export function PhaseMotif({ cyclePhase, ring, label }: { cyclePhase: CyclePhase
       {/* Today's real moon (ADR-019), offset-circle style: an unlit disc,
           the lit part bounded by the limb and an elliptical terminator,
           with a faint dot grain for an illustrated rather than flat look. */}
-      <motion.svg
-        viewBox="-12 -12 24 24"
-        className="relative size-16"
-        animate={prefersReducedMotion ? undefined : { scale: [1, 1.04, 1] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-      >
+      <svg viewBox="-12 -12 24 24" className="mf-moon relative size-16">
         <defs>
           <pattern id="moon-grain" width="1.6" height="1.6" patternUnits="userSpaceOnUse">
             <circle cx="0.4" cy="0.4" r="0.22" fill="var(--primary-foreground)" fillOpacity="0.18" />
@@ -127,7 +119,7 @@ export function PhaseMotif({ cyclePhase, ring, label }: { cyclePhase: CyclePhase
           <path d={litPath(moon.illumination)} fill="var(--primary)" />
           <path d={litPath(moon.illumination)} fill="url(#moon-grain)" />
         </g>
-      </motion.svg>
+      </svg>
     </div>
   );
 }

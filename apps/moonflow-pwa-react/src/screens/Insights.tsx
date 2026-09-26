@@ -1,13 +1,12 @@
 // src/screens/Insights.tsx — ported from screens/insights.js, including its
 // "not enough history yet" empty state. The bar-chart/symptom-frequency
-// grow-in uses framer-motion's imperative `animate()` against plain DOM refs.
+// grow-in is CSS (mf-grow-y / mf-fill in index.css), off under Reduce Motion.
 // Symptom-frequency rows use shadcn's Progress (Radix, a div-based
 // aria-valuenow progressbar) — verified live that Chromium's native
 // <progress> here ignores accent-color entirely and renders its default
 // green, a real cross-browser risk this app's own "every color comes from
 // our tokens" rule can't accept.
-import { animate, useReducedMotion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
@@ -34,59 +33,11 @@ export function InsightsScreen() {
   const nudges = healthNudges(entries, settings);
   const timing = symptomTiming(entries);
   const [query, setQuery] = useState('');
-  const prefersReducedMotion = useReducedMotion();
-  const barRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const fillRefs = useRef<Array<HTMLDivElement | null>>([]);
   // Most-recent-first, capped at 10 — the only way to browse your own
   // history today is paging Calendar month-by-month one day at a time.
   const recentEntries = [...entries].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)).slice(0, 10);
   const shownEntries = query.trim() ? searchEntries(entries, query) : recentEntries;
 
-  useEffect(() => {
-    if (prefersReducedMotion) {
-      fillRefs.current.forEach((el, i) => {
-        const percent = data.topSymptoms[i]?.percent ?? 0;
-        if (el) el.style.transform = `translateX(-${100 - percent}%)`;
-      });
-      return;
-    }
-
-    const controls: Array<{ stop: () => void }> = [];
-    data.recentCycleLengths.forEach((len, i) => {
-      const el = barRefs.current[i];
-      if (!el) return;
-      const targetHeight = cycleBarHeight(len, data.recentCycleLengths, CHART_HEIGHT_PX);
-      controls.push(
-        animate(0, targetHeight, {
-          duration: 0.4,
-          ease: 'easeOut',
-          delay: i * 0.05,
-          onUpdate: (v) => {
-            el.style.height = `${v}px`;
-          },
-        }),
-      );
-    });
-
-    const barsDuration = data.recentCycleLengths.length * 0.05;
-    data.topSymptoms.forEach((s, i) => {
-      const el = fillRefs.current[i];
-      if (!el) return;
-      controls.push(
-        animate(0, s.percent, {
-          duration: 0.5,
-          ease: 'easeOut',
-          delay: barsDuration + i * 0.08,
-          onUpdate: (v) => {
-            el.style.transform = `translateX(-${100 - v}%)`;
-          },
-        }),
-      );
-    });
-
-    return () => controls.forEach((c) => c.stop());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries]);
 
   // A real progress signal (0 vs. 1 logged period), not just a flat wait
   // message — data.cyclesLogged is already computed either way, this
@@ -128,11 +79,8 @@ export function InsightsScreen() {
             {data.recentCycleLengths.map((len, i) => (
               <div
                 key={i}
-                ref={(el) => {
-                  barRefs.current[i] = el;
-                }}
-                className="flex-1 rounded-t-[0.25rem] bg-primary"
-                style={{ height: prefersReducedMotion ? cycleBarHeight(len, data.recentCycleLengths, CHART_HEIGHT_PX) : 0 }}
+                className="mf-grow-y flex-1 rounded-t-[0.25rem] bg-primary"
+                style={{ height: cycleBarHeight(len, data.recentCycleLengths, CHART_HEIGHT_PX), animationDelay: `${i * 50}ms` }}
               />
             ))}
           </div>
@@ -155,11 +103,9 @@ export function InsightsScreen() {
                   </div>
                   <Progress
                     value={s.percent}
-                    animated={!prefersReducedMotion}
                     aria-label={s.label}
-                    indicatorRef={(el) => {
-                      fillRefs.current[i] = el;
-                    }}
+                    indicatorClassName="mf-fill"
+                    indicatorStyle={{ animationDelay: `${data.recentCycleLengths.length * 50 + i * 80}ms` }}
                   />
                 </div>
               ))}

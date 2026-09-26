@@ -328,3 +328,14 @@ It also caught a real bug: update detection was decided once at launch, so an up
 **Status:** Accepted 2026-09-26 (refines ADR-039)
 **Context:** A WebKit review confirmed one 56-day cycle as real. The min–max range became 16 Sep–16 Oct and the "fertile window" 37 days: technically honest, useless in practice.
 **Decision:** The predicted range is median ± max(2, 1.5 × median absolute deviation). "Irregular" is still FIGO's spread ≥8 days. If the fertile window would span more than 14 days, none is shown, and the Calendar says cycles vary too much to estimate one.
+
+### ADR-050: Platform motion — View Transitions API, CSS and WAAPI replace framer-motion
+**Status:** Accepted 2026-09-26 (owner's request; reverses ADR-035's inclusion of Framer Motion)
+**Decision:**
+- **Route changes** cross-fade via TanStack Router's `defaultViewTransition`.
+- **Calendar months** slide via a named view transition (`calendar-grid`, direction from `data-vt-dir`), flushed synchronously.
+- **Ambient motion** (moon, glow, entrance, save pulse, chart grow-in) is CSS keyframes.
+- **The wrong-PIN shake** uses the Web Animations API.
+- **Reduce Motion:** one `prefers-reduced-motion` rule disables all animations and view transitions.
+
+**Consequences:** One less dependency. Launch JS is ~211 → 168KB gzip. Without View Transitions support, changes simply apply instantly.

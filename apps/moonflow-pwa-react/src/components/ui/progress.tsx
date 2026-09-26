@@ -10,17 +10,13 @@ import { cn } from 'cn';
 function Progress({
   className,
   value,
-  indicatorRef,
-  animated = false,
+  indicatorClassName,
+  indicatorStyle,
   ...props
 }: React.ComponentProps<typeof ProgressPrimitive.Root> & {
-  indicatorRef?: React.Ref<HTMLDivElement>;
-  /** When a caller drives the indicator's transform imperatively (a grow-in
-   * animation via a ref), the initial render must start empty regardless of
-   * `value` — otherwise it paints at the final position for one frame
-   * before the animation resets and re-plays it. `value` still always
-   * drives aria-valuenow, since that's read once, not repainted per frame. */
-  animated?: boolean;
+  /** e.g. a CSS grow-in (index.css mf-fill) for the fill. */
+  indicatorClassName?: string;
+  indicatorStyle?: React.CSSProperties;
 }) {
   return (
     <ProgressPrimitive.Root
@@ -30,10 +26,9 @@ function Progress({
       {...props}
     >
       <ProgressPrimitive.Indicator
-        ref={indicatorRef}
         data-slot="progress-indicator"
-        className="h-full w-full flex-1 rounded-full bg-accent transition-transform"
-        style={{ transform: `translateX(-${100 - (animated ? 0 : (value ?? 0))}%)` }}
+        className={cn('h-full w-full flex-1 rounded-full bg-accent', indicatorClassName)}
+        style={{ transform: `translateX(-${100 - (value ?? 0)}%)`, ...indicatorStyle }}
       />
     </ProgressPrimitive.Root>
   );
