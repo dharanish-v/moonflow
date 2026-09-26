@@ -27,6 +27,9 @@ import { UndoToast } from '../components/UndoToast';
 import { computeHomeStatus } from '../lib/home-status';
 import { quoteOfTheDay } from '../lib/quotes';
 import { backupNudge } from '../lib/backup-nudge';
+import { missedPeriodPrompts } from '../lib/forecast';
+import { formatHeaderDate } from '../lib/log-entry';
+import { useSaveSettings } from '../state/useSaveSettings';
 import { moonPhase } from '../lib/lunar';
 import { useAppDispatch, useAppState } from '../state/hooks';
 
@@ -40,6 +43,8 @@ export function HomeScreen() {
   const search = useSearch({ from: '/' });
 
   const status = computeHomeStatus(entries, settings);
+  const missed = missedPeriodPrompts(entries, settings, settings.confirmedLongCycles).at(-1) ?? null;
+  const saveSettingsPatch = useSaveSettings();
   const today = todayString();
   const todayEntry = entries.find((e) => e.date === today) ?? null;
 
@@ -206,6 +211,31 @@ export function HomeScreen() {
           <Alert className="mt-2">
             <AlertDescription>Couldn't save — try again</AlertDescription>
           </Alert>
+        )}
+
+        {missed && (
+          <Card className="mt-4 gap-2 px-4 py-3">
+            <p className="text-sm text-foreground">
+              Did you miss logging a period around {formatHeaderDate(missed.likelyDate)}? One cycle looks about twice as long
+              as usual.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate({ to: '/log', search: { date: missed.likelyDate, from: 'home' } })}
+                className="h-11 flex-1 text-sm"
+              >
+                Log it
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => void saveSettingsPatch({ confirmedLongCycles: [...settings.confirmedLongCycles, missed.cycleStart] })}
+                className="h-11 flex-1 text-sm"
+              >
+                No, that's right
+              </Button>
+            </div>
+          </Card>
         )}
 
         <p className="mt-5 text-center text-xs text-muted-foreground italic">"{quote}"</p>

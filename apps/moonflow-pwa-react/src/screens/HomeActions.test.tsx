@@ -62,3 +62,26 @@ describe('Home — contextual one-tap actions', () => {
     expect(screen.getByRole('button', { name: /log symptoms, mood or notes/i })).toBeInTheDocument();
   });
 });
+
+describe('Home — missed period prompt (T78)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 4, 25, 9));
+  });
+  afterEach(() => vi.useRealTimers());
+  const hist = ['2026-01-01', '2026-01-29', '2026-02-26', '2026-04-23', '2026-05-21'].map((d) => e(d, 'medium'));
+
+  it('asks about a likely unlogged period and lets the user dismiss it', async () => {
+    const { state } = await renderHome(hist);
+    expect(screen.getByText(/did you miss logging a period around/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /no, that.s right/i }));
+    await waitFor(() => expect(state().settings.confirmedLongCycles).toEqual(['2026-02-26']));
+    expect(screen.queryByText(/did you miss logging/i)).not.toBeInTheDocument();
+  });
+
+  it('"Log it" opens that day', async () => {
+    const { router } = await renderHome(hist);
+    fireEvent.click(screen.getByRole('button', { name: 'Log it' }));
+    await waitFor(() => expect(router.state.location.search).toMatchObject({ date: '2026-03-26' }));
+  });
+});

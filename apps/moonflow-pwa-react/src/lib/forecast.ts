@@ -92,7 +92,10 @@ function cycleStarts(periods: Period[], lastPeriodStart: string | null): string[
 
 export function computeForecast(
   entries: Array<Pick<Entry, 'date' | 'flow'>>,
-  settings: Pick<Settings, 'lastPeriodStart' | 'avgCycleLength' | 'avgPeriodLength'> & { predictionsPaused?: boolean },
+  settings: Pick<Settings, 'lastPeriodStart' | 'avgCycleLength' | 'avgPeriodLength'> & {
+    predictionsPaused?: boolean;
+    confirmedLongCycles?: string[];
+  },
   today: Date = new Date(),
 ): Forecast {
   const todayStr = formatDate(today);
@@ -132,7 +135,10 @@ export function computeForecast(
   }
 
   const baseline = cycles.length ? median(cycles.map((c) => c.length)) : 0;
-  const suspectedMissedCycles = cycles.length >= 3 ? cycles.filter((c) => c.length >= baseline * MISSED_LOG_FACTOR) : [];
+  // A long cycle the user confirmed was real counts like any other.
+  const confirmed = settings.confirmedLongCycles ?? [];
+  const suspectedMissedCycles =
+    cycles.length >= 3 ? cycles.filter((c) => c.length >= baseline * MISSED_LOG_FACTOR && !confirmed.includes(c.start)) : [];
   const usedCycleLengths = cycles
     .filter((c) => !suspectedMissedCycles.includes(c))
     .slice(-PREDICTION_WINDOW_CYCLES)
@@ -207,4 +213,24 @@ export function computeForecast(
     suspectedMissedCycles,
     irregular,
   };
+}
+
+export interface MissedPeriodPrompt {
+  /** Start of the suspiciously long cycle — also the id used to dismiss it. */
+  cycleStart: string;
+  /** Where the unlogged period most likely was: halfway through. */
+  likelyDate: string;
+}
+
+/** Long cycles that probably hide an unlogged period, minus the ones the
+ * user has already confirmed were real (T78). */
+export function missedPeriodPrompts(
+  entries: Array<Pick<Entry, 'date' | 'flow'>>,
+  settings: Pick<Settings, 'lastPeriodStart' | 'avgCycleLength' | 'avgPeriodLength'>,
+  confirmedLongCycles: string[],
+  today: Date = new Date(),
+): MissedPeriodPrompt[] {
+  return computeForecast(entries, settings, today)
+    .suspectedMissedCycles.filter((c) => !confirmedLongCycles.includes(c.start))
+    .map((c) => ({ cycleStart: c.start, likelyDate: addDays(c.start, Math.round(c.length / 2)) }));
 }

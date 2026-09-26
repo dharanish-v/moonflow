@@ -162,3 +162,17 @@ describe('computeForecast — status over the cycle', () => {
     expect(computeForecast([], { ...SETTINGS, lastPeriodStart: '2026-09-10' }, day('2026-09-15')).periodLength).toBe(5);
   });
 });
+
+describe('missed-log prompts (T78)', () => {
+  const history = [...period('2026-01-01'), ...period('2026-01-29'), ...period('2026-02-26'), ...period('2026-04-23'), ...period('2026-05-21')];
+
+  it('suggests the likely date of the unlogged period, halfway through the long cycle', async () => {
+    const { missedPeriodPrompts } = await import('./forecast');
+    expect(missedPeriodPrompts(history, SETTINGS, [], day('2026-05-25'))).toEqual([{ cycleStart: '2026-02-26', likelyDate: '2026-03-26' }]);
+  });
+
+  it('stays quiet about a gap the user already confirmed was real', async () => {
+    const { missedPeriodPrompts } = await import('./forecast');
+    expect(missedPeriodPrompts(history, SETTINGS, ['2026-02-26'], day('2026-05-25'))).toEqual([]);
+  });
+});

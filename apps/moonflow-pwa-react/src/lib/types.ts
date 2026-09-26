@@ -57,6 +57,8 @@ export interface Settings {
   predictionsPaused: boolean;
   /** The user's own tag vocabulary, offered as chips in the log sheet (T68). */
   customTags: string[];
+  /** Long cycles the user said were real, not a missed log (T78). */
+  confirmedLongCycles: string[];
   /** Epoch ms of the last successful export (T47). */
   lastBackupAt: number | null;
 }

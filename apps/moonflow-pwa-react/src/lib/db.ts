@@ -92,6 +92,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   lastBackupAt: null,
   predictionsPaused: false,
   customTags: [],
+  confirmedLongCycles: [],
 };
 
 /** Read one setting, falling back to its documented default if never set. */
