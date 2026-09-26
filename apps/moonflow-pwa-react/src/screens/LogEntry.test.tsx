@@ -89,7 +89,7 @@ describe('LogEntryScreen — form behaviour (T54)', () => {
     await renderLog();
     fireEvent.click(screen.getByRole('radio', { name: 'Heavy' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
-    expect(await screen.findByRole('alertdialog', { name: /discard changes/i })).toBeInTheDocument();
+    expect(await screen.findByRole('alertdialog', { name: /unsaved changes/i })).toBeInTheDocument();
   });
 
   it('closes straight away when nothing changed, back to where it was opened from', async () => {
@@ -175,5 +175,30 @@ describe('LogEntryScreen — clear with undo (T79)', () => {
     // no entry → no clear button at all on a fresh day
     expect(clear).toBeNull();
     expect(save).toBeInTheDocument();
+  });
+});
+
+describe('LogEntryScreen — faster logging (T80)', () => {
+  it('"Same as yesterday" copies yesterday\'s flow, symptoms and tags', async () => {
+    const { SETTINGS_DEFAULTS } = await import('../lib/db');
+    const yesterday = { date: '2026-09-05', flow: 'heavy' as const, symptoms: ['cramps' as const], mood: 'low' as never, note: 'n', tags: ['Ibuprofen'], updatedAt: 1 };
+    await renderRouted(<LogEntryScreen />, {
+      path: '/log',
+      initialEntries: ['/log?date=2026-09-06'],
+      validateSearch: validateLogSearch,
+      wrapper: (c) => <StateProvider testState={{ entries: [yesterday], settings: { ...SETTINGS_DEFAULTS, customTags: ['Ibuprofen'] } }}>{c}</StateProvider>,
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Same as yesterday' }));
+    expect(screen.getByRole('radio', { name: 'Heavy' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('button', { name: 'Cramps' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Ibuprofen', pressed: true })).toBeInTheDocument();
+  });
+
+  it('closing with changes offers to save them, not just discard', async () => {
+    const { state } = await renderLog();
+    fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(state().entries.map((x) => x.flow)).toEqual(['light']));
   });
 });

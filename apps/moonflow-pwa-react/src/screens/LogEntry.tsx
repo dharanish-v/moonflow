@@ -36,7 +36,7 @@ import { Textarea } from '../components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { MOOD_ICONS } from '../components/mood-icons';
 import { FLOW_OPTIONS, MOOD_OPTIONS, PERIOD_FLOW_LEVELS, SYMPTOM_OPTIONS } from '../lib/constants';
-import { todayString } from '../lib/cycle-math';
+import { addDays, todayString } from '../lib/cycle-math';
 import { deleteEntryAndClearDraft, saveEntry, saveEntryAndClearDraft } from '../lib/db';
 import { offerUndo } from '../lib/undo-signal';
 import { useSaveSettings } from '../state/useSaveSettings';
@@ -121,6 +121,17 @@ export function LogEntryScreen() {
     [],
   );
 
+  // One tap during a period: carry yesterday's flow/symptoms/tags forward.
+  const yesterdayEntry = entries.find((e) => e.date === addDays(date, -1)) ?? null;
+  function copyYesterday() {
+    if (!yesterdayEntry) return;
+    const next = { flow: yesterdayEntry.flow, symptoms: [...yesterdayEntry.symptoms], tags: [...(yesterdayEntry.tags ?? [])] };
+    setFlow(next.flow);
+    setSymptoms(next.symptoms);
+    setTags(next.tags);
+    reportDraft(currentDraft(next));
+  }
+
   function requestClose() {
     if (isDirty) setConfirmDiscard(true);
     else void goBack();
@@ -197,6 +208,12 @@ export function LogEntryScreen() {
             </Button>
           </DrawerClose>
         </div>
+
+        {yesterdayEntry && !existingEntry && (
+          <Button variant="outline" onClick={copyYesterday} className="mb-4 h-11 w-full text-sm">
+            Same as yesterday
+          </Button>
+        )}
 
         <div className="mb-5">
           <span id="log-flow-label" className="mb-1.5 block text-sm text-muted-foreground">Flow</span>
@@ -366,10 +383,19 @@ export function LogEntryScreen() {
         <AlertDialog open={confirmDiscard} onOpenChange={setConfirmDiscard}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Discard changes?</AlertDialogTitle>
-              <AlertDialogDescription>What you entered for {formatHeaderDate(date)} hasn't been saved.</AlertDialogDescription>
+              <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+              <AlertDialogDescription>What you entered for {formatHeaderDate(date)} hasn't been saved yet.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
+              <Button
+                onClick={() => {
+                  setConfirmDiscard(false);
+                  void handleSave();
+                }}
+                className="h-11 w-full text-sm"
+              >
+                Save changes
+              </Button>
               <AlertDialogAction onClick={() => void goBack()}>Discard</AlertDialogAction>
               <AlertDialogCancel>Keep editing</AlertDialogCancel>
             </AlertDialogFooter>
