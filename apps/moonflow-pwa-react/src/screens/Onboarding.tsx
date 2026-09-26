@@ -23,7 +23,8 @@ import { formatDate, parseDate } from '../lib/cycle-math';
 import { submitOnboarding } from '../lib/onboarding';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { useSaveSettings } from '../state/useSaveSettings';
-import { isDiscreetInstall } from '../lib/install-identity';
+import { isDiscreetInstall, isStandalone } from '../lib/install-identity';
+import { ImportBackup } from '../components/ImportBackup';
 
 export function OnboardingScreen() {
   const discreet = isDiscreetInstall();
@@ -60,6 +61,15 @@ export function OnboardingScreen() {
       <p className="mb-5 text-center text-xs text-muted-foreground">
         Just enough to make your first prediction
       </p>
+
+      {!isStandalone() && (
+        <Alert className="mb-5">
+          <AlertDescription>
+            Install it first: tap Share, then <strong>Add to Home Screen</strong>, and open it from there. Anything you
+            enter in this browser tab stays in the tab — the installed app won't see it.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="mb-5">
         <Label id="onboarding-date-label" className="mb-1.5 block text-sm text-muted-foreground">
@@ -123,6 +133,15 @@ export function OnboardingScreen() {
       <Button disabled={!lastPeriodStart || isSaving} onClick={() => void handleSubmit()} className="h-11 w-full text-sm">
         Get started
       </Button>
+
+      {/* New phone: bring the old one's backup straight in instead. */}
+      <ImportBackup>
+        {(pick) => (
+          <Button variant="ghost" onClick={pick} className="mt-2 h-11 w-full text-sm text-muted-foreground">
+            Restore from a backup
+          </Button>
+        )}
+      </ImportBackup>
     </div>
   );
 }

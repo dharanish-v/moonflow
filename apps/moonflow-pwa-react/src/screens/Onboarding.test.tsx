@@ -30,3 +30,29 @@ describe('OnboardingScreen', () => {
     expect(screen.queryByText(/couldn.t save/i)).not.toBeInTheDocument();
   });
 });
+
+describe('OnboardingScreen — new phone, not installed (T60)', () => {
+  it('offers restoring from a backup instead of setting up from scratch', async () => {
+    render(
+      <StateProvider testState={{}}>
+        <OnboardingScreen />
+      </StateProvider>,
+    );
+    expect(screen.getByRole('button', { name: /restore from a backup/i })).toBeInTheDocument();
+    expect(screen.getByLabelText('Import data file')).toBeInTheDocument();
+  });
+
+  it('warns when opened in a Safari tab instead of the installed app', async () => {
+    const { isStandalone } = await import('../lib/install-identity');
+    expect(isStandalone({ standalone: false } as unknown as Navigator, () => false)).toBe(false);
+    expect(isStandalone({ standalone: true } as unknown as Navigator, () => false)).toBe(true);
+    expect(isStandalone({} as unknown as Navigator, () => true)).toBe(true);
+    render(
+      <StateProvider testState={{}}>
+        <OnboardingScreen />
+      </StateProvider>,
+    );
+    // jsdom is never standalone
+    expect(screen.getByText(/add to home screen/i)).toBeInTheDocument();
+  });
+});

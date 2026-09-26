@@ -1,7 +1,7 @@
 // src/screens/Settings.tsx — ported from screens/settings.js. Setting a new
 // PIN (create-1/create-2) is its own route (PinSetup.tsx) — see that file
 // for why.
-import { forwardRef, useRef, useState, type ChangeEvent, type ComponentProps, type ReactNode } from 'react';
+import { forwardRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { Calendar, Info, Monitor, Moon, ShieldAlert, Sun, Upload } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from 'cn';
@@ -26,15 +26,14 @@ import { Switch } from '../components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { BellIcon, ChevronRightIcon, DownloadIcon, DropletIcon, EyeOffIcon, LockIcon } from '../components/icons';
 import { MAX_CYCLE_LENGTH, MAX_PERIOD_LENGTH, MIN_CYCLE_LENGTH, MIN_PERIOD_LENGTH } from '../lib/constants';
-import { eraseAllData, importData, loadAllEntries, loadAllSettings } from '../lib/db';
+import { eraseAllData } from '../lib/db';
 import { useSaveSettings } from '../state/useSaveSettings';
-import { decryptBackup, isEncryptedBackup } from '../lib/backup-crypto';
 import { isDiscreetInstall } from '../lib/install-identity';
 import { lastBackupLabel } from '../lib/backup-nudge';
 import { ExportSheet } from '../components/ExportSheet';
+import { ImportBackup } from '../components/ImportBackup';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { parseImportPayload, type ImportPayload } from '../lib/import';
 import type { Settings, ThemeMode } from '../lib/types';
 import { useAppDispatch, useAppState } from '../state/store';
 
@@ -54,17 +53,11 @@ export function SettingsScreen() {
   const [dataMoveOpen, setDataMoveOpen] = useState(false);
   const [editField, setEditField] = useState<EditField>(null);
   const [draftValue, setDraftValue] = useState(0);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [pendingImport, setPendingImport] = useState<{ payload: ImportPayload; skippedEntries: number } | null>(null);
   const [saveError, setSaveError] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [removeDuressOpen, setRemoveDuressOpen] = useState(false);
   const [eraseOpen, setEraseOpen] = useState(false);
   const [eraseConfirm, setEraseConfirm] = useState('');
-  const [lockedBackup, setLockedBackup] = useState<string | null>(null);
-  const [backupPassphrase, setBackupPassphrase] = useState('');
-  const [unlockError, setUnlockError] = useState<string | null>(null);
-  const importInputRef = useRef<HTMLInputElement>(null);
   const saveSettingsPatch = useSaveSettings();
 
   async function persist(patch: Partial<Settings>): Promise<boolean> {
@@ -101,23 +94,6 @@ export function SettingsScreen() {
     if (ok) setEditField(null);
   }
 
-  function handleImportFileSelected(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // allow re-selecting the same file to retry
-    if (!file) return;
-    setImportError(null);
-    file
-      .text()
-      .then((text) => {
-        if (isEncryptedBackup(text)) {
-          setLockedBackup(text);
-          return;
-        }
-        stageImport(text);
-      })
-      .catch(() => setImportError("Couldn't read that file."));
-  }
-
   async function handleEraseAll() {
     const ok = await eraseAllData();
     setEraseOpen(false);
@@ -129,57 +105,6 @@ export function SettingsScreen() {
     // Re-read the now-empty database: AppGate lands on onboarding.
     dispatch({ type: 'BOOT_RETRY' });
   }
-
-  function stageImport(json: string) {
-    const result = parseImportPayload(json);
-    if (!result.ok) {
-      setImportError(result.error);
-      return;
-    }
-    setPendingImport({ payload: result.payload, skippedEntries: result.skippedEntries });
-  }
-
-  async function handleUnlockBackup() {
-    if (!lockedBackup) return;
-    setUnlockError(null);
-    const result = await decryptBackup(lockedBackup, backupPassphrase);
-    if (!result.ok) {
-      setUnlockError(result.error);
-      return;
-    }
-    setLockedBackup(null);
-    setBackupPassphrase('');
-    stageImport(result.json);
-  }
-
-  async function handleImportConfirm() {
-    if (!pendingImport) return;
-    const ok = await importData(pendingImport.payload.entries, pendingImport.payload.settings);
-    setPendingImport(null);
-    if (!ok) {
-      setImportError("Couldn't import — try again");
-      return;
-    }
-    try {
-      const [freshEntries, freshSettings] = await Promise.all([loadAllEntries(), loadAllSettings()]);
-      dispatch({ type: 'BOOT_LOADED', entries: freshEntries, settings: freshSettings });
-    } catch {
-      // The import itself committed; only the re-read failed. A reload re-reads it.
-      setImportError('Imported — reopen the app to see it.');
-    }
-  }
-
-  const importSummary = (() => {
-    if (!pendingImport) return '';
-    const n = pendingImport.payload.entries.length;
-    const dayPart = n > 0 ? `${n} logged day${n === 1 ? '' : 's'} and your cycle settings` : 'your cycle settings (no logged days were found in this file)';
-    const overwriteNote = n > 0 ? ' Entries already logged on the same date here will be overwritten.' : '';
-    const skippedNote =
-      pendingImport.skippedEntries > 0
-        ? ` ${pendingImport.skippedEntries} entr${pendingImport.skippedEntries === 1 ? 'y' : 'ies'} in the file couldn't be read and ${pendingImport.skippedEntries === 1 ? 'was' : 'were'} skipped.`
-        : '';
-    return `Import ${dayPart}?${overwriteNote}${skippedNote}`;
-  })();
 
   return (
     <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col px-4 py-5">
@@ -269,11 +194,11 @@ export function SettingsScreen() {
         )}
         <SettingsRowButton icon={<DownloadIcon className="size-4" />} label="Export data" value={lastBackupLabel(settings.lastBackupAt, Date.now())} onClick={() => setExportOpen(true)} />
         <Separator />
-        <SettingsRowButton
-          icon={<Upload className="size-4" aria-hidden="true" />}
-          label="Import data"
-          onClick={() => importInputRef.current?.click()}
-        />
+        <ImportBackup>
+          {(pick) => (
+            <SettingsRowButton icon={<Upload className="size-4" aria-hidden="true" />} label="Import data" onClick={pick} />
+          )}
+        </ImportBackup>
         <Separator />
         <Collapsible open={dataMoveOpen} onOpenChange={setDataMoveOpen}>
           <CollapsibleTrigger asChild>
@@ -292,14 +217,7 @@ export function SettingsScreen() {
         </Collapsible>
       </Card>
 
-      <input
-        ref={importInputRef}
-        type="file"
-        accept="application/json"
-        aria-label="Import data file"
-        className="hidden"
-        onChange={handleImportFileSelected}
-      />
+
 
       {saveError && (
         <Alert className="mt-3.5">
@@ -307,11 +225,7 @@ export function SettingsScreen() {
         </Alert>
       )}
 
-      {importError && (
-        <Alert className="mt-3.5">
-          <AlertDescription>{importError}</AlertDescription>
-        </Alert>
-      )}
+
 
       <Button
         variant="ghost"
@@ -419,58 +333,9 @@ export function SettingsScreen() {
         onExported={() => void persist({ lastBackupAt: Date.now() })}
       />
 
-      <AlertDialog
-        open={lockedBackup !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setLockedBackup(null);
-            setBackupPassphrase('');
-            setUnlockError(null);
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Encrypted backup</AlertDialogTitle>
-            <AlertDialogDescription>Enter the passphrase this backup was exported with.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <Label htmlFor="backup-passphrase" className="sr-only">
-            Backup passphrase
-          </Label>
-          <Input
-            id="backup-passphrase"
-            type="password"
-            autoComplete="current-password"
-            value={backupPassphrase}
-            onChange={(e) => setBackupPassphrase(e.target.value)}
-            className="h-11"
-          />
-          {unlockError && (
-            <Alert>
-              <AlertDescription>{unlockError}</AlertDescription>
-            </Alert>
-          )}
-          <AlertDialogFooter>
-            <Button onClick={() => void handleUnlockBackup()} className="h-11 w-full text-sm">
-              Unlock backup
-            </Button>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
-      <AlertDialog open={pendingImport !== null} onOpenChange={(open) => { if (!open) setPendingImport(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Import data?</AlertDialogTitle>
-            <AlertDialogDescription>{importSummary}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => void handleImportConfirm()}>Import</AlertDialogAction>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
+
     </div>
   );
 }

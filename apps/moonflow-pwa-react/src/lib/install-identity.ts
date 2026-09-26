@@ -9,3 +9,13 @@ export function isDiscreetInstall(pathname: string = window.location.pathname): 
 export function appName(pathname: string = window.location.pathname): 'Moonflow' | 'Planner' {
   return isDiscreetInstall(pathname) ? 'Planner' : 'Moonflow';
 }
+
+/** Running as the installed home-screen app, not a Safari tab? Matters
+ * because each has its own separate storage: data entered in a tab never
+ * reaches the installed app. */
+export function isStandalone(
+  nav: Navigator & { standalone?: boolean } = navigator,
+  matches: (query: string) => boolean = (q) => window.matchMedia(q).matches,
+): boolean {
+  return nav.standalone === true || matches('(display-mode: standalone)');
+}
