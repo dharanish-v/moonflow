@@ -120,7 +120,7 @@ describe('CalendarScreen', () => {
     await db.entries.put(existing);
     await renderCalendar({ lastPeriodStart: '2026-07-10' }, '2026-08', [existing]);
     fireEvent.click(screen.getByRole('button', { name: 'Mark a period' }));
-    fireEvent.click(screen.getByRole('button', { name: /^(August 3|3 August)/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^(August 3|3 August)(,|$)/ }));
     fireEvent.click(screen.getByRole('button', { name: /^(August 6|6 August)/ }));
     expect(screen.getByText('4 days selected')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Save as period' }));
