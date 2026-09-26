@@ -50,7 +50,6 @@ export interface Settings {
   pinLockEnabled: boolean;
   pinFailedAttempts: number;
   pinLockoutUntil: number | null;
-  soundEnabled: boolean;
   draftEntry: LogEntryInput | null;
   themeMode: ThemeMode;
   /** Pregnancy, breastfeeding, hormonal birth control… — logging continues,

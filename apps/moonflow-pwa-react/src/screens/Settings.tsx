@@ -30,13 +30,17 @@ import { eraseAllData } from '../lib/db';
 import { useSaveSettings } from '../state/useSaveSettings';
 import { isDiscreetInstall } from '../lib/install-identity';
 import { lastBackupLabel } from '../lib/backup-nudge';
+import { parseDate } from '../lib/cycle-math';
+
+/** Midday of the store's `today` — a stable 'now' for day-level labels. */
+const NOON_MS = 12 * 3_600_000;
 import { ExportSheet } from '../components/ExportSheet';
 import { RemindersSheet } from '../components/RemindersSheet';
 import { ImportBackup } from '../components/ImportBackup';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import type { Settings, ThemeMode } from '../lib/types';
-import { useAppDispatch, useAppState } from '../state/store';
+import { useAppDispatch, useAppState } from '../state/hooks';
 
 type EditField = 'avgCycleLength' | 'avgPeriodLength' | null;
 
@@ -47,7 +51,7 @@ const THEME_OPTIONS: ReadonlyArray<{ id: ThemeMode; label: string; Icon: typeof 
 ];
 
 export function SettingsScreen() {
-  const { settings, entries } = useAppState();
+  const { settings, entries, today } = useAppState();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [discreetOpen, setDiscreetOpen] = useState(false);
@@ -211,7 +215,7 @@ export function SettingsScreen() {
             <Separator />
           </>
         )}
-        <SettingsRowButton icon={<DownloadIcon className="size-4" />} label="Export data" value={lastBackupLabel(settings.lastBackupAt, Date.now())} onClick={() => setExportOpen(true)} />
+        <SettingsRowButton icon={<DownloadIcon className="size-4" />} label="Export data" value={lastBackupLabel(settings.lastBackupAt, parseDate(today).getTime() + NOON_MS)} onClick={() => setExportOpen(true)} />
         <Separator />
         <ImportBackup>
           {(pick) => (

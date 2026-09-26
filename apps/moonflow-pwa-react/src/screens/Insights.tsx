@@ -22,7 +22,7 @@ import { searchEntries } from '../lib/search';
 import { formatHeaderDate } from '../lib/log-entry';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { useAppState } from '../state/store';
+import { useAppState } from '../state/hooks';
 
 /** Matches the chart container's h-16. */
 const CHART_HEIGHT_PX = 64;

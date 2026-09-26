@@ -163,6 +163,9 @@ Review (WebKit 26.6, both themes, production build): lazy onboarding with instal
 
 Review (WebKit 26.6, seeded 5-cycle history incl. a 10-day period): FIGO nudge + urgent-care line, symptom timing ('Cramps usually around days 1–2'), search, doctor report (screen + print media, black on white), 6-event neutral .ics, tags, pause. Caught and fixed: the 80%-opaque glass sheet let underlying text show through where WebKit didn't render the blur (now 95%, guarded by a test).
 
+## Phase 12 — Everything left from the audit
+**T72** Dead code + lint warnings (M3) · **T73** No theme flash at launch (D19) · **T74** Today's outline coexists with peak/predicted (D20) · **T75** Quote rolls at local midnight (D16) · **T76** Flow not by colour alone in Calendar (I9) · **T77** "New version — tap to update" prompt (A5) · **T78** "Did you miss a period around X?" prompt (E2) · **T79** Clear-day → Undo; Clear moved away from Save (F4/F12) · **T80** "Same as yesterday" + save-on-close offer (F3) · **T81** Drag across Calendar days to mark a period (F2) · **T82** Native iOS date wheel in onboarding (H5) · **T83** Shortcut deep links `/#/log?flow=…` for iOS Shortcuts/Action Button (H7) · **T84** Static launch shell / splash (G8/J4) · **T85** Service-worker survives a 404 on `sw.js` (L6) · **T86** design-system.md rewritten to match the shipped app.
+
 ---
 
 ## Backlog — V2 & Explorations

@@ -16,7 +16,7 @@ import { PIN_RELOCK_AFTER_MINUTES } from '../lib/constants';
 import { needsUnlock } from '../lib/pin-auth';
 import { switchDatabase } from '../lib/db';
 import { PinUnlockScreen } from '../screens/PinUnlock';
-import { useAppDispatch, useAppState } from '../state/store';
+import { useAppDispatch, useAppState } from '../state/hooks';
 import { BootErrorScreen, SplashScreen } from './placeholders';
 
 // First run only — keeps the date-picker library out of every later launch.
@@ -55,27 +55,24 @@ export function AppGate({ children, tabBar }: { children: ReactNode; tabBar?: Re
   // is active.
   useResolvedTheme(settings.themeMode);
 
-  const [hasResolvedLock, setHasResolvedLock] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
-  const deepLinkTargetRef = useRef<string | null>(null);
+  // null = not resolved yet. Resolved exactly once per boot, not on every
+  // settings change, so turning the PIN lock on in Settings doesn't itself
+  // lock the screen (re-locking is the Page Visibility behaviour below).
+  // Resolved during render (React's "adjust state from props" pattern)
+  // rather than in an effect.
+  const [isLocked, setIsLocked] = useState<boolean | null>(null);
+  // The deep link the app was opened with — read from the raw hash at mount,
+  // before any route can mount or the router can diverge from it.
+  const [initialHash] = useState(() => window.location.hash.replace(/^#/, '') || '/');
+  const [deepLinkTarget, setDeepLinkTarget] = useState<string | null>(null);
   const lastRouteRef = useRef('/');
 
-  // Resolve the lock state exactly once, right after boot — not on every
-  // settings change, so toggling the PIN-lock feature in Settings doesn't
-  // itself trigger a re-lock (that's the distinct Page Visibility behavior
-  // below).
-  useEffect(() => {
-    if (!booted || hasResolvedLock) return;
+  if (booted && isLocked === null) {
     const locked = needsUnlock(settings);
-    if (locked) {
-      // Read the raw hash directly — before Routes ever mounts and before
-      // the router can diverge from it (back/forward-mashing while locked).
-      // Deliberately not useLocation() here; see file header.
-      deepLinkTargetRef.current = window.location.hash.replace(/^#/, '') || '/';
-    }
     setIsLocked(locked);
-    setHasResolvedLock(true);
-  }, [booted, hasResolvedLock, settings]);
+    if (locked) setDeepLinkTarget(initialHash);
+  }
+  const hasResolvedLock = isLocked !== null;
 
   // Re-lock after PIN_RELOCK_AFTER_MINUTES spent backgrounded (Page Visibility API).
   useEffect(() => {
@@ -100,14 +97,13 @@ export function AppGate({ children, tabBar }: { children: ReactNode; tabBar?: Re
   /** Forgot-PIN erase finished: drop the lock and re-read the (now empty)
    * database, which lands on onboarding. */
   function handleErased() {
-    setIsLocked(false);
-    setHasResolvedLock(false);
+    setIsLocked(null);
     dispatch({ type: 'BOOT_RETRY' });
   }
 
   async function handleUnlock(kind: 'real' | 'duress' = 'real') {
-    const target = deepLinkTargetRef.current ?? lastRouteRef.current;
-    deepLinkTargetRef.current = null;
+    const target = deepLinkTarget ?? lastRouteRef.current;
+    setDeepLinkTarget(null);
     if (kind === 'duress') {
       // Swap to the decoy database and re-read from it; the real data is
       // never loaded into this session again until the app is relaunched.

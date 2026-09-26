@@ -10,7 +10,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
 import { addDays, derivePeriods, diffDays, formatDate, parseDate } from '../lib/cycle-math';
 import { computeForecast } from '../lib/forecast';
 import { FERTILE_DISCLAIMER, formatDateRange } from '../lib/home-status';
-import { useAppDispatch, useAppState } from '../state/store';
+import { useAppDispatch, useAppState } from '../state/hooks';
 
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];

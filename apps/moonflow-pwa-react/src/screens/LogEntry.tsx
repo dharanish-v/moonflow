@@ -35,7 +35,7 @@ import { Label } from '../components/ui/label';
 import { MAX_TAG_LENGTH } from '../lib/import';
 import { Textarea } from '../components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
-import { MOOD_ICONS } from '../components/icons';
+import { MOOD_ICONS } from '../components/mood-icons';
 import { FLOW_OPTIONS, MOOD_OPTIONS, PERIOD_FLOW_LEVELS, SYMPTOM_OPTIONS } from '../lib/constants';
 import { todayString } from '../lib/cycle-math';
 import { deleteEntryAndClearDraft, saveEntryAndClearDraft } from '../lib/db';
@@ -43,7 +43,7 @@ import { useSaveSettings } from '../state/useSaveSettings';
 import { formatHeaderDate, resolveInitialDraft } from '../lib/log-entry';
 import type { FlowId, LogEntryInput, MoodId, SymptomId } from '../lib/types';
 import { useDraftAutosave } from '../hooks/useDraftAutosave';
-import { useAppDispatch, useAppState } from '../state/store';
+import { useAppDispatch, useAppState } from '../state/hooks';
 
 const ORIGIN_PATH = { home: '/', calendar: '/calendar', insights: '/insights' } as const;
 

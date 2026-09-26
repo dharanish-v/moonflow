@@ -2,11 +2,11 @@
 // by Settings and onboarding (T60): pick a file → (passphrase, if it's an
 // encrypted backup) → confirm what will be imported → write → re-read.
 // Render-prop trigger so each screen supplies its own button.
-import { type ChangeEvent, type ReactNode, useRef, useState } from 'react';
+import { type ChangeEvent, type ReactNode, useState } from 'react';
 import { decryptBackup, isEncryptedBackup } from '../lib/backup-crypto';
 import { importData, loadAllEntries, loadAllSettings } from '../lib/db';
 import { type ImportPayload, parseImportPayload } from '../lib/import';
-import { useAppDispatch } from '../state/store';
+import { useAppDispatch } from '../state/hooks';
 import { Alert, AlertDescription } from './ui/alert';
 import {
   AlertDialog,
@@ -37,12 +37,18 @@ function summarize({ payload, skippedEntries }: Pending): string {
 
 export function ImportBackup({ children }: { children: (pick: () => void) => ReactNode }) {
   const dispatch = useAppDispatch();
-  const inputRef = useRef<HTMLInputElement>(null);
+  // Held in state (a callback ref), not useRef, so the render-prop trigger
+  // never reads a ref during render.
+  const [input, setInput] = useState<HTMLInputElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [locked, setLocked] = useState<string | null>(null);
   const [passphrase, setPassphrase] = useState('');
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending | null>(null);
+
+  function pick() {
+    input?.click();
+  }
 
   function stage(json: string) {
     const result = parseImportPayload(json);
@@ -96,9 +102,9 @@ export function ImportBackup({ children }: { children: (pick: () => void) => Rea
 
   return (
     <>
-      {children(() => inputRef.current?.click())}
+      {children(pick)}
       <input
-        ref={inputRef}
+        ref={setInput}
         type="file"
         accept="application/json,.json"
         aria-label="Import data file"

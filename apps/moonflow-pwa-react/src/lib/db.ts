@@ -87,7 +87,6 @@ export const SETTINGS_DEFAULTS: Settings = {
   pinLockEnabled: false,
   pinFailedAttempts: 0,
   pinLockoutUntil: null,
-  soundEnabled: false,
   draftEntry: null,
   themeMode: 'system',
   lastBackupAt: null,

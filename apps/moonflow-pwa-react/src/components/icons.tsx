@@ -247,10 +247,3 @@ export function MoodHappyIcon(props: IconProps) {
   );
 }
 
-export const MOOD_ICONS = {
-  cry: MoodCryIcon,
-  sad: MoodSadIcon,
-  neutral: MoodNeutralIcon,
-  smile: MoodSmileIcon,
-  happy: MoodHappyIcon,
-} as const;

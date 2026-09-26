@@ -5,7 +5,7 @@
 import { useCallback } from 'react';
 import { saveSettings } from '../lib/db';
 import type { Settings } from '../lib/types';
-import { useAppDispatch } from './store';
+import { useAppDispatch } from './hooks';
 
 export function useSaveSettings() {
   const dispatch = useAppDispatch();

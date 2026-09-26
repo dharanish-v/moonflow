@@ -8,7 +8,7 @@ import { Button } from '../components/ui/button';
 import { parseDate } from '../lib/cycle-math';
 import { healthNudges } from '../lib/health-nudges';
 import { buildReport } from '../lib/report';
-import { useAppState } from '../state/store';
+import { useAppState } from '../state/hooks';
 
 const fmt = (d: string) => parseDate(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 

@@ -7,7 +7,7 @@
 // component — it needs the period/fertile/predicted dots this generic
 // picker has no concept of (see Calendar.tsx's own header comment).
 import { DayPicker, type DayPickerProps } from 'react-day-picker';
-import { buttonVariants } from './button';
+import { buttonVariants } from './button-variants';
 import { ChevronLeftIcon, ChevronRightIcon } from '../icons';
 import { cn } from 'cn';
 

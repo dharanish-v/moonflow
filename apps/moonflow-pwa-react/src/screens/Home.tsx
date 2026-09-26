@@ -28,7 +28,7 @@ import { computeHomeStatus } from '../lib/home-status';
 import { quoteOfTheDay } from '../lib/quotes';
 import { backupNudge } from '../lib/backup-nudge';
 import { moonPhase } from '../lib/lunar';
-import { useAppDispatch, useAppState } from '../state/store';
+import { useAppDispatch, useAppState } from '../state/hooks';
 
 /** How long the just-logged acknowledgment stays up before it self-clears. */
 const LOGGED_ACK_DURATION_MS = 2600;

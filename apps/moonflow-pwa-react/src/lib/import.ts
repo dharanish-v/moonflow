@@ -3,7 +3,7 @@
 // *data* (entries + lastPeriodStart/avgCycleLength/avgPeriodLength) — never
 // the device-specific settings an export payload also happens to carry
 // (pinHash, pinLockEnabled, pinFailedAttempts, pinLockoutUntil, draftEntry,
-// soundEnabled, themeMode). Importing someone else's PIN hash onto this
+// themeMode). Importing someone else's PIN hash onto this
 // device, or clobbering a half-finished log draft, would be a real
 // security/data-loss surprise a "bring my period data to my new phone"
 // action shouldn't cause.

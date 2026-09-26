@@ -4,9 +4,9 @@
 import { useState } from 'react';
 import { PIN_LOCKOUT_AFTER_ATTEMPTS } from '../lib/constants';
 import { evaluatePinAttempt, hashPin, verifyPin } from '../lib/pin-auth';
-import { useAppState } from '../state/store';
+import { useAppState } from '../state/hooks';
 import { useSaveSettings } from '../state/useSaveSettings';
-import { useAppDispatch } from '../state/store';
+import { useAppDispatch } from '../state/hooks';
 
 export type PinOutcome = 'real' | 'duress' | null;
 
@@ -67,6 +67,7 @@ export function usePinAttempt({ allowDuress = false }: { allowDuress?: boolean }
     return null;
   }
 
-  const lockedUntil = settings.pinLockoutUntil && settings.pinLockoutUntil > Date.now() ? settings.pinLockoutUntil : null;
+  // The form's countdown treats a lockout time in the past as no lockout.
+  const lockedUntil = settings.pinLockoutUntil;
   return { attempt, error, lockedUntil, busy };
 }

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { PinEntryForm } from '../components/PinEntryForm';
 import { hashPin, verifyPin } from '../lib/pin-auth';
-import { useAppState } from '../state/store';
+import { useAppState } from '../state/hooks';
 import { useSaveSettings } from '../state/useSaveSettings';
 
 export function DuressSetupScreen() {

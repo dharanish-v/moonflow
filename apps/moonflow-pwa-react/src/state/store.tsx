@@ -4,13 +4,12 @@
 // strictly cheaper version of it). Split State/Dispatch contexts so
 // dispatch-only components never re-render on state changes.
 
-import { createContext, type Dispatch, type ReactNode, useContext, useEffect, useReducer, useRef } from 'react';
+import { type ReactNode, useEffect, useReducer, useRef } from 'react';
 import { todayString } from '../lib/cycle-math';
 import { loadAllEntries, loadAllSettings } from '../lib/db';
-import { type Action, type AppState, initialState, reducer } from './actions';
+import { type AppState, initialState, reducer } from './actions';
+import { DispatchContext, StateContext } from './hooks';
 
-const StateContext = createContext<AppState | null>(null);
-const DispatchContext = createContext<Dispatch<Action> | null>(null);
 
 export interface StateProviderProps {
   children: ReactNode;
@@ -79,16 +78,4 @@ export function StateProvider({ children, testState }: StateProviderProps) {
       <DispatchContext.Provider value={dispatch}>{children}</DispatchContext.Provider>
     </StateContext.Provider>
   );
-}
-
-export function useAppState(): AppState {
-  const ctx = useContext(StateContext);
-  if (!ctx) throw new Error('useAppState must be used within StateProvider');
-  return ctx;
-}
-
-export function useAppDispatch(): Dispatch<Action> {
-  const ctx = useContext(DispatchContext);
-  if (!ctx) throw new Error('useAppDispatch must be used within StateProvider');
-  return ctx;
 }

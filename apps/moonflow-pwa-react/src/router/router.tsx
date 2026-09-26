@@ -9,44 +9,25 @@
 // is the one place that can sit "around" every screen (splash/lock/
 // onboarding vs. the real Outlet) while still being inside router context.
 import {
-  Navigate,
-  Outlet,
   createHashHistory,
   createRootRoute,
   createRoute,
   createRouter,
   lazyRouteComponent,
 } from '@tanstack/react-router';
-import { TabBar } from '../components/TabBar';
 // Home is the launch screen and stays in the main bundle; everything else
 // loads on first visit (T62).
 import { HomeScreen } from '../screens/Home';
-import { AppGate } from './AppGate';
+import { NotFound, RootLayout } from './RootLayout';
 import { isFutureDate, isRealDate } from '../lib/dates';
 import { AppErrorScreen } from './placeholders';
-
-// #app-content wraps AppGate (every branch: splash/lock/onboarding/real
-// screens all get its padding + flex-column treatment uniformly) and is the
-// one element that actually scrolls (index.css). TabBar sits as its
-// *sibling*, not its child — real bug, caught live: with TabBar nested
-// inside the scrolling box, it visually scrolled away with the content
-// instead of staying pinned, invisible on every screen until one had
-// content tall enough to actually scroll (Insights' recent-logs list was
-// the first).
-function RootLayout() {
-  return (
-    <AppGate tabBar={<TabBar />}>
-      <Outlet />
-    </AppGate>
-  );
-}
 
 export const rootRoute = createRootRoute({
   component: RootLayout,
   // Mirrors the old <Route path="*" element={<Navigate to="/" replace />} />
   // catch-all — an unrecognized hash (hand-edited, or a stale deep link)
   // lands on Home instead of a blank error screen.
-  notFoundComponent: () => <Navigate to="/" replace />,
+  notFoundComponent: NotFound,
   errorComponent: AppErrorScreen,
 });
 

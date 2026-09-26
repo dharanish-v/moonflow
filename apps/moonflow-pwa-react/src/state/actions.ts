@@ -7,8 +7,6 @@ import { todayString } from '../lib/cycle-math';
 import { SETTINGS_DEFAULTS } from '../lib/db';
 import type { Entry, Settings } from '../lib/types';
 
-export type LogFocusSection = 'flow' | 'symptom' | 'mood' | null;
-
 export interface AppState {
   /** Whether the initial IndexedDB load has finished. */
   booted: boolean;
@@ -23,8 +21,6 @@ export interface AppState {
   /** "YYYY-MM-DD" — kept current by the store (midnight + resume), so every
    * screen re-renders when the day changes while the app stays open. */
   today: string;
-  editingDate: string | null;
-  logFocusSection: LogFocusSection;
 }
 
 export type Action =
@@ -36,9 +32,7 @@ export type Action =
   | { type: 'REMOVE_ENTRY'; date: string }
   | { type: 'PATCH_SETTINGS'; patch: Partial<Settings> }
   | { type: 'SET_CALENDAR_MONTH'; month: string }
-  | { type: 'DAY_CHANGED'; today: string }
-  | { type: 'SET_EDITING_DATE'; date: string | null }
-  | { type: 'SET_LOG_FOCUS_SECTION'; section: LogFocusSection };
+  | { type: 'DAY_CHANGED'; today: string };
 
 function currentMonth(): string {
   return todayString().slice(0, 7);
@@ -52,8 +46,6 @@ export const initialState: AppState = {
   settings: SETTINGS_DEFAULTS,
   calendarMonth: currentMonth(),
   today: todayString(),
-  editingDate: null,
-  logFocusSection: null,
 };
 
 export function reducer(state: AppState, action: Action): AppState {
@@ -86,10 +78,6 @@ export function reducer(state: AppState, action: Action): AppState {
     }
     case 'SET_CALENDAR_MONTH':
       return { ...state, calendarMonth: action.month };
-    case 'SET_EDITING_DATE':
-      return { ...state, editingDate: action.date };
-    case 'SET_LOG_FOCUS_SECTION':
-      return { ...state, logFocusSection: action.section };
     default:
       return state;
   }
