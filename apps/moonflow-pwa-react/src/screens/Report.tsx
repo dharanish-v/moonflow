@@ -44,7 +44,9 @@ export function ReportScreen() {
         </div>
         <div>
           <dt className="text-muted-foreground">Cycle range</dt>
-          <dd className="font-medium">{r.shortestCycle === null ? '—' : `${r.shortestCycle}–${r.longestCycle} days`}</dd>
+          <dd className="font-medium">
+            {r.shortestCycle === null ? '—' : r.shortestCycle === r.longestCycle ? days(r.shortestCycle) : `${r.shortestCycle}–${r.longestCycle} days`}
+          </dd>
         </div>
         <div>
           <dt className="text-muted-foreground">Typical period</dt>

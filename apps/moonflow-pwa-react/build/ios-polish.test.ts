@@ -34,3 +34,11 @@ describe('iOS polish', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe('glass sheets stay legible', () => {
+  it('keeps the drawer at least 95% opaque — blur may not render behind a transformed sheet in WebKit', () => {
+    const src = readFileSync(path.join(ROOT, 'src/components/ui/drawer.tsx'), 'utf8');
+    const m = src.match(/bg-popover\/(\d+)/);
+    expect(m && Number(m[1])).toBeGreaterThanOrEqual(95);
+  });
+});

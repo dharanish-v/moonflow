@@ -161,6 +161,8 @@ Review (WebKit 26.6, both themes, production build): lazy onboarding with instal
 ## Phase 11 — Features ✅ done
 **T64** ✅ FIGO health nudges · **T65** ✅ Pause predictions mode · **T66** ✅ Printable doctor report · **T67** ✅ `.ics` export of predictions with reminders (replaces dead Reminders toggle) · **T68** ✅ Custom tags · **T69** ✅ Symptom × cycle-day insights, cycle-length trend · **T70** ✅ Notes search · **T71** ✅ Docs refresh (README, ADRs 034+, design-system, technical-design, qa-checklist, copy-deck) + CI lint.
 
+Review (WebKit 26.6, seeded 5-cycle history incl. a 10-day period): FIGO nudge + urgent-care line, symptom timing ('Cramps usually around days 1–2'), search, doctor report (screen + print media, black on white), 6-event neutral .ics, tags, pause. Caught and fixed: the 80%-opaque glass sheet let underlying text show through where WebKit didn't render the blur (now 95%, guarded by a test).
+
 ---
 
 ## Backlog — V2 & Explorations
