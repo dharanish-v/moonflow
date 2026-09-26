@@ -18,6 +18,7 @@
 import { addDays, derivePeriods, diffDays, formatDate } from './cycle-math';
 import { MAX_PERIOD_LENGTH, MIN_PERIOD_LENGTH, PERIOD_GAP_TOLERANCE_DAYS } from './constants';
 import type { Entry, Period, Settings } from './types';
+import { personalLutealLength } from './sympto-thermal';
 
 export const MIN_VALID_CYCLE_DAYS = 15;
 export const MAX_VALID_CYCLE_DAYS = 90;
@@ -72,6 +73,9 @@ export interface Forecast {
   irregular: boolean;
   /** Cycles vary too much for a meaningful fertile window (none is shown). */
   fertileTooUncertain: boolean;
+  /** Days from ovulation to the next period used for the fertile window. */
+  lutealLength: number;
+  lutealSource: 'default' | 'personal';
 }
 
 function median(numbers: number[]): number {
@@ -94,7 +98,7 @@ function cycleStarts(periods: Period[], lastPeriodStart: string | null): string[
 }
 
 export function computeForecast(
-  entries: Array<Pick<Entry, 'date' | 'flow'>>,
+  entries: Array<Pick<Entry, 'date' | 'flow'> & Partial<Entry>>,
   settings: Pick<Settings, 'lastPeriodStart' | 'avgCycleLength' | 'avgPeriodLength'> & {
     predictionsPaused?: boolean;
     confirmedLongCycles?: string[];
@@ -128,6 +132,8 @@ export function computeForecast(
     suspectedMissedCycles: [],
     irregular: false,
     fertileTooUncertain: false,
+    lutealLength: OVULATION_BEFORE_PERIOD_DAYS,
+    lutealSource: 'default',
   };
   if (starts.length === 0) return empty;
 
@@ -186,15 +192,19 @@ export function computeForecast(
   else if (diffDays(todayStr, next.rangeEnd) >= 0) status = 'due';
   else status = 'late';
 
-  const peak = addDays(next.date, -OVULATION_BEFORE_PERIOD_DAYS);
+  // Measured luteal phase (confirmed ovulations, sympto-thermal.ts) beats the
+  // population mean once there is one.
+  const personalLuteal = entries.some((e) => typeof e.temperature === 'number') ? personalLutealLength(entries as Entry[]) : null;
+  const luteal = personalLuteal ?? OVULATION_BEFORE_PERIOD_DAYS;
+  const peak = addDays(next.date, -luteal);
   const fertileDays = diffDays(next.rangeStart, next.rangeEnd) + FERTILE_BEFORE_OVULATION_DAYS + FERTILE_AFTER_OVULATION_DAYS + 1;
   // A "window" wider than two weeks tells the user nothing; say so instead.
   const fertileTooUncertain = fertileDays > MAX_FERTILE_WINDOW_DAYS;
   const fertile: FertileWindow | null =
     status !== 'late' && !fertileTooUncertain
       ? {
-          start: addDays(next.rangeStart, -OVULATION_BEFORE_PERIOD_DAYS - FERTILE_BEFORE_OVULATION_DAYS),
-          end: addDays(next.rangeEnd, -OVULATION_BEFORE_PERIOD_DAYS + FERTILE_AFTER_OVULATION_DAYS),
+          start: addDays(next.rangeStart, -luteal - FERTILE_BEFORE_OVULATION_DAYS),
+          end: addDays(next.rangeEnd, -luteal + FERTILE_AFTER_OVULATION_DAYS),
           peak,
         }
       : null;
@@ -225,6 +235,8 @@ export function computeForecast(
     suspectedMissedCycles,
     irregular,
     fertileTooUncertain: status !== 'late' && fertileTooUncertain,
+    lutealLength: luteal,
+    lutealSource: personalLuteal !== null ? 'personal' : 'default',
   };
 }
 
