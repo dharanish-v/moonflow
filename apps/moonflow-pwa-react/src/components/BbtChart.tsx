@@ -72,7 +72,7 @@ export function BbtChart({ entries, unit }: { entries: Entry[]; unit: Temperatur
 
       <svg viewBox={`0 0 ${W} ${H + 14}`} className="w-full" role="img" aria-label={summary}>
         {[lo, (lo + hi) / 2, hi].map((v) => (
-          <text key={v} x={PAD.l - 4} y={y(v) + 3} textAnchor="end" className="fill-muted-foreground text-[8px]">
+          <text key={v} x={PAD.l - 4} y={y(v) + 3} textAnchor="end" fontSize="8" className="fill-muted-foreground">
             {v.toFixed(unit === 'F' ? 1 : 2)}
           </text>
         ))}
