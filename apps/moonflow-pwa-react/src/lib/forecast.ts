@@ -27,6 +27,7 @@ export const IRREGULAR_SPREAD_DAYS = 8;
 export const OVULATION_BEFORE_PERIOD_DAYS = 13;
 const FERTILE_BEFORE_OVULATION_DAYS = 5;
 const FERTILE_AFTER_OVULATION_DAYS = 1;
+const MAX_FERTILE_WINDOW_DAYS = 14;
 /** Minimum half-width of any predicted range. */
 const MIN_RANGE_HALF_DAYS = 2;
 /** Estimates (no confirmed history) get a wider honest range. */
@@ -69,6 +70,8 @@ export interface Forecast {
   usedCycleLengths: number[];
   suspectedMissedCycles: Array<{ start: string; length: number }>;
   irregular: boolean;
+  /** Cycles vary too much for a meaningful fertile window (none is shown). */
+  fertileTooUncertain: boolean;
 }
 
 function median(numbers: number[]): number {
@@ -124,6 +127,7 @@ export function computeForecast(
     usedCycleLengths: [],
     suspectedMissedCycles: [],
     irregular: false,
+    fertileTooUncertain: false,
   };
   if (starts.length === 0) return empty;
 
@@ -151,11 +155,16 @@ export function computeForecast(
     const typical = Math.round(median(usedCycleLengths));
     const shortest = Math.min(...usedCycleLengths);
     const longest = Math.max(...usedCycleLengths);
+    // "Irregular" is FIGO's spread measure; the *range* is robust instead —
+    // median ± 1.5 × median absolute deviation — so one outlier cycle can't
+    // stretch a prediction to a month wide.
     irregular = longest - shortest >= IRREGULAR_SPREAD_DAYS;
+    const mad = median(usedCycleLengths.map((n) => Math.abs(n - typical)));
+    const half = Math.max(MIN_RANGE_HALF_DAYS, Math.round(1.5 * mad));
     next = {
       date: addDays(lastStart, typical),
-      rangeStart: addDays(lastStart, Math.min(shortest, typical - MIN_RANGE_HALF_DAYS)),
-      rangeEnd: addDays(lastStart, Math.max(longest, typical + MIN_RANGE_HALF_DAYS)),
+      rangeStart: addDays(lastStart, typical - half),
+      rangeEnd: addDays(lastStart, typical + half),
       confidence: 'confirmed',
     };
   } else {
@@ -178,8 +187,11 @@ export function computeForecast(
   else status = 'late';
 
   const peak = addDays(next.date, -OVULATION_BEFORE_PERIOD_DAYS);
+  const fertileDays = diffDays(next.rangeStart, next.rangeEnd) + FERTILE_BEFORE_OVULATION_DAYS + FERTILE_AFTER_OVULATION_DAYS + 1;
+  // A "window" wider than two weeks tells the user nothing; say so instead.
+  const fertileTooUncertain = fertileDays > MAX_FERTILE_WINDOW_DAYS;
   const fertile: FertileWindow | null =
-    status !== 'late'
+    status !== 'late' && !fertileTooUncertain
       ? {
           start: addDays(next.rangeStart, -OVULATION_BEFORE_PERIOD_DAYS - FERTILE_BEFORE_OVULATION_DAYS),
           end: addDays(next.rangeEnd, -OVULATION_BEFORE_PERIOD_DAYS + FERTILE_AFTER_OVULATION_DAYS),
@@ -212,6 +224,7 @@ export function computeForecast(
     usedCycleLengths,
     suspectedMissedCycles,
     irregular,
+    fertileTooUncertain: status !== 'late' && fertileTooUncertain,
   };
 }
 

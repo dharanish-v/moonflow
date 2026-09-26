@@ -323,3 +323,8 @@ FIGO-based health nudges (lib/health-nudges.ts) read the same forecast.
 - with the host completely gone, the app still launches from cache.
 
 It also caught a real bug: update detection was decided once at launch, so an update arriving in the same session as the first install was never announced. Detection is now per worker (an active worker already exists), and the page reloads after any applied update.
+
+### ADR-049: Robust prediction ranges; no fertile window when it would be meaningless
+**Status:** Accepted 2026-09-26 (refines ADR-039)
+**Context:** A WebKit review confirmed one 56-day cycle as real. The min–max range became 16 Sep–16 Oct and the "fertile window" 37 days: technically honest, useless in practice.
+**Decision:** The predicted range is median ± max(2, 1.5 × median absolute deviation). "Irregular" is still FIGO's spread ≥8 days. If the fertile window would span more than 14 days, none is shown, and the Calendar says cycles vary too much to estimate one.

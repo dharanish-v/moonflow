@@ -114,8 +114,9 @@ describe('computeForecast — confirmed predictions', () => {
     const f = computeForecast([...period('2026-03-01'), ...period('2026-03-25'), ...period('2026-05-01'), ...period('2026-05-27')], SETTINGS, day('2026-06-01'));
     // cycles 24, 37, 26 → spread 13
     expect(f.irregular).toBe(true);
-    expect(f.next?.rangeStart).toBe('2026-06-20'); // 27 May + 24
-    expect(f.next?.rangeEnd).toBe('2026-07-03'); // 27 May + 37
+    // median 26, MAD 2 → ±3 days (robust: the 37-day cycle doesn't stretch it)
+    expect(f.next?.rangeStart).toBe('2026-06-19');
+    expect(f.next?.rangeEnd).toBe('2026-06-25');
   });
 });
 
@@ -174,5 +175,30 @@ describe('missed-log prompts (T78)', () => {
   it('stays quiet about a gap the user already confirmed was real', async () => {
     const { missedPeriodPrompts } = await import('./forecast');
     expect(missedPeriodPrompts(history, SETTINGS, ['2026-02-26'], day('2026-05-25'))).toEqual([]);
+  });
+});
+
+describe('robust ranges (Phase 12 review finding)', () => {
+  it('one confirmed outlier cycle does not blow up the predicted range', () => {
+    // 28, 28, 56 (confirmed real), 28
+    const f = computeForecast(
+      [...period('2026-04-03'), ...period('2026-05-01'), ...period('2026-05-29'), ...period('2026-07-24'), ...period('2026-08-21')],
+      { ...SETTINGS, confirmedLongCycles: ['2026-05-29'] },
+      day('2026-08-30'),
+    );
+    expect(f.irregular).toBe(true); // FIGO spread still reported
+    expect(f.next?.rangeStart).toBe('2026-09-16'); // 21 Aug + 26
+    expect(f.next?.rangeEnd).toBe('2026-09-20'); // 21 Aug + 30
+  });
+
+  it('shows no fertile window at all when it would be implausibly wide', () => {
+    const f = computeForecast(
+      [...period('2026-01-01'), ...period('2026-01-22'), ...period('2026-03-05'), ...period('2026-03-27'), ...period('2026-05-10')],
+      SETTINGS,
+      day('2026-05-15'),
+    );
+    // cycles 21, 42, 22, 44 → wide spread, MAD large
+    expect(f.fertile).toBeNull();
+    expect(f.fertileTooUncertain).toBe(true);
   });
 });

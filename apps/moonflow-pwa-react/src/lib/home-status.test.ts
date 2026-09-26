@@ -89,9 +89,9 @@ describe('computeHomeStatus', () => {
     const status = computeHomeStatus(
       [med('2026-03-01'), med('2026-03-25'), med('2026-05-01'), med('2026-05-27')],
       BASE,
-      new Date(2026, 5, 1),
+      new Date(2026, 5, 15), // after the fertile window, before the range
     );
-    expect(status.detail).toMatch(/^Expected 20 Jun–3 Jul · cycles vary$/);
+    expect(status.detail).toMatch(/^Expected 19–25 Jun · cycles vary$/);
   });
 });
 

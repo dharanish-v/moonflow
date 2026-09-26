@@ -113,7 +113,7 @@ Icons are lucide plus a few custom SVGs (`components/icons.tsx`). Every icon-onl
 
 **Cycle maths** (lib/forecast.ts, ADR-039)
 - Flow options are None / Spotting / Light / Medium / Heavy. Only Light and above count toward a period, with a 2-day gap tolerance.
-- Valid cycles are 15–90 days. Predictions use the last 6, the median, and always a range.
+- Valid cycles are 15–90 days. Predictions use the last 6 and the median, and always show a range: median ± max(2, 1.5×MAD) days, so one outlier can't stretch it (ADR-049). No fertile window is shown if it would span more than 14 days.
 - "Confirmed" needs ≥2 valid cycles. A cycle ≥1.6× the median counts as a likely missed log: it's excluded, and the user is asked about it (confirmed long cycles count again).
 - Irregular means a spread of ≥8 days (FIGO). Past the range is "late · N days".
 - Ovulation is taken as 13 days before the period; the fertile window is widened by the range and labelled "not birth control".

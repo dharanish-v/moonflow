@@ -348,6 +348,12 @@ export function CalendarScreen() {
         )}
       </div>
 
+      {forecast.fertileTooUncertain && (
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          Your cycles vary too much to estimate a fertile window.
+        </p>
+      )}
+
       {forecast.status === 'paused' && (
         <p className="mt-2 text-center text-xs text-muted-foreground">Predictions are paused — only what you've logged is shown.</p>
       )}

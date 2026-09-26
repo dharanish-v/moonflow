@@ -140,6 +140,13 @@ describe('CalendarScreen', () => {
     expect(screen.getByRole('button', { name: 'Mark a period' })).toBeInTheDocument();
   });
 
+  it('says so when cycles vary too much for a fertile window', async () => {
+    const d = (date: string) => ({ date, flow: 'medium' as const, symptoms: [], mood: null, note: '', updatedAt: 0 });
+    const entries = ['2026-04-01', '2026-04-22', '2026-06-03', '2026-06-25', '2026-08-08'].map(d); // 21, 42, 22, 44 days
+    await renderCalendar({ lastPeriodStart: '2026-04-01' }, '2026-08', entries);
+    expect(screen.getByText(/vary too much to estimate a fertile window/i)).toBeInTheDocument();
+  });
+
   it('renders without crashing when there is no start date at all', async () => {
     await renderCalendar({ lastPeriodStart: null }, '2026-08');
     expect(screen.getByRole('button', { name: /^(August 20|20 August)/ })).toBeInTheDocument();
