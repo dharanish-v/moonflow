@@ -17,15 +17,17 @@ import { ChartBarIcon, ChevronRightIcon } from '../components/icons';
 import { parseDate } from '../lib/cycle-math';
 import { computeInsights, cycleBarHeight } from '../lib/insights';
 import { describeEntry } from '../lib/entry-summary';
+import { HEAVY_BLEEDING_ADVICE, healthNudges } from '../lib/health-nudges';
 import { useAppState } from '../state/store';
 
 /** Matches the chart container's h-16. */
 const CHART_HEIGHT_PX = 64;
 
 export function InsightsScreen() {
-  const { entries } = useAppState();
+  const { entries, settings } = useAppState();
   const navigate = useNavigate();
   const data = computeInsights(entries);
+  const nudges = healthNudges(entries, settings);
   const prefersReducedMotion = useReducedMotion();
   const barRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fillRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -157,6 +159,23 @@ export function InsightsScreen() {
             </>
           )}
         </div>
+      )}
+
+      {nudges.length > 0 && (
+        <section aria-labelledby="nudges-heading" className="mb-5">
+          <h2 id="nudges-heading" className="mb-2 text-sm font-medium text-foreground">
+            Worth knowing
+          </h2>
+          <div className="flex flex-col gap-2">
+            {nudges.map((n) => (
+              <Card key={n.id} className="gap-1 px-4 py-3">
+                <p className="text-sm font-medium text-foreground">{n.title}</p>
+                <p className="text-sm text-muted-foreground">{n.body}</p>
+              </Card>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">{HEAVY_BLEEDING_ADVICE}</p>
+        </section>
       )}
 
       {recentEntries.length > 0 && (
