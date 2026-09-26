@@ -19,6 +19,7 @@ import { HEAVY_BLEEDING_ADVICE, healthNudges } from '../lib/health-nudges';
 import { symptomTiming } from '../lib/symptom-timing';
 import { searchEntries } from '../lib/search';
 import { BbtChart } from '../components/BbtChart';
+import { CycleTrend, YearView } from '../components/YearView';
 import { STAGE_TEXT, perimenopauseStage, suggestPerimenopauseMode } from '../lib/perimenopause';
 import { useSaveSettings } from '../state/useSaveSettings';
 import { formatHeaderDate } from '../lib/log-entry';
@@ -118,6 +119,19 @@ export function InsightsScreen() {
             </>
           )}
         </div>
+      )}
+
+      {data.cyclesLogged > 0 && (
+        <section aria-labelledby="year-heading" className="mb-5">
+          <h2 id="year-heading" className="mb-2 text-sm font-medium text-foreground">
+            Your year
+          </h2>
+          <Card className="gap-3 px-3 py-3">
+            <YearView entries={entries} />
+            <CycleTrend entries={entries} />
+            <p className="text-xs text-muted-foreground">Shaded band: the typical 24–38 day cycle range. Rose dots fall outside it.</p>
+          </Card>
+        </section>
       )}
 
       {suggestMode && (
