@@ -113,8 +113,9 @@ describe('AppGate — onboarding', () => {
     // The date picker is shadcn's Popover+Calendar (react-day-picker), not a
     // native input — open it and pick today, the one day always enabled
     // and locatable without depending on the real wall-clock date's value.
-    fireEvent.click(await screen.findByRole('button', { name: /when did your last period start/i }));
-    fireEvent.click(await screen.findByRole('button', { name: /^today,/i }));
+    const date = new Date();
+    const iso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    fireEvent.change(await screen.findByLabelText(/when did your last period start/i), { target: { value: iso } });
     fireEvent.click(screen.getByRole('button', { name: 'Get started' }));
     expect(await screen.findByRole('navigation', { name: 'Primary' })).toBeInTheDocument();
   });

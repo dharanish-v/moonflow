@@ -56,3 +56,20 @@ describe('OnboardingScreen — new phone, not installed (T60)', () => {
     expect(screen.getByText(/add to home screen/i)).toBeInTheDocument();
   });
 });
+
+describe('OnboardingScreen — native date wheel (T82)', () => {
+  it('uses a native date input capped at today', async () => {
+    render(
+      <StateProvider testState={{}}>
+        <OnboardingScreen />
+      </StateProvider>,
+    );
+    const input = screen.getByLabelText(/when did your last period start/i);
+    expect(input).toHaveAttribute('type', 'date');
+    expect(input.getAttribute('max')).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(screen.getByRole('button', { name: 'Get started' })).toBeDisabled();
+    const { fireEvent } = await import('@testing-library/react');
+    fireEvent.change(input, { target: { value: '2026-09-01' } });
+    expect(screen.getByRole('button', { name: 'Get started' })).toBeEnabled();
+  });
+});

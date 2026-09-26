@@ -38,7 +38,7 @@ One person, on their own iPhone 17 (iOS 26). Values privacy strongly, prefers a 
 - Offer a discreet alternate home-screen icon, chosen at install time
 
 ## Non-Functional Requirements
-- **Performance:** launch JS ≤ ~125KB gzip with other screens lazy-loaded (ADR-043); initial load feels instant on a modern iPhone
+- **Performance:** launch JS (everything index.html loads) ~211KB gzip, other screens lazy-loaded (ADR-043/047); cached relaunch paints in ~130ms under 4× CPU throttle
 - **Privacy:** zero data leaves the device in V1 — no analytics, no tracking, no third-party network calls at runtime
 - **Accessibility:** usable with VoiceOver, respects Safari's text-zoom, meets WCAG AA contrast
 - **Reliability:** a draft log entry survives the app being backgrounded mid-entry; a failed save never silently loses data

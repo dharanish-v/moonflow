@@ -283,7 +283,7 @@ FIGO-based health nudges (lib/health-nudges.ts) read the same forecast.
 ### ADR-043: Lazy-load every screen but Home (replaces the ~150KB PRD target)
 **Status:** Accepted 2026-09-26
 **Decision:** Router screens use `lazyRouteComponent`; onboarding (react-day-picker) is `React.lazy`. All chunks stay in the service-worker precache.
-**Consequences:** Launch JS went from 250KB to 125KB gzip; offline use is unchanged.
+**Consequences:** The main chunk dropped to 125KB gzip, but the true launch cost (every chunk `index.html` preloads) is ~211KB gzip, down from 250KB — see ADR-047 for the correction. Offline use is unchanged.
 
 ### ADR-044: A contextual Home action replaces three quick actions
 **Status:** Accepted 2026-09-26 (supersedes design-system.md's "3 quick actions")
@@ -305,3 +305,9 @@ FIGO-based health nudges (lib/health-nudges.ts) read the same forecast.
 **Status:** Accepted 2026-09-26 (amends ADR-038)
 **Context:** பிறை ("crescent") was the only Tamil word in the app. It was decorative, unexplained and hidden from VoiceOver, so it read as odd rather than personal.
 **Decision:** Remove it. The moon illustration carries the identity on its own.
+
+### ADR-047: Correction — measure launch JS as everything index.html loads
+**Status:** Accepted 2026-09-26
+**Context:** ADR-043 reported "launch JS 250 → 125KB gzip". That counted only `main-*.js`. Rollup also moves shared code into separate chunks that `index.html` preloads at startup (dexie, motion-dom, React internals).
+**Decision:** The launch metric is the gzip total of every script `dist/index.html` references. It is currently ~211KB gzip across 13 files, down from ~250KB. The native date input (T82) removed react-day-picker and date-fns, shrinking the onboarding chunk from 72KB to 3KB.
+**Consequences:** The PRD's performance line now states the honest number.

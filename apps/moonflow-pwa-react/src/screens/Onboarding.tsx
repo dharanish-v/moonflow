@@ -3,11 +3,9 @@
 // AppGate.tsx and router.js's original reasoning for why onboarding/pin-lock
 // never get a URL.
 import { useState } from 'react';
-import { CalendarIcon } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Calendar } from '../components/ui/calendar';
+import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Stepper } from '../components/Stepper';
 import { CalendarDays } from 'lucide-react';
 import { MoonIcon } from '../components/icons';
@@ -19,7 +17,8 @@ import {
   MIN_CYCLE_LENGTH,
   MIN_PERIOD_LENGTH,
 } from '../lib/constants';
-import { formatDate, parseDate } from '../lib/cycle-math';
+import { todayString } from '../lib/cycle-math';
+import { isFutureDate, isRealDate } from '../lib/dates';
 import { submitOnboarding } from '../lib/onboarding';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { useSaveSettings } from '../state/useSaveSettings';
@@ -32,7 +31,6 @@ export function OnboardingScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [lastPeriodStart, setLastPeriodStart] = useState('');
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [cycleLength, setCycleLength] = useState(DEFAULT_CYCLE_LENGTH);
   const [periodLength, setPeriodLength] = useState(DEFAULT_PERIOD_LENGTH);
 
@@ -72,35 +70,19 @@ export function OnboardingScreen() {
       )}
 
       <div className="mb-5">
-        <Label id="onboarding-date-label" className="mb-1.5 block text-sm text-muted-foreground">
+        <Label htmlFor="onboarding-date" className="mb-1.5 block text-sm text-muted-foreground">
           When did your last period start?
         </Label>
-        <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              aria-labelledby="onboarding-date-label onboarding-date-value"
-              className="h-11 w-full justify-start gap-1.5 font-normal"
-            >
-              <CalendarIcon className="size-4 text-muted-foreground" aria-hidden="true" />
-              <span id="onboarding-date-value" className={lastPeriodStart ? 'text-foreground' : 'text-muted-foreground'}>
-                {lastPeriodStart ? parseDate(lastPeriodStart).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : 'Select a date'}
-              </span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)]">
-            <Calendar
-              mode="single"
-              selected={lastPeriodStart ? parseDate(lastPeriodStart) : undefined}
-              onSelect={(date) => {
-                if (!date) return;
-                setLastPeriodStart(formatDate(date));
-                setDatePickerOpen(false);
-              }}
-              disabled={{ after: new Date() }}
-            />
-          </PopoverContent>
-        </Popover>
+        {/* Native input: iOS shows its own date wheel (design-system.md), and
+            max stops a future date. No date-picker library needed. */}
+        <Input
+          id="onboarding-date"
+          type="date"
+          max={todayString()}
+          value={lastPeriodStart}
+          onChange={(e) => setLastPeriodStart(isRealDate(e.target.value) && !isFutureDate(e.target.value) ? e.target.value : '')}
+          className="h-11"
+        />
       </div>
 
       <Stepper
