@@ -122,3 +122,20 @@ describe('InsightsScreen — search (T70)', () => {
     expect(screen.getByText(/1 day found/)).toBeInTheDocument();
   });
 });
+
+describe('InsightsScreen — temperature chart (T90)', () => {
+  it('appears when fertility awareness is on', async () => {
+    const { renderRouted } = await import('../test/render-with-router');
+    const { StateProvider } = await import('../state/store');
+    const { InsightsScreen } = await import('./Insights');
+    const { SETTINGS_DEFAULTS } = await import('../lib/db');
+    const { screen } = await import('@testing-library/react');
+    const entries = [{ date: '2026-03-01', flow: 'medium' as const, symptoms: [], mood: null, note: '', updatedAt: 0, temperature: 36.4 }];
+    await renderRouted(
+      <StateProvider testState={{ entries, settings: { ...SETTINGS_DEFAULTS, fertilityAwareness: true, temperatureUnit: 'C' } }}>
+        <InsightsScreen />
+      </StateProvider>,
+    );
+    expect(screen.getByRole('heading', { name: 'Temperature' })).toBeInTheDocument();
+  });
+});

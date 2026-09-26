@@ -18,6 +18,7 @@ import { describeEntry } from '../lib/entry-summary';
 import { HEAVY_BLEEDING_ADVICE, healthNudges } from '../lib/health-nudges';
 import { symptomTiming } from '../lib/symptom-timing';
 import { searchEntries } from '../lib/search';
+import { BbtChart } from '../components/BbtChart';
 import { formatHeaderDate } from '../lib/log-entry';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -112,6 +113,17 @@ export function InsightsScreen() {
             </>
           )}
         </div>
+      )}
+
+      {settings.fertilityAwareness && (
+        <section aria-labelledby="bbt-heading" className="mb-5">
+          <h2 id="bbt-heading" className="mb-2 text-sm font-medium text-foreground">
+            Temperature
+          </h2>
+          <Card className="px-3 py-3">
+            <BbtChart entries={entries} unit={settings.temperatureUnit} />
+          </Card>
+        </section>
       )}
 
       {timing.length > 0 && (
