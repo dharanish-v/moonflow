@@ -33,3 +33,21 @@ describe('InsightsScreen', () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 });
+
+describe('InsightsScreen — copy (T63)', () => {
+  it('spells out units and says what was counted', async () => {
+    const { renderRouted } = await import('../test/render-with-router');
+    const { StateProvider } = await import('../state/store');
+    const { InsightsScreen } = await import('./Insights');
+    const { screen } = await import('@testing-library/react');
+    const med = (date: string) => ({ date, flow: 'medium' as const, symptoms: [], mood: null, note: '', updatedAt: 0 });
+    await renderRouted(
+      <StateProvider testState={{ entries: [med('2026-06-01'), med('2026-06-02'), med('2026-06-29'), med('2026-06-30'), med('2026-07-27')] }}>
+        <InsightsScreen />
+      </StateProvider>,
+    );
+    expect(screen.getByText('2 days')).toBeInTheDocument();
+    expect(screen.getByText('Periods logged')).toBeInTheDocument();
+    expect(screen.queryByText(/\dd$/)).not.toBeInTheDocument();
+  });
+});

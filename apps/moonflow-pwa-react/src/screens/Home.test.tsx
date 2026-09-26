@@ -41,3 +41,17 @@ describe('HomeScreen — backup reminder', () => {
     expect(screen.queryByRole('link', { name: /back up/i })).not.toBeInTheDocument();
   });
 });
+
+describe('HomeScreen — save acknowledgement (T63)', () => {
+  it('only claims the prediction changed when period flow was logged', async () => {
+    const { validateHomeSearch } = await import('../router/router');
+    await renderRouted(
+      <StateProvider testState={{ settings: { ...SETTINGS_DEFAULTS, lastPeriodStart: '2026-08-10' } }}>
+        <HomeScreen />
+      </StateProvider>,
+      { initialEntries: ['/?justLogged=saved'], validateSearch: validateHomeSearch },
+    );
+    expect(screen.getByRole('status')).toHaveTextContent('Saved');
+    expect(screen.queryByText(/prediction just updated/)).not.toBeInTheDocument();
+  });
+});

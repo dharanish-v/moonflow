@@ -50,3 +50,11 @@ describe('formatHeaderDate', () => {
     expect(formatHeaderDate('2026-09-01', new Date(2026, 8, 6))).not.toMatch(/^Today/);
   });
 });
+
+describe('formatHeaderDate — year (T63)', () => {
+  it('adds the year only when it is not the current one', () => {
+    const today = new Date(2026, 8, 26);
+    expect(formatHeaderDate('2026-09-20', today)).not.toMatch(/2026/);
+    expect(formatHeaderDate('2025-01-03', today)).toMatch(/2025/);
+  });
+});

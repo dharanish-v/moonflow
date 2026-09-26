@@ -37,6 +37,16 @@ describe('SettingsScreen', () => {
     expect(screen.getByText(/not a medical device/i)).toBeInTheDocument();
   });
 
+  it('has no dead "coming soon" controls', async () => {
+    await renderSettings();
+    expect(screen.queryByRole('switch', { name: 'Reminders' })).not.toBeInTheDocument();
+  });
+
+  it('explains when the average lengths are actually used', async () => {
+    await renderSettings();
+    expect(screen.getByText(/used for predictions until you've logged two cycles/i)).toBeInTheDocument();
+  });
+
   it('a failed theme write shows an error and leaves the theme unchanged', async () => {
     vi.spyOn(db, 'saveSettings').mockResolvedValue(false);
     const state = await renderSettings();

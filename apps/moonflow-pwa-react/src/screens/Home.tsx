@@ -93,7 +93,8 @@ export function HomeScreen() {
   // used the app's core action" moment; nothing else set this state to true
   // before, so re-renders from other causes (e.g. a settings change) never
   // replay it.
-  const [showLoggedAck, setShowLoggedAck] = useState(() => search.justLogged === true);
+  const [showLoggedAck, setShowLoggedAck] = useState(() => search.justLogged !== undefined);
+  const ackText = search.justLogged === 'saved' ? 'Saved' : 'Logged — your prediction just updated';
 
   useEffect(() => {
     if (search.justLogged) navigate({ to: '/', search: {}, replace: true });
@@ -135,7 +136,7 @@ export function HomeScreen() {
               transition={{ duration: 0.25, ease: 'easeOut' }}
               className="mb-3 text-center text-xs font-medium text-primary"
             >
-              Logged — your prediction just updated
+              {ackText}
             </motion.p>
           )}
         </AnimatePresence>

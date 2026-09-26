@@ -55,7 +55,8 @@ export interface HomeSearch {
    * entry for that date) — a one-shot "just logged" signal Home reads once
    * to show an acknowledgment, then clears from the URL itself (see
    * Home.tsx) so a later refresh/revisit never replays it. */
-  justLogged?: boolean;
+  /** 'prediction' when period flow was saved (the prediction moved), 'saved' otherwise. */
+  justLogged?: 'prediction' | 'saved';
 }
 
 /** Mirrors validateLogSearch's own defensive style below — a boolean should
@@ -63,7 +64,12 @@ export interface HomeSearch {
  * accept the stringified form too rather than assume. */
 export function validateHomeSearch(search: Record<string, unknown>): HomeSearch {
   return {
-    justLogged: search.justLogged === true || search.justLogged === 'true' ? true : undefined,
+    justLogged:
+      search.justLogged === 'saved'
+        ? 'saved'
+        : search.justLogged === 'prediction' || search.justLogged === true || search.justLogged === 'true'
+          ? 'prediction'
+          : undefined,
   };
 }
 

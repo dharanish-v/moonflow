@@ -34,7 +34,7 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { MOOD_ICONS } from '../components/icons';
-import { FLOW_OPTIONS, MOOD_OPTIONS, SYMPTOM_OPTIONS } from '../lib/constants';
+import { FLOW_OPTIONS, MOOD_OPTIONS, PERIOD_FLOW_LEVELS, SYMPTOM_OPTIONS } from '../lib/constants';
 import { todayString } from '../lib/cycle-math';
 import { deleteEntryAndClearDraft, saveEntryAndClearDraft } from '../lib/db';
 import { useSaveSettings } from '../state/useSaveSettings';
@@ -126,7 +126,11 @@ export function LogEntryScreen() {
     // acknowledge the save instead of just silently re-rendering. Editing
     // an existing entry lands on Calendar instead, where this doesn't apply.
     if (returnTo === '/' && !existingEntry) {
-      navigate({ to: '/', search: { justLogged: true }, replace: true });
+      navigate({
+        to: '/',
+        search: { justLogged: flow && PERIOD_FLOW_LEVELS.includes(flow) ? 'prediction' : 'saved' },
+        replace: true,
+      });
     } else {
       navigate({ to: returnTo, replace: true });
     }

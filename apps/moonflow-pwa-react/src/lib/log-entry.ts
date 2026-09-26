@@ -37,6 +37,10 @@ export function resolveInitialDraft(
 export function formatHeaderDate(dateStr: string, today: Date = new Date()): string {
   const date = parseDate(dateStr);
   const isToday = date.toDateString() === today.toDateString();
-  const label = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const label = date.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    ...(date.getFullYear() !== today.getFullYear() ? { year: 'numeric' } : {}),
+  });
   return isToday ? `Today, ${label}` : label;
 }

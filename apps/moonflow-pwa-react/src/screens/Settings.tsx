@@ -24,7 +24,7 @@ import { Separator } from '../components/ui/separator';
 import { Stepper } from '../components/Stepper';
 import { Switch } from '../components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
-import { BellIcon, ChevronRightIcon, DownloadIcon, DropletIcon, EyeOffIcon, LockIcon } from '../components/icons';
+import { ChevronRightIcon, DownloadIcon, DropletIcon, EyeOffIcon, LockIcon } from '../components/icons';
 import { MAX_CYCLE_LENGTH, MAX_PERIOD_LENGTH, MIN_CYCLE_LENGTH, MIN_PERIOD_LENGTH } from '../lib/constants';
 import { eraseAllData } from '../lib/db';
 import { useSaveSettings } from '../state/useSaveSettings';
@@ -155,10 +155,6 @@ export function SettingsScreen() {
           </>
         )}
         <Separator />
-        <SettingsRow icon={<BellIcon className="size-4" />} label="Reminders">
-          <Switch checked={false} disabled aria-label="Reminders" title="Coming in V2" />
-        </SettingsRow>
-        <Separator />
         <SettingsRowButton
           icon={<Calendar className="size-4" aria-hidden="true" />}
           label="Average cycle length"
@@ -172,6 +168,9 @@ export function SettingsScreen() {
           value={`${settings.avgPeriodLength} days`}
           onClick={() => openEdit('avgPeriodLength', settings.avgPeriodLength)}
         />
+        <p className="px-3.5 pb-2 text-xs text-muted-foreground">
+          Used for predictions until you've logged two cycles — after that, your own history takes over.
+        </p>
         <Separator />
         {!isDiscreetInstall() && (
           <>

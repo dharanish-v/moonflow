@@ -107,9 +107,9 @@ export function InsightsScreen() {
             </CardContent>
           </Card>
           <div className="grid grid-cols-3 gap-2">
-            <Stat title="Avg period" value={`${data.avgPeriodLength}d`} />
+            <Stat title="Avg period" value={`${data.avgPeriodLength} ${data.avgPeriodLength === 1 ? 'day' : 'days'}`} />
             <Stat title="Varies by" value={`${data.variability} ${data.variability === 1 ? 'day' : 'days'}`} />
-            <Stat title="Logged" value={data.cyclesLogged} />
+            <Stat title="Periods logged" value={data.cyclesLogged} />
           </div>
 
           <div className="mb-2 mt-5 text-xs text-muted-foreground">
