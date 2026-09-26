@@ -20,18 +20,10 @@ import {
   MIN_PERIOD_LENGTH,
 } from '../lib/constants';
 import { formatDate, parseDate } from '../lib/cycle-math';
-import type { Settings } from '../lib/types';
+import { submitOnboarding } from '../lib/onboarding';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { useSaveSettings } from '../state/useSaveSettings';
 import { isDiscreetInstall } from '../lib/install-identity';
-
-type OnboardingValues = Pick<Settings, 'lastPeriodStart' | 'avgCycleLength' | 'avgPeriodLength'>;
-
-/** One atomic write for everything onboarding collects — a committed
- * onboardingComplete without its lastPeriodStart used to be unrenderable. */
-export function submitOnboarding(values: OnboardingValues, save: (patch: Partial<Settings>) => Promise<boolean>): Promise<boolean> {
-  return save({ ...values, onboardingComplete: true });
-}
 
 export function OnboardingScreen() {
   const discreet = isDiscreetInstall();

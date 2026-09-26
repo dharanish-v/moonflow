@@ -2,7 +2,7 @@
 // has no shadcn/Radix equivalent (no component library ships a
 // cycle-tracking calendar) — stays hand-built, same as the vanilla app.
 import { motion } from 'framer-motion';
-import { useRef } from 'react';
+import { type TouchEvent, useRef, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
@@ -13,6 +13,9 @@ import { FERTILE_DISCLAIMER, formatDateRange } from '../lib/home-status';
 import { useAppDispatch, useAppState } from '../state/store';
 
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+/** Minimum horizontal travel for a swipe to count as a month change. */
+const SWIPE_MIN_PX = 50;
 
 type NavDirection = 'prev' | 'next' | null;
 
@@ -40,7 +43,10 @@ export function CalendarScreen() {
   const { calendarMonth, entries, settings } = useAppState();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const navDirectionRef = useRef<NavDirection>(null);
+  // Direction of the last month change, for the slide-in animation. State,
+  // not a ref read during render (which React may not re-render for).
+  const [direction, setDirection] = useState<NavDirection>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const [yearStr, monthStr] = calendarMonth.split('-');
   const year = Number(yearStr);
@@ -51,6 +57,8 @@ export function CalendarScreen() {
   const todayStr = formatDate(new Date());
 
   const periods = derivePeriods(entries);
+  // Days with something logged but no period flow (symptoms, mood, notes).
+  const loggedOtherDates = new Set(entries.map((e) => e.date));
   const loggedPeriodDates = new Set<string>();
   for (const p of periods) {
     let d = p.start;
@@ -123,15 +131,34 @@ export function CalendarScreen() {
     navigate({ to: '/log', search: { date: dateStr, from: 'calendar' } });
   }
 
-  function handleChangeMonth(direction: 'prev' | 'next') {
-    navDirectionRef.current = direction;
-    const next = new Date(year, month - 1 + (direction === 'next' ? 1 : -1), 1);
+  function handleChangeMonth(dir: 'prev' | 'next') {
+    setDirection(dir);
+    const next = new Date(year, month - 1 + (dir === 'next' ? 1 : -1), 1);
     dispatch({ type: 'SET_CALENDAR_MONTH', month: `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}` });
   }
 
   const monthLabel = firstOfMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-  const direction = navDirectionRef.current;
-  navDirectionRef.current = null;
+
+  /** Horizontal swipe on the grid changes month (spec'd scroll-snap
+   * behaviour, QA "swiping left/right changes the visible month"). Mostly
+   * vertical drags are left alone so the page can still scroll. */
+  function onTouchStart(e: TouchEvent<HTMLDivElement>) {
+    const t = e.touches[0];
+    touchStartRef.current = t ? { x: t.clientX, y: t.clientY } : null;
+  }
+  function onTouchEnd(e: TouchEvent<HTMLDivElement>) {
+    const start = touchStartRef.current;
+    const t = e.changedTouches[0];
+    touchStartRef.current = null;
+    if (!start || !t) return;
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    handleChangeMonth(dx < 0 ? 'next' : 'prev');
+  }
+
+  const rows: Array<Array<string | null>> = [];
+  for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
 
   return (
     <div className="mx-auto box-border flex w-full max-w-[26rem] flex-1 flex-col px-4 py-5">
@@ -145,7 +172,9 @@ export function CalendarScreen() {
         >
           <ChevronLeftIcon className="size-[0.9rem]" />
         </Button>
-        <span className="text-sm font-medium text-foreground">{monthLabel}</span>
+        <h1 id="calendar-month" aria-live="polite" className="text-sm font-medium text-foreground">
+          {monthLabel}
+        </h1>
         <Button
           variant="ghost"
           size="icon-touch"
@@ -165,18 +194,21 @@ export function CalendarScreen() {
         animate="center"
         transition={{ duration: 0.22, ease: 'easeOut' }}
       >
-        <div className="grid grid-cols-7">
+        <div role="grid" aria-labelledby="calendar-month" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div role="row" className="grid grid-cols-7">
           {WEEKDAY_LABELS.map((l, i) => (
-            <span key={i} className="pb-1.5 text-center text-xs text-muted-foreground">
+            <span key={i} role="columnheader" aria-label={WEEKDAY_NAMES[i]} className="pb-1.5 text-center text-xs text-muted-foreground">
               {l}
             </span>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-[0.375rem]">
-          {cells.map((dateStr, i) => {
+        {rows.map((row, r) => (
+        <div key={r} role="row" className="mb-[0.375rem] grid grid-cols-7 gap-[0.375rem]">
+          {row.map((dateStr, c) => {
+            const i = r * 7 + c;
             if (!dateStr) {
               return (
-                <div key={i} className="flex aspect-square items-center justify-center">
+                <div key={i} role="gridcell" className="flex aspect-square items-center justify-center">
                   <span className="invisible size-10 rounded-full" />
                 </div>
               );
@@ -200,6 +232,8 @@ export function CalendarScreen() {
             } else if (predictedDates.has(dateStr)) {
               stateClass = 'border-[1.5px] border-dashed border-secondary text-secondary';
               stateLabel = `predicted period${estimateSuffix}`;
+            } else if (loggedOtherDates.has(dateStr)) {
+              stateLabel = 'logged';
             }
 
             const spokenParts = [parseDate(dateStr).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })];
@@ -207,19 +241,24 @@ export function CalendarScreen() {
             if (isToday) spokenParts.push('today');
 
             return (
-              <div key={dateStr} className="flex aspect-square items-center justify-center">
+              <div key={dateStr} role="gridcell" className="flex aspect-square items-center justify-center">
                 <button
                   type="button"
                   disabled={isFuture}
                   onClick={() => handleSelectDate(dateStr)}
                   aria-label={spokenParts.join(', ')}
-                  className={`flex size-10 items-center justify-center rounded-full text-xs text-foreground disabled:cursor-default ${stateClass} ${isFuture && !stateClass ? 'text-muted-foreground' : ''} ${isToday ? 'border-[1.5px] border-foreground' : ''}`}
+                  className={`relative flex size-10 items-center justify-center rounded-full text-xs text-foreground disabled:cursor-default ${stateClass} ${isFuture && !stateClass ? 'text-muted-foreground' : ''} ${isToday ? 'border-[1.5px] border-foreground' : ''}`}
                 >
                   {dayNum}
+                  {loggedOtherDates.has(dateStr) && !loggedPeriodDates.has(dateStr) && (
+                    <span aria-hidden="true" className="absolute bottom-1 size-1 rounded-full bg-accent" />
+                  )}
                 </button>
               </div>
             );
           })}
+        </div>
+        ))}
         </div>
       </motion.div>
 

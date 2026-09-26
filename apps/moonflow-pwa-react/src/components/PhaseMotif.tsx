@@ -8,17 +8,7 @@
 // stack already provides" spirit as the rest of this rebuild.
 import { motion, useReducedMotion } from 'framer-motion';
 import type { CyclePhase, CycleRing } from '../lib/home-status';
-
-/** Exported for Home's ambient background wash too — one mapping, so the
- * wash and the moon can never drift to different colors for the same
- * phase. */
-export const PHASE_COLOR_CLASS: Record<CyclePhase, string> = {
-  period: 'text-secondary',
-  follicular: 'text-accent',
-  fertile: 'text-primary',
-  luteal: 'text-muted-foreground',
-  unknown: 'text-muted-foreground',
-};
+import { PHASE_COLOR_CLASS } from '../lib/phase-colors';
 
 // Ring geometry — a full lap = one predicted cycle (see CycleRing's own
 // doc). Sized to sit inside the size-32 (128px) motif with room for the

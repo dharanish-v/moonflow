@@ -16,7 +16,7 @@ describe('OnboardingScreen', () => {
   });
 
   it('saves every onboarding value in one atomic write', async () => {
-    const { submitOnboarding } = await import('./Onboarding');
+    const { submitOnboarding } = await import('../lib/onboarding');
     const calls: unknown[] = [];
     const ok = await submitOnboarding(
       { lastPeriodStart: '2026-09-01', avgCycleLength: 30, avgPeriodLength: 4 },
