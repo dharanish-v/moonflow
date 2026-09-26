@@ -4,6 +4,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { createAppRouter } from './router/router';
 import { StateProvider } from './state/store';
 import { usePrivacyScreen } from './hooks/usePrivacyScreen';
+import { UpdatePrompt } from './components/UpdatePrompt';
 
 // #phone-frame is static chrome, unrelated to routing. #app-content lives
 // inside RootLayout (router/router.tsx), not here — it has to sit alongside
@@ -20,6 +21,7 @@ function App() {
       <StateProvider>
         <div id="phone-frame">
           <RouterProvider router={router} />
+          <UpdatePrompt />
         </div>
       </StateProvider>
     </MotionConfig>

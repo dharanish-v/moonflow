@@ -7,7 +7,9 @@
   var mode = null;
   try {
     mode = localStorage.getItem('theme');
-  } catch (e) {}
+  } catch {
+    // storage blocked: fall back to the OS preference
+  }
   var light = mode === 'light' || (mode !== 'dark' && matchMedia('(prefers-color-scheme: light)').matches);
   document.documentElement.classList.toggle('light', light);
   var meta = document.querySelector('meta[name="theme-color"]');

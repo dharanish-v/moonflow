@@ -30,8 +30,10 @@ describe('quoteOfTheDay', () => {
 
 describe('quoteOfTheDay — rolls at local midnight, even across DST (T75)', () => {
   it('00:30 and 23:30 on the same summer-time day give the same quote', () => {
-    const prev = process.env.TZ;
-    process.env.TZ = 'Europe/London';
+    // Node re-reads TZ at runtime; the app tsconfig has no Node types.
+    const env = (globalThis as unknown as { process: { env: Record<string, string | undefined> } }).process.env;
+    const prev = env.TZ;
+    env.TZ = 'Europe/London';
     try {
       const early = quoteOfTheDay('unknown', new Date(2026, 6, 10, 0, 30));
       const late = quoteOfTheDay('unknown', new Date(2026, 6, 10, 23, 30));
@@ -39,7 +41,7 @@ describe('quoteOfTheDay — rolls at local midnight, even across DST (T75)', () 
       expect(early).toBe(late);
       expect(early).not.toBe(dayBefore);
     } finally {
-      process.env.TZ = prev;
+      env.TZ = prev;
     }
   });
 });

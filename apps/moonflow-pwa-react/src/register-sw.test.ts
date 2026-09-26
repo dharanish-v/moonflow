@@ -41,3 +41,56 @@ describe('registerServiceWorker', () => {
     expect(env.sw.register).not.toHaveBeenCalled();
   });
 });
+
+describe('update on consent (T77)', () => {
+  function env({ controlled, waiting = null as unknown }: { controlled: boolean; waiting?: unknown }) {
+    const swListeners: Record<string, () => void> = {};
+    const regListeners: Record<string, () => void> = {};
+    const installing = { state: 'installing', addEventListener: vi.fn((_t: string, fn: () => void) => (installingChange = fn)), postMessage: vi.fn() };
+    let installingChange: () => void = () => {};
+    const registration = {
+      waiting,
+      installing: null as unknown,
+      addEventListener: (t: string, fn: () => void) => (regListeners[t] = fn),
+    };
+    const sw = {
+      controller: controlled ? {} : null,
+      addEventListener: (t: string, fn: () => void) => (swListeners[t] = fn),
+      register: vi.fn().mockResolvedValue(registration),
+    };
+    return { sw, registration, installing, regListeners, swListeners, fireInstalled: () => installingChange() };
+  }
+
+  it('announces an update that was already waiting at launch', async () => {
+    const waiting = { postMessage: vi.fn() };
+    const e = env({ controlled: true, waiting });
+    const onUpdateReady = vi.fn();
+    registerServiceWorker({ serviceWorker: e.sw, reload: vi.fn(), onLoad: (fn) => fn(), isProd: true, onUpdateReady });
+    await vi.waitFor(() => expect(onUpdateReady).toHaveBeenCalled());
+    onUpdateReady.mock.calls[0]![0]();
+    expect(waiting.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+  });
+
+  it('announces a new version once it finishes installing — but not the very first install', async () => {
+    const e = env({ controlled: true });
+    const onUpdateReady = vi.fn();
+    registerServiceWorker({ serviceWorker: e.sw, reload: vi.fn(), onLoad: (fn) => fn(), isProd: true, onUpdateReady });
+    await vi.waitFor(() => expect(e.regListeners.updatefound).toBeDefined());
+    e.registration.installing = e.installing;
+    e.regListeners.updatefound!();
+    e.installing.state = 'installed';
+    e.fireInstalled();
+    expect(onUpdateReady).toHaveBeenCalled();
+
+    const first = env({ controlled: false });
+    const onFirst = vi.fn();
+    registerServiceWorker({ serviceWorker: first.sw, reload: vi.fn(), onLoad: (fn) => fn(), isProd: true, onUpdateReady: onFirst });
+    await vi.waitFor(() => expect(first.regListeners.updatefound).toBeDefined());
+    first.registration.installing = first.installing;
+    first.regListeners.updatefound!();
+    first.installing.state = 'installed';
+    first.fireInstalled();
+    expect(onFirst).not.toHaveBeenCalled();
+  });
+});
+
