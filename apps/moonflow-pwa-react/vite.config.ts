@@ -34,7 +34,7 @@ export default defineConfig({
       // produces (the hashed JS/CSS + the two HTML entries) — the two
       // manifests and all 6 icons live in public/ as untouched passthrough
       // files, so Workbox never discovers them on its own.
-      includeAssets: ['manifest.json', 'manifest-discreet.json', 'icons/*.png'],
+      includeAssets: ['manifest.json', 'manifest-discreet.json', 'icons/*.png', 'theme-boot.js'],
       registerType: 'autoUpdate',
       // src/register-sw.ts already calls navigator.serviceWorker.register()
       // itself — don't let the plugin inject a second registration.

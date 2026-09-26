@@ -32,9 +32,16 @@ export function useResolvedTheme(themeMode: ThemeMode): ResolvedTheme {
 
   useEffect(() => {
     document.documentElement.classList.toggle('light', resolved === 'light');
+    // Remembered for public/theme-boot.js, which applies it on the next
+    // launch before React (and IndexedDB) load.
+    try {
+      localStorage.setItem('theme', themeMode);
+    } catch {
+      // private mode / storage blocked: only the launch flash comes back
+    }
     // Browser UI tint (Safari tab bar, Android status bar) follows the theme.
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_BACKGROUND[resolved]);
-  }, [resolved]);
+  }, [resolved, themeMode]);
 
   return resolved;
 }

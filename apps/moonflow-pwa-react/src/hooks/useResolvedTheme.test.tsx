@@ -16,3 +16,10 @@ describe('useResolvedTheme', () => {
     meta.remove();
   });
 });
+
+describe('useResolvedTheme — remembers the choice for the next launch (T73)', () => {
+  it('mirrors the theme mode to localStorage', () => {
+    renderHook(() => useResolvedTheme('dark'));
+    expect(localStorage.getItem('theme')).toBe('dark');
+  });
+});
