@@ -36,10 +36,12 @@ const QUOTES: Quote[] = [
 
 const PHASE_NEUTRAL_QUOTES = QUOTES.filter((q) => !q.phase);
 
-/** Day-of-year (1-366), used to pick deterministically without a Date lib. */
+/** Day-of-year (1-366) from the local calendar date — not elapsed ms, which
+ * during summer time put the rollover at 01:00 instead of midnight. */
 function dayOfYear(date: Date): number {
+  const midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const start = new Date(date.getFullYear(), 0, 0);
-  return Math.floor((date.getTime() - start.getTime()) / 86_400_000);
+  return Math.round((midnight.getTime() - start.getTime()) / 86_400_000);
 }
 
 export function quoteOfTheDay(cyclePhase: CyclePhase, today: Date = new Date()): string {

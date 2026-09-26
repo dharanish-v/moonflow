@@ -27,3 +27,19 @@ describe('quoteOfTheDay', () => {
     }
   });
 });
+
+describe('quoteOfTheDay — rolls at local midnight, even across DST (T75)', () => {
+  it('00:30 and 23:30 on the same summer-time day give the same quote', () => {
+    const prev = process.env.TZ;
+    process.env.TZ = 'Europe/London';
+    try {
+      const early = quoteOfTheDay('unknown', new Date(2026, 6, 10, 0, 30));
+      const late = quoteOfTheDay('unknown', new Date(2026, 6, 10, 23, 30));
+      const dayBefore = quoteOfTheDay('unknown', new Date(2026, 6, 9, 23, 30));
+      expect(early).toBe(late);
+      expect(early).not.toBe(dayBefore);
+    } finally {
+      process.env.TZ = prev;
+    }
+  });
+});
