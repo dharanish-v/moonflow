@@ -9,6 +9,7 @@ import { Card, CardContent } from '../components/ui/card';
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons';
 import { addDays, derivePeriods, diffDays, formatDate, parseDate } from '../lib/cycle-math';
 import { computeForecast } from '../lib/forecast';
+import { FLOW_OPTIONS } from '../lib/constants';
 import { FERTILE_DISCLAIMER, formatDateRange } from '../lib/home-status';
 import { useAppDispatch, useAppState } from '../state/hooks';
 
@@ -59,6 +60,7 @@ export function CalendarScreen() {
   const periods = derivePeriods(entries);
   // Days with something logged but no period flow (symptoms, mood, notes).
   const loggedOtherDates = new Set(entries.map((e) => e.date));
+  const entryByDate = new Map(entries.map((e) => [e.date, e]));
   const loggedPeriodDates = new Set<string>();
   for (const p of periods) {
     let d = p.start;
@@ -222,7 +224,9 @@ export function CalendarScreen() {
             let stateLabel = '';
             if (loggedPeriodDates.has(dateStr)) {
               stateClass = 'bg-secondary text-secondary-foreground';
-              stateLabel = 'period day';
+              const flow = entryByDate.get(dateStr)?.flow;
+              const flowLabel = FLOW_OPTIONS.find((f) => f.id === flow)?.label.toLowerCase();
+              stateLabel = flowLabel && flow !== 'none' ? `period day, ${flowLabel} flow` : 'period day';
             } else if (dateStr === fertilePeak) {
               stateClass = 'bg-primary font-medium text-primary-foreground';
               stateLabel = `peak fertile day${estimateSuffix}`;
@@ -247,9 +251,15 @@ export function CalendarScreen() {
                   disabled={isFuture}
                   onClick={() => handleSelectDate(dateStr)}
                   aria-label={spokenParts.join(', ')}
-                  className={`relative flex size-10 items-center justify-center rounded-full text-sm text-foreground disabled:cursor-default ${stateClass} ${isFuture && !stateClass ? 'text-muted-foreground' : ''} ${isToday ? 'border-[1.5px] border-foreground' : ''}`}
+                  className={`relative flex size-10 items-center justify-center rounded-full text-sm text-foreground disabled:cursor-default ${stateClass} ${isFuture && !stateClass ? 'text-muted-foreground' : ''} ${isToday ? 'outline-2 outline-offset-2 outline-foreground' : ''}`}
                 >
                   {dayNum}
+                  {loggedPeriodDates.has(dateStr) && (
+                    // Shape as well as colour (WCAG 1.4.1): a droplet marks logged period days.
+                    <svg data-marker="flow" aria-hidden="true" viewBox="0 0 8 10" className="absolute bottom-0.5 size-2 fill-current">
+                      <path d="M4 0C4 0 0 4.6 0 6.6A4 4 0 0 0 8 6.6C8 4.6 4 0 4 0Z" />
+                    </svg>
+                  )}
                   {loggedOtherDates.has(dateStr) && !loggedPeriodDates.has(dateStr) && (
                     <span aria-hidden="true" className="absolute bottom-1 size-1 rounded-full bg-accent" />
                   )}
@@ -268,7 +278,9 @@ export function CalendarScreen() {
 
       <div className="mt-2 flex justify-center gap-3.5 text-xs text-muted-foreground">
         <span>
-          <span className="mr-1 inline-block size-2 rounded-full bg-secondary align-middle" />
+          <svg aria-hidden="true" viewBox="0 0 8 10" className="mr-1 inline-block size-2.5 fill-secondary align-middle">
+            <path d="M4 0C4 0 0 4.6 0 6.6A4 4 0 0 0 8 6.6C8 4.6 4 0 4 0Z" />
+          </svg>
           Period
         </span>
         <span>

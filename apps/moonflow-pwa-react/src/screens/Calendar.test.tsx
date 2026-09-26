@@ -97,6 +97,22 @@ describe('CalendarScreen', () => {
     expect(screen.getByText(/predictions are paused/i)).toBeInTheDocument();
   });
 
+  it("today's marker is an outline, so a state border on the same day still shows (T74)", async () => {
+    // lastPeriodStart 23 Jul → next 20 Aug, today (20 Aug) is the predicted start
+    await renderCalendar({ lastPeriodStart: '2026-07-23' }, '2026-08');
+    const today = screen.getByRole('button', { name: /today/ });
+    expect(today.className).toMatch(/outline-2/);
+    expect(today.className).toMatch(/border-dashed/);
+    expect(today.className).not.toMatch(/border-foreground/);
+  });
+
+  it('logged period days carry a shape and their flow level, not colour alone (T76)', async () => {
+    const entries = [{ date: '2026-08-03', flow: 'heavy' as const, symptoms: [], mood: null, note: '', updatedAt: 0 }];
+    await renderCalendar({ lastPeriodStart: '2026-08-03' }, '2026-08', entries);
+    const day = screen.getByRole('button', { name: /^(August 3|3 August), period day, heavy flow/ });
+    expect(day.querySelector('[data-marker="flow"]')).not.toBeNull();
+  });
+
   it('renders without crashing when there is no start date at all', async () => {
     await renderCalendar({ lastPeriodStart: null }, '2026-08');
     expect(screen.getByRole('button', { name: /^(August 20|20 August)/ })).toBeInTheDocument();
