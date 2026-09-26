@@ -18,6 +18,7 @@ import { parseDate } from '../lib/cycle-math';
 import { computeInsights, cycleBarHeight } from '../lib/insights';
 import { describeEntry } from '../lib/entry-summary';
 import { HEAVY_BLEEDING_ADVICE, healthNudges } from '../lib/health-nudges';
+import { symptomTiming } from '../lib/symptom-timing';
 import { useAppState } from '../state/store';
 
 /** Matches the chart container's h-16. */
@@ -28,6 +29,7 @@ export function InsightsScreen() {
   const navigate = useNavigate();
   const data = computeInsights(entries);
   const nudges = healthNudges(entries, settings);
+  const timing = symptomTiming(entries);
   const prefersReducedMotion = useReducedMotion();
   const barRefs = useRef<Array<HTMLDivElement | null>>([]);
   const fillRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -159,6 +161,24 @@ export function InsightsScreen() {
             </>
           )}
         </div>
+      )}
+
+      {timing.length > 0 && (
+        <section aria-labelledby="timing-heading" className="mb-5">
+          <h2 id="timing-heading" className="mb-2 text-sm font-medium text-foreground">
+            When symptoms show up
+          </h2>
+          <Card className="gap-0 px-4 py-2">
+            <ul className="flex flex-col divide-y divide-border">
+              {timing.map((t) => (
+                <li key={t.id} className="py-2 text-sm">
+                  <span className="font-medium text-foreground">{t.label}</span>{' '}
+                  <span className="text-muted-foreground">{t.text}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </section>
       )}
 
       {nudges.length > 0 && (

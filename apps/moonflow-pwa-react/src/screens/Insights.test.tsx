@@ -76,3 +76,21 @@ describe('InsightsScreen — health nudges (T64)', () => {
     expect(screen.getByText(/get urgent care if you soak through/i)).toBeInTheDocument();
   });
 });
+
+describe('InsightsScreen — symptom timing (T69)', () => {
+  it('says when a recurring symptom usually shows up', async () => {
+    const { renderRouted } = await import('../test/render-with-router');
+    const { StateProvider } = await import('../state/store');
+    const { InsightsScreen } = await import('./Insights');
+    const { screen } = await import('@testing-library/react');
+    const e = (date: string, symptoms: Array<'cramps'> = []) => ({ date, flow: 'medium' as const, symptoms, mood: null, note: '', updatedAt: 0 });
+    await renderRouted(
+      <StateProvider testState={{ entries: [e('2026-03-01', ['cramps']), e('2026-03-29', ['cramps']), e('2026-04-26', ['cramps'])] }}>
+        <InsightsScreen />
+      </StateProvider>,
+    );
+    expect(screen.getByRole('heading', { name: 'When symptoms show up' })).toBeInTheDocument();
+    const item = screen.getAllByRole('listitem').find((li) => li.textContent?.startsWith('Cramps'));
+    expect(item).toHaveTextContent('Cramps usually around day 1');
+  });
+});
