@@ -1,6 +1,6 @@
-> **Current state (2026-09-26):** the React app in `apps/moonflow-pwa-react` supersedes the vanilla-JS design below where they differ. Key points:
+> **Current state (2026-09-26, updated after Phase 12):** the React app in `apps/moonflow-pwa-react` supersedes the vanilla-JS design below where they differ. Key points:
 > - **Forecast:** `src/lib/forecast.ts` is the single prediction engine (ADR-039); `home-status.ts`, Calendar, Insights, health nudges, the report and `.ics` all read it.
-> - **Settings keys** (Dexie `settings` table, one row per key): `onboardingComplete, lastPeriodStart, avgCycleLength, avgPeriodLength, pinHash (pbkdf2-sha256$iter$salt$hash), duressPinHash, pinLockEnabled, pinFailedAttempts, pinLockoutUntil, soundEnabled, draftEntry, themeMode, lastBackupAt, predictionsPaused, customTags`.
+> - **Settings keys** (Dexie `settings` table, one row per key): `onboardingComplete, lastPeriodStart, avgCycleLength, avgPeriodLength, pinHash (pbkdf2-sha256$iter$salt$hash), duressPinHash, pinLockEnabled, pinFailedAttempts, pinLockoutUntil, draftEntry, themeMode, lastBackupAt, predictionsPaused, customTags, confirmedLongCycles`. Theme mode is also mirrored to `localStorage.theme` for the pre-paint `theme-boot.js`.
 > - **Entries:** `{date (PK), flow, symptoms[], mood, note, tags?[], updatedAt}`.
 > - **Databases:** `MoonflowDB` (real) and `PlannerData` (duress decoy), same schema (ADR-040).
 > - **Writes:** all go through `useSaveSettings` or the transactional helpers in `db.ts` — write first, dispatch on success.

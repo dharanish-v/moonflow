@@ -53,3 +53,6 @@ Moonflow stores everything only on this device. Nothing is uploaded, synced, or 
 **Insights:** "Worth knowing" (FIGO nudges, each ending "This is not a diagnosis — …a clinician can tell you whether it's worth looking into.") · "When symptoms show up" · "Search notes, tags, symptoms…" · "N days found" · "Report for your doctor"
 
 **Tone rules (unchanged, reinforced):** calm, never alarming; health notes never say "warning"; neutral words in anything that can leave the app (filenames, calendar titles) when in the discreet install.
+
+## Added in Phase 12
+"A new version is ready. — Later / Update" · "Unsaved changes — Save changes / Discard / Keep editing" · "Same as yesterday" · "Cleared 6 Sep — Undo" · "Mark a period → Tap the first and last day of the period → N days selected → Save as period" · "Marked N days as a period — Undo" · "Did you miss logging a period around <date>? One cycle looks about twice as long as usual. — Log it / No, that's right" · "Shortcut links" · calendar speech "period day, heavy flow", "logged", "selected".
