@@ -3,6 +3,7 @@
 // period) are never stored here — always computed from entries/settings at
 // read time (technical-design.md's explicit invariant).
 
+import { todayString } from '../lib/cycle-math';
 import { SETTINGS_DEFAULTS } from '../lib/db';
 import type { Entry, Settings } from '../lib/types';
 
@@ -19,6 +20,9 @@ export interface AppState {
   settings: Settings;
   /** "YYYY-MM" */
   calendarMonth: string;
+  /** "YYYY-MM-DD" — kept current by the store (midnight + resume), so every
+   * screen re-renders when the day changes while the app stays open. */
+  today: string;
   editingDate: string | null;
   logFocusSection: LogFocusSection;
 }
@@ -32,12 +36,12 @@ export type Action =
   | { type: 'REMOVE_ENTRY'; date: string }
   | { type: 'PATCH_SETTINGS'; patch: Partial<Settings> }
   | { type: 'SET_CALENDAR_MONTH'; month: string }
+  | { type: 'DAY_CHANGED'; today: string }
   | { type: 'SET_EDITING_DATE'; date: string | null }
   | { type: 'SET_LOG_FOCUS_SECTION'; section: LogFocusSection };
 
 function currentMonth(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return todayString().slice(0, 7);
 }
 
 export const initialState: AppState = {
@@ -47,6 +51,7 @@ export const initialState: AppState = {
   entries: [],
   settings: SETTINGS_DEFAULTS,
   calendarMonth: currentMonth(),
+  today: todayString(),
   editingDate: null,
   logFocusSection: null,
 };
@@ -70,6 +75,15 @@ export function reducer(state: AppState, action: Action): AppState {
       return { ...state, entries: state.entries.filter((e) => e.date !== action.date) };
     case 'PATCH_SETTINGS':
       return { ...state, settings: { ...state.settings, ...action.patch } };
+    case 'DAY_CHANGED': {
+      // Follow the calendar into a new month only if it was showing "now".
+      const wasOnCurrentMonth = state.calendarMonth === state.today.slice(0, 7);
+      return {
+        ...state,
+        today: action.today,
+        calendarMonth: wasOnCurrentMonth ? action.today.slice(0, 7) : state.calendarMonth,
+      };
+    }
     case 'SET_CALENDAR_MONTH':
       return { ...state, calendarMonth: action.month };
     case 'SET_EDITING_DATE':
