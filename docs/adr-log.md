@@ -412,5 +412,7 @@ It also caught a real bug: update detection was decided once at launch, so an up
 - **Sending:** a PocketHost webhook calls `/api/moonflow/reminders/tick?key=…` every minute (it runs even while the instance hibernates). The hook signs a VAPID JWT (ES256, `@noble/curves` P-256 bundled for goja; T102 measured ~11 ms per signature, cached 12 h per push service), sends each due reminder once, skips reminders more than 12 h late, and deletes subscriptions the push service reports gone (404/410).
 - **Secrets:** `VAPID_PRIVATE_KEY` and `REMINDER_TICK_KEY` live only in PocketHost's instance secrets. The VAPID public key is in the app. The JWT subject is the repo URL, so no email address is published.
 
+**Verified 2026-11-01:** a test reminder reached the owner's iPhone (installed app, locked, app closed) with the neutral text; the webhook woke the hibernated instance on the minute.
+
 **Consequences:** the reminder times reveal predicted period dates, which the server can already infer from the synced logs (ADR-053: no end-to-end encryption). A reminder needs the server; without an account, the `.ics` export stays the way.
 

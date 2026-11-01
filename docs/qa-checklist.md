@@ -96,3 +96,10 @@ Use a build with `VITE_ACCOUNTS=1` on the iPhone and on a second device (iPad, M
 - [ ] Erase all data on B (Settings → Erase all data): onboarding offers "Sign in to restore"; signing in brings the logs and cycle settings back and opens the app (PIN and theme don't come back: they're phone-only).
 - [ ] Delete the account on A (type DELETE): B shows "Sign in again to sync" on its next sync; both devices keep their days.
 
+## Push reminders (T103, ADR-055)
+
+- [ ] Installed app, signed in: Settings → Calendar reminders → Notifications → "Notify me the day before, at 9am" → Allow.
+- [ ] Test send: in the admin UI, put a Unix time 2–3 minutes ahead at the front of your `push_subscriptions` row's `reminders` (keep the rest). A "Reminder" notification arrives on the minute, phone locked, app closed.
+- [ ] Turn on "Say 'Period likely tomorrow'": the next test says that instead.
+- [ ] Sign out: the switch is off and the server row is gone; no more notifications.
+
