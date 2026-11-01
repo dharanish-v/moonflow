@@ -2,3 +2,4 @@
 node_modules/
 dist/
 pb_data/
+.ftp-deploy-sync-state.json
