@@ -1,0 +1,12 @@
+{
+  "name": "moonflow-vapid-bundle",
+  "private": true,
+  "description": "Builds pb_hooks/lib/vapid.js: VAPID JWT signing for PocketBase's goja runtime (ADR-055)",
+  "scripts": {
+    "build": "esbuild src/vapid.js --bundle --format=cjs --platform=neutral --target=es2020 --main-fields=module,main --minify --legal-comments=eof --outfile=../../pb_hooks/lib/vapid.js"
+  },
+  "devDependencies": {
+    "@noble/curves": "2.4.0",
+    "esbuild": "0.28.2"
+  }
+}

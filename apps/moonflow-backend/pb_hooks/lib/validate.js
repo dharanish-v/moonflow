@@ -31,6 +31,13 @@ function json(record, field) {
   return text === "" || text === "null" ? null : JSON.parse(text)
 }
 
+function times(value, field, maxItems) {
+  if (value === null || value === undefined || value === "") return
+  if (!Array.isArray(value) || value.length > maxItems || !value.every((t) => Number.isInteger(t) && t > 0)) {
+    throw new BadRequestError(`${field} must be a list of at most ${maxItems} times (Unix seconds).`)
+  }
+}
+
 module.exports = {
   entry(record) {
     strings(json(record, "tags"), "tags", 30, 40)
@@ -38,5 +45,8 @@ module.exports = {
   cycleSettings(record) {
     strings(json(record, "customTags"), "customTags", 200, 40)
     dates(json(record, "confirmedLongCycles"), "confirmedLongCycles", 500)
+  },
+  pushSubscription(record) {
+    times(json(record, "reminders"), "reminders", 12)
   },
 }

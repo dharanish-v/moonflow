@@ -21,3 +21,13 @@ onRecordUpdateRequest((e) => {
   require(`${__hooks}/lib/validate.js`).cycleSettings(e.record)
   e.next()
 }, "cycle_settings")
+
+onRecordCreateRequest((e) => {
+  require(`${__hooks}/lib/validate.js`).pushSubscription(e.record)
+  e.next()
+}, "push_subscriptions")
+
+onRecordUpdateRequest((e) => {
+  require(`${__hooks}/lib/validate.js`).pushSubscription(e.record)
+  e.next()
+}, "push_subscriptions")

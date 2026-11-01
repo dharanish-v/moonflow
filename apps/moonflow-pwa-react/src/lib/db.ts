@@ -6,6 +6,7 @@ import Dexie, { type Table } from 'dexie';
 import type { Entry, LogEntryInput, Settings, SettingKey } from './types';
 import { defaultTemperatureUnit } from './temperature';
 import { bumpSessionEpoch, notifyLocalChange } from './sync-signal';
+import { unsubscribeThisDevice } from './push-device';
 
 interface SettingRow<K extends SettingKey = SettingKey> {
   key: K;
@@ -155,6 +156,8 @@ export const SETTINGS_DEFAULTS: Settings = {
   themeMode: 'system',
   lastBackupAt: null,
   account: null,
+  pushReminders: null,
+  detailedReminderText: false,
   predictionsPaused: false,
   customTags: [],
   confirmedLongCycles: [],
@@ -352,6 +355,9 @@ export async function eraseAllData(): Promise<boolean> {
     // Local only: clears sync bookkeeping too, never touches the server
     // (ADR-054). The session lives in settings, so this also signs out.
     bumpSessionEpoch();
+    // Stop this device's push reminders: the push service then tells the
+    // server the subscription is gone (ADR-055).
+    void unsubscribeThisDevice();
     await db.transaction('rw', [db.entries, db.settings, db.tombstones, db.outbox, db.syncState], async () => {
       await db.entries.clear();
       await db.settings.clear();

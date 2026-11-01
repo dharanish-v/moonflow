@@ -83,6 +83,18 @@ export interface Settings {
   lastBackupAt: number | null;
   /** Signed-in session for sync (T98, ADR-053). Device-only: never exported. */
   account: AccountSession | null;
+  /** This device's push reminder subscription (T103, ADR-055). Device-only. */
+  pushReminders: PushReminderState | null;
+  /** Lock-screen text says "Period likely tomorrow" instead of "Reminder".
+   * Device-only: the server never knows what a notification says. */
+  detailedReminderText: boolean;
+}
+
+export interface PushReminderState {
+  recordId: string;
+  endpoint: string;
+  /** The reminder times last sent to the server (Unix seconds). */
+  reminders: number[];
 }
 
 export interface AccountSession {

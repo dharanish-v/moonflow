@@ -104,5 +104,7 @@ Only for people who sign in. Stored readable (not end-to-end encrypted) in Pocke
 - `entries`: one row per user per `date`, with the fields of section 1 plus `deleted` (a tombstone, so a deletion syncs) and `updatedAt` (last write wins).
 - `cycle_settings`: one row per user: `lastPeriodStart`, `avgCycleLength`, `avgPeriodLength`, `predictionsPaused`, `customTags` (≤ 200), `birthYear`, `perimenopauseMode`, `fertilityAwareness`, `temperatureUnit`, `confirmedLongCycles` (≤ 500 dates), `updatedAt`.
 
+- `push_subscriptions` (ADR-055): one row per device that turned on push reminders: `endpoint` (where the push service delivers), `reminders` (up to 12 Unix times) and `sentUpTo` (set by the server). Pushes carry no content; what the notification says is decided on the phone.
+
 PocketBase has no null: an empty select or text, or a number `0` (`temperature`, `birthYear`), means "not set". Device-only settings (PIN, lockout, theme, draft, onboarding, last backup) are never sent.
 

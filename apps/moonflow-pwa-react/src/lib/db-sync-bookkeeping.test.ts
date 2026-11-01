@@ -16,6 +16,7 @@ import {
   setSetting,
 } from './db';
 import { subscribeLocalChange } from './sync-signal';
+import * as pushDevice from './push-device';
 
 const day = (date: string) => ({ date, flow: 'medium' as const, symptoms: [], mood: null, note: '' });
 const outbox = async () => (await db.outbox.toArray()).map((r) => r.key).sort();
@@ -74,10 +75,18 @@ describe('sync bookkeeping', () => {
 
   it('queues settings that describe the person, never device-only ones', async () => {
     await saveSettings({ themeMode: 'dark', pinLockEnabled: true, account: { userId: 'u', email: 'e', token: 't' } });
+    await saveSettings({ pushReminders: { recordId: 'r', endpoint: 'e', reminders: [1] }, detailedReminderText: true });
     await setSetting('draftEntry', null);
     expect(await outbox()).toEqual([]);
     await setSetting('fertilityAwareness', true);
     expect(await outbox()).toEqual(['settings']);
+  });
+
+  it('erase also stops this device\u2019s push reminders', async () => {
+    const stop = vi.spyOn(pushDevice, 'unsubscribeThisDevice').mockResolvedValue();
+    await eraseAllData();
+    expect(stop).toHaveBeenCalled();
+    stop.mockRestore();
   });
 
   it('erase clears the bookkeeping too', async () => {

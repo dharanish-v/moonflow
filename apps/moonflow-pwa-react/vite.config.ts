@@ -37,7 +37,7 @@ export default defineConfig({
       // produces (the hashed JS/CSS + the two HTML entries) — the two
       // manifests and all 6 icons live in public/ as untouched passthrough
       // files, so Workbox never discovers them on its own.
-      includeAssets: ['manifest.json', 'manifest-discreet.json', 'icons/*.png', 'theme-boot.js'],
+      includeAssets: ['manifest.json', 'manifest-discreet.json', 'icons/*.png', 'theme-boot.js', 'push-sw.js'],
       registerType: 'autoUpdate',
       // src/register-sw.ts already calls navigator.serviceWorker.register()
       // itself — don't let the plugin inject a second registration.
@@ -58,6 +58,8 @@ export default defineConfig({
         // closed. clientsClaim lets the first-ever install control the page
         // straight away (register-sw.ts doesn't reload for that one).
         skipWaiting: false,
+        // Push reminders (T103, ADR-055): shows the notification for an empty push.
+        importScripts: ['push-sw.js'],
         clientsClaim: true,
       },
     }),

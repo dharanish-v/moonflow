@@ -7,6 +7,7 @@ import { MIN_PASSWORD_LENGTH, deleteAccount, signIn, signUp } from '../lib/accou
 import { beginSession, endSession, getSyncStatus, mergePreview, subscribeSyncStatus } from '../lib/sync';
 import { syncLabel } from '../lib/sync-label';
 import { requestSync } from '../lib/sync-trigger';
+import { disablePush } from '../lib/push';
 import { useMinuteClock } from '../hooks/useMinuteClock';
 import type { AccountSession } from '../lib/types';
 import { Alert, AlertDescription } from './ui/alert';
@@ -115,6 +116,8 @@ export function AccountSheet({
   }
 
   async function handleSignOut() {
+    // Reminders belong to the account: stop them on this device first.
+    await disablePush(account);
     await endSession();
     if (await onSessionChange(null)) reset();
     else setError('Couldn’t sign out. Try again.');

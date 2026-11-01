@@ -403,3 +403,14 @@ It also caught a real bug: update detection was decided once at launch, so an up
 
 **Consequences:** a wrong phone clock can make an older edit win; one of two offline settings changes made on different devices can be lost. Both judged rare for one person's own devices. Realtime can be added later without changing the model.
 
+### ADR-055: Push reminders (T102/T103)
+**Status:** Accepted 2026-11-01
+**Decision:**
+- **What:** "period likely tomorrow", at 9:00 local time the day before each of the next 6 predicted starts (the same dates the `.ics` export uses). Opt-in per device, in Settings → Calendar reminders, for signed-in users on an installed app (iOS only allows web push from the home-screen app). Recomputed on every app open and sync.
+- **Payload-less pushes.** The server sends an empty push; the service worker builds the notification from this phone's own settings. Default text is neutral ("Reminder"); detailed text ("Period likely tomorrow") is a device setting that never leaves the phone.
+- **The server stores only** the push endpoint, the reminder times and how far it has sent (`push_subscriptions`, owner-only rules, deleted with the account). Not the subscription's encryption keys: with no payload there is nothing to encrypt.
+- **Sending:** a PocketHost webhook calls `/api/moonflow/reminders/tick?key=…` every minute (it runs even while the instance hibernates). The hook signs a VAPID JWT (ES256, `@noble/curves` P-256 bundled for goja; T102 measured ~11 ms per signature, cached 12 h per push service), sends each due reminder once, skips reminders more than 12 h late, and deletes subscriptions the push service reports gone (404/410).
+- **Secrets:** `VAPID_PRIVATE_KEY` and `REMINDER_TICK_KEY` live only in PocketHost's instance secrets. The VAPID public key is in the app. The JWT subject is the repo URL, so no email address is published.
+
+**Consequences:** the reminder times reveal predicted period dates, which the server can already infer from the synced logs (ADR-053: no end-to-end encryption). A reminder needs the server; without an account, the `.ics` export stays the way.
+

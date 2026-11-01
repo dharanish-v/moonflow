@@ -4,9 +4,11 @@
 // Triggers: mount, a few seconds after a local change, back to foreground,
 // back online, and "Sync now". Offline runs retry with backoff.
 import { useEffect } from 'react';
-import { loadAllEntries, loadAllSettings } from '../lib/db';
+import { getSetting, loadAllEntries, loadAllSettings } from '../lib/db';
 import { accountsEnabled } from '../lib/features';
 import { pickSynced } from '../lib/sync-merge';
+import { refreshPushReminders } from '../lib/push';
+import { predictedStarts, reminderTimes } from '../lib/reminder-dates';
 import { loadSyncStatus, syncDatabase } from '../lib/sync';
 import { subscribeLocalChange } from '../lib/sync-signal';
 import { setSyncTrigger } from '../lib/sync-trigger';
@@ -46,7 +48,13 @@ export function SyncRunner() {
         const [entries, fresh] = await Promise.all([loadAllEntries(), loadAllSettings()]);
         if (stopped) return;
         if (outcome.changed) dispatch({ type: 'SET_ENTRIES', entries });
-        dispatch({ type: 'PATCH_SETTINGS', patch: { ...pickSynced(fresh), account: fresh.account } });
+        // Predictions may have moved: keep this device's push reminders in step.
+        if (fresh.pushReminders && fresh.account) {
+          await refreshPushReminders(fresh.account, reminderTimes(predictedStarts(entries, fresh), Date.now()));
+          fresh.pushReminders = await getSetting('pushReminders');
+          if (stopped) return;
+        }
+        dispatch({ type: 'PATCH_SETTINGS', patch: { ...pickSynced(fresh), account: fresh.account, pushReminders: fresh.pushReminders } });
       } else if (outcome.result === 'offline') {
         retry = setTimeout(() => void run(), RETRY_MS[Math.min(failures++, RETRY_MS.length - 1)]);
       }
