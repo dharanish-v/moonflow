@@ -4,7 +4,8 @@
 // never touches the data on this phone.
 import { useState, useSyncExternalStore, type FormEvent } from 'react';
 import { MIN_PASSWORD_LENGTH, deleteAccount, signIn, signUp } from '../lib/account';
-import { beginSession, endSession, getSyncStatus, mergePreview, subscribeSyncStatus } from '../lib/sync';
+import { beginSession, endSession, getSyncStatus, mergePreview, replaceLocalData, subscribeSyncStatus } from '../lib/sync';
+import { useAppDispatch } from '../state/hooks';
 import { syncLabel } from '../lib/sync-label';
 import { requestSync } from '../lib/sync-trigger';
 import { disablePush } from '../lib/push';
@@ -26,7 +27,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 
-type Mode = 'intro' | 'sign-up' | 'sign-in' | 'confirm-merge';
+type Mode = 'intro' | 'sign-up' | 'sign-in' | 'confirm-merge' | 'confirm-replace';
 
 interface PendingMerge {
   session: AccountSession;
@@ -61,6 +62,7 @@ export function AccountSheet({
   const [pending, setPending] = useState<PendingMerge | null>(null);
   const status = useSyncExternalStore(subscribeSyncStatus, getSyncStatus);
   const now = useMinuteClock();
+  const dispatch = useAppDispatch();
   const expired = account !== null && status.state === 'expired';
 
   function reset() {
@@ -99,9 +101,10 @@ export function AccountSheet({
     // confirmed first when both sides have days (ADR-054).
     if (account?.userId === result.session.userId) return finish(result.session);
     const counts = await mergePreview(result.session);
-    // Nothing to combine — unless this phone's days belong to another
-    // account, which would copy them in without asking.
-    if (counts && (counts.local === 0 || (counts.remote === 0 && !counts.otherAccount))) return finish(result.session);
+    // Ask whenever this phone has days: combining copies them into the
+    // account (and can replace a day there or here); replacing deletes them
+    // from this phone. Only an empty phone signs straight in.
+    if (counts && counts.local === 0) return finish(result.session);
     setPending({ session: result.session, counts });
     setMode('confirm-merge');
     setBusy(false);
@@ -117,6 +120,13 @@ export function AccountSheet({
     }
     reset();
     requestSync();
+  }
+
+  async function replaceAndFinish(session: AccountSession) {
+    setBusy(true);
+    await replaceLocalData();
+    dispatch({ type: 'SET_ENTRIES', entries: [] });
+    await finish(session);
   }
 
   async function handleSignOut() {
@@ -176,8 +186,27 @@ export function AccountSheet({
             <Button disabled={busy} onClick={() => void finish(pending.session)} className="h-11 w-full text-sm">
               {busy ? 'Please wait…' : 'Combine and sync'}
             </Button>
-            <Button variant="outline" onClick={reset} className="h-11 w-full text-sm">
+            <Button variant="outline" disabled={busy} onClick={() => setMode('confirm-replace')} className="h-11 w-full text-sm">
+              Replace this phone's data
+            </Button>
+            <Button variant="ghost" onClick={reset} className="h-11 w-full text-sm">
               Cancel
+            </Button>
+          </div>
+        ) : mode === 'confirm-replace' && pending ? (
+          <div className="flex flex-col gap-2">
+            <p className="mb-2 text-sm text-foreground">
+              {pending.counts ? `The ${days(pending.counts.local)} on this phone` : 'The days on this phone'} will be deleted
+              from this phone and replaced with your account's. Nothing in the account changes. Your PIN and theme stay.
+            </p>
+            <p className="mb-2 text-xs text-muted-foreground">
+              Want to keep them? Cancel, then Settings → Export data first.
+            </p>
+            <Button variant="destructive" disabled={busy} onClick={() => void replaceAndFinish(pending.session)} className="h-11 w-full text-sm">
+              {busy ? 'Please wait…' : "Delete this phone's days and sign in"}
+            </Button>
+            <Button variant="outline" disabled={busy} onClick={() => setMode('confirm-merge')} className="h-11 w-full text-sm">
+              Back
             </Button>
           </div>
         ) : account && mode !== 'sign-in' ? (

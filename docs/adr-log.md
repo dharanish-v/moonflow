@@ -388,7 +388,7 @@ It also caught a real bug: update detection was decided once at launch, so an up
 **Decision:**
 - **Conflicts:** per day, the newest `updatedAt` (stamped by the phone) wins. No field-level merge.
 - **Deletes:** a Dexie `tombstones` table (`date`, `deletedAt`), schema version 2. Written on every delete, signed in or not; saving the date again removes it; pruned once the server has the tombstone.
-- **First sync after sign-in:** merge, after a confirmation with counts ("This phone has 42 days and your account has 120…"). Cancel signs out.
+- **First sync after sign-in:** merge, after a confirmation with counts ("This phone has 42 days and your account has 120…"). Cancel signs out. *Amended 2026-11-01:* the confirmation shows whenever this phone has any days (not only when both sides do), and offers a third choice, **Replace this phone's data**: the phone's days and sync bookkeeping are cleared without tombstones, so nothing in the account changes, and the account's data loads. A second confirmation names the count and points to Export first.
 - **When:** on open (after unlock), a few seconds after each save, on returning to the foreground, on reconnect, and "Sync now". No realtime connection.
 - **Settings:** the whole `cycle_settings` row, newest wins on one local "settings changed at" stamp; `customTags` merge as a union. Theme stays per device; temperature unit syncs.
 - **Duress PIN:** a sync records which database it started on and aborts, writing nothing, if that changes. Signing in inside the decoy is allowed; the disclosure says anyone with the account password can see synced logs. Nothing about the real account shows in the decoy.

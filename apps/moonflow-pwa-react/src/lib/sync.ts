@@ -126,6 +126,22 @@ export async function endSession(target: MoonflowDB = activeDb) {
   setStatus({ state: 'idle', lastSyncedAt: null, rejected: 0 });
 }
 
+/** "Replace this phone's data" at sign-in: empties this database's days and
+ * sync bookkeeping so the next sync brings in only the account's data. The
+ * days are cleared directly — no tombstones, no outbox — so nothing is
+ * deleted from any account. Settings stay; the account's win on the first
+ * sync anyway (pullSettings). PIN, theme and other phone-only settings are
+ * untouched. */
+export async function replaceLocalData(target: MoonflowDB = activeDb) {
+  bumpSessionEpoch();
+  await target.transaction('rw', [target.entries, target.tombstones, target.outbox, target.syncState], async () => {
+    await target.entries.clear();
+    await target.tombstones.clear();
+    await target.outbox.clear();
+    await target.syncState.clear();
+  });
+}
+
 /** What the first-sync confirmation needs ("This phone has 42 days and your
  * account has 120"). `otherAccount`: this phone's days were last synced with a
  * different account. null when the server can't be reached. */

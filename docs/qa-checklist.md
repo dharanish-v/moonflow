@@ -93,6 +93,7 @@ Use a build with `VITE_ACCOUNTS=1` on the iPhone and on a second device (iPad, M
 - [ ] Undo a "period started" on A: after syncing, B doesn't have those days.
 - [ ] With App lock and a duress PIN on device A: open with the duress PIN: Settings → Account says "Not signed in"; nothing from the real data appears. Relaunch with the real PIN: still signed in and synced.
 - [ ] Sign out on B: B keeps its days; Account says "Not signed in". Sign back in: no duplicate days.
+- [ ] On a phone with a few logged days, sign in to a different (throwaway) account: the prompt shows Combine / Replace this phone's data / Cancel. Replace → confirm: the phone shows only the account's days, and the account (checked on another device) is unchanged.
 - [ ] Erase all data on B (Settings → Erase all data): onboarding offers "Sign in to restore"; signing in brings the logs and cycle settings back and opens the app (PIN and theme don't come back: they're phone-only).
 - [ ] Delete the account on A (type DELETE): B shows "Sign in again to sync" on its next sync; both devices keep their days.
 

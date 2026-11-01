@@ -177,6 +177,43 @@ describe('Account (T98)', () => {
     expect(await screen.findByText(/This phone's 1 day was synced with a different account\. Combining copies it into this one too/)).toBeInTheDocument();
   });
 
+  it('asks even when the phone was never signed in and the account is empty', async () => {
+    vi.spyOn(account, 'signIn').mockResolvedValue({ ok: true, session: SESSION });
+    vi.spyOn(sync, 'mergePreview').mockResolvedValue({ local: 4, remote: 0, otherAccount: false });
+    const { state } = await renderSettings();
+    openAccount();
+    fireEvent.click(await screen.findByRole('button', { name: 'I already have an account' }));
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'me@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'long enough pw' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(await screen.findByText(/This phone has 4 days and your account has 0 days/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: "Replace this phone's data" })).toBeInTheDocument();
+    expect(state().settings.account).toBeNull();
+  });
+
+  it('can replace this phone\u2019s days with the account\u2019s, after a second confirmation', async () => {
+    vi.spyOn(account, 'signIn').mockResolvedValue({ ok: true, session: SESSION });
+    vi.spyOn(sync, 'mergePreview').mockResolvedValue({ local: 9, remote: 20, otherAccount: false });
+    const replace = vi.spyOn(sync, 'replaceLocalData').mockResolvedValue();
+    const begin = vi.spyOn(sync, 'beginSession');
+    const { state } = await renderSettings();
+    openAccount();
+    fireEvent.click(await screen.findByRole('button', { name: 'I already have an account' }));
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'me@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'long enough pw' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    fireEvent.click(await screen.findByRole('button', { name: "Replace this phone's data" }));
+    expect(screen.getByText(/The 9 days on this phone will be deleted from this phone and replaced with your account's\. Nothing in the account changes/)).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    fireEvent.click(await screen.findByRole('button', { name: "Replace this phone's data" }));
+    fireEvent.click(screen.getByRole('button', { name: "Delete this phone's days and sign in" }));
+    await waitFor(() => expect(state().settings.account).toEqual(SESSION));
+    expect(replace).toHaveBeenCalledTimes(1);
+    expect(replace.mock.invocationCallOrder[0]!).toBeLessThan(begin.mock.invocationCallOrder[0]!);
+    expect(state().entries).toEqual([]);
+  });
+
   it('cancelling the merge leaves this phone signed out', async () => {
     vi.spyOn(account, 'signIn').mockResolvedValue({ ok: true, session: SESSION });
     vi.spyOn(sync, 'mergePreview').mockResolvedValue({ local: 3, remote: 5, otherAccount: false });

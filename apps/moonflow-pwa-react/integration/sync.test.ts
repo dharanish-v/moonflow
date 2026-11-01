@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { signUp } from '../src/lib/account';
 import { setBackendBaseForTests } from '../src/lib/backend';
 import { MoonflowDB } from '../src/lib/db';
-import { beginSession, endSession, getSyncStatus, mergePreview, syncDatabase } from '../src/lib/sync';
+import { beginSession, endSession, getSyncStatus, mergePreview, replaceLocalData, syncDatabase } from '../src/lib/sync';
 import type { AccountSession, Entry } from '../src/lib/types';
 
 const backend = resolve(import.meta.dirname, '../../moonflow-backend');
@@ -368,4 +368,36 @@ describe('sync review regressions', () => {
     expect(await mergePreview(second, a)).toEqual({ local: 1, remote: 0, otherAccount: true });
     expect(await mergePreview(first, a)).toMatchObject({ otherAccount: false });
   });
+
+  it('"Replace this phone\u2019s data" loads only the account\u2019s days and deletes nothing from the account', async () => {
+    const s = await newAccount();
+    const owner = await device(s);
+    await save(owner, '2026-07-01', { note: 'in the account' });
+    await save(owner, '2026-07-02', { note: 'also in the account' });
+    await sync(owner);
+    await sync(owner);
+
+    // A phone with its own days, never signed in, one of them the same date.
+    const phone = new MoonflowDB(`phone-${Math.random()}`);
+    await phone.settings.put({ key: 'onboardingComplete', value: true });
+    await phone.settings.put({ key: 'pinLockEnabled', value: true });
+    await save(phone, '2026-07-01', { note: 'phone only, newer' }, Date.now() + 60_000);
+    await save(phone, '2026-07-05', { note: 'phone only' });
+
+    await replaceLocalData(phone);
+    await phone.settings.put({ key: 'account', value: s });
+    await beginSession(s, phone);
+    expect((await sync(phone)).result).toBe('synced');
+
+    expect(await dates(phone)).toEqual(['2026-07-01', '2026-07-02']);
+    expect((await phone.entries.get('2026-07-01'))!.note).toBe('in the account');
+    expect(await setting(phone, 'pinLockEnabled')).toBe(true); // phone-only settings stay
+    const server = await fetch(`${base}/api/collections/entries/records?sort=date`, { headers: { authorization: s.token } });
+    const rows = ((await server.json()) as { items: Array<{ date: string; deleted: boolean; note: string }> }).items;
+    expect(rows.map((r) => [r.date, r.deleted, r.note])).toEqual([
+      ['2026-07-01', false, 'in the account'],
+      ['2026-07-02', false, 'also in the account'],
+    ]);
+  });
 });
+
