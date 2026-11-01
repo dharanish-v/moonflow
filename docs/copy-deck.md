@@ -40,6 +40,10 @@ Warm, calm, plain language. Short sentences. No exclamation marks. No medical ja
 
 Moonflow stores everything only on this device. Nothing is uploaded, synced, or shared — there's no account and no server involved at any point. The only way data ever leaves your phone is if you choose to export it yourself.
 
+**With accounts on (ADR-053, `VITE_ACCOUNTS=1`):** the above stays true for anyone who doesn't sign in. Onboarding says: "Everything you log stays on this phone. An account is optional, only for syncing your devices." · "Without an account the app sends nothing; its security policy allows only Moonflow's own server."
+
+**Account sheet (T98):** "Optional. Sign in to keep your logs in step across your devices. Without an account, everything stays on this phone." · "What an account means": copied to Moonflow's server · stored unencrypted, readable by the server's admin, the host and anyone who breaks in · PIN, theme and other phone settings never leave it · no email, the app's owner resets forgotten passwords · delete any time · acknowledgement switch: "I understand my logs are stored on the server unencrypted, where the server's admin can read them" · "Signing out or deleting the account leaves everything on this phone as it is." · Delete: type DELETE.
+
 ## Added 2026-09 (Phases 8–11) — source of truth is the code; key strings
 
 **Home:** "Period started today" · "Still on my period" · "Today: Medium flow · 2 symptoms" · "Edit today" · "Log symptoms, mood or notes" · "Logged medium flow for today — Undo" · "N days late / log your period when it starts" · "Predictions paused / keep logging — resume anytime in Settings" · "Expected 22–26 Aug · cycles vary" · "Estimate only — not birth control." · "Back up your data · You haven't backed up yet"

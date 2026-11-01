@@ -91,6 +91,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   draftEntry: null,
   themeMode: 'system',
   lastBackupAt: null,
+  account: null,
   predictionsPaused: false,
   customTags: [],
   confirmedLongCycles: [],

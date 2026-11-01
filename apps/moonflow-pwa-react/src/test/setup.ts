@@ -24,6 +24,16 @@ if (typeof window.matchMedia !== 'function') {
     }) as MediaQueryList;
 }
 
+// jsdom has no ResizeObserver either. Radix measures a Switch with it when the
+// switch sits inside a <form> (the Account sheet, T98).
+if (typeof window.ResizeObserver !== 'function') {
+  window.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
+
 // Lazy-loaded screens (T62) are transformed on first import in the test run,
 // which can take longer than Testing Library's 1s default for findBy*.
 import { configure } from '@testing-library/react';

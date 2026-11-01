@@ -51,7 +51,7 @@ This is what Settings → Export → "Unencrypted backup (JSON)" writes, and it 
 | `mucus` | `dry` · `sticky` · `creamy` · `watery` · `eggwhite` · absent/`null` | Cervical mucus, least to most fertile. |
 | `updatedAt` | integer (milliseconds since 1970) | When the day was last saved. |
 
-Never exported: the PIN hash, lockout state, theme, draft entry or any other device-only setting.
+Never exported: the PIN hash, lockout state, theme, draft entry, the signed-in account session or any other device-only setting.
 
 ## 2. Encrypted backup
 

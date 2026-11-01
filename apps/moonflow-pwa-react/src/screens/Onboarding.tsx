@@ -24,6 +24,7 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import { useSaveSettings } from '../state/useSaveSettings';
 import { isDiscreetInstall, isStandalone } from '../lib/install-identity';
 import { ImportBackup } from '../components/ImportBackup';
+import { accountsEnabled } from '../lib/features';
 
 export function OnboardingScreen() {
   const discreet = isDiscreetInstall();
@@ -120,8 +121,17 @@ export function OnboardingScreen() {
         <>
           <h1 className="mb-3 text-center text-base font-medium text-foreground">Private by design</h1>
           <ul className="mb-5 flex flex-col gap-2 text-sm text-foreground">
-            <li>Everything you log stays on this phone. There's no account and no server.</li>
-            <li>The app can't send data anywhere; its security policy blocks every network request.</li>
+            {accountsEnabled() ? (
+              <>
+                <li>Everything you log stays on this phone. An account is optional, only for syncing your devices.</li>
+                <li>Without an account the app sends nothing; its security policy allows only Moonflow's own server.</li>
+              </>
+            ) : (
+              <>
+                <li>Everything you log stays on this phone. There's no account and no server.</li>
+                <li>The app can't send data anywhere; its security policy blocks every network request.</li>
+              </>
+            )}
             <li>Backups are encrypted with a passphrase only you know.</li>
             <li>Predictions are estimates, not medical advice, and never birth control.</li>
           </ul>

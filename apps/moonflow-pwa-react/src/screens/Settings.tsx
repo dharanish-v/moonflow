@@ -2,7 +2,7 @@
 // PIN (create-1/create-2) is its own route (PinSetup.tsx) — see that file
 // for why.
 import { forwardRef, useState, type ComponentProps, type ReactNode } from 'react';
-import { Calendar, CalendarClock, Info, Monitor, Moon, PauseCircle, ShieldAlert, Sun, Sunset, Thermometer, Upload, Zap } from 'lucide-react';
+import { Calendar, CalendarClock, CircleUser, Info, Monitor, Moon, PauseCircle, ShieldAlert, Sun, Sunset, Thermometer, Upload, Zap } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from 'cn';
 import { Alert, AlertDescription } from '../components/ui/alert';
@@ -36,6 +36,8 @@ import { parseDate } from '../lib/cycle-math';
 const NOON_MS = 12 * 3_600_000;
 import { ExportSheet } from '../components/ExportSheet';
 import { RemindersSheet } from '../components/RemindersSheet';
+import { AccountSheet } from '../components/AccountSheet';
+import { accountsEnabled } from '../lib/features';
 import { ImportBackup } from '../components/ImportBackup';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -77,6 +79,7 @@ export function SettingsScreen() {
   const [saveError, setSaveError] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [remindersOpen, setRemindersOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [removeDuressOpen, setRemoveDuressOpen] = useState(false);
   const [eraseOpen, setEraseOpen] = useState(false);
   const [eraseConfirm, setEraseConfirm] = useState('');
@@ -156,6 +159,17 @@ export function SettingsScreen() {
       </div>
 
       <Card className="gap-0 p-0 ring-border/60">
+        {accountsEnabled() && (
+          <>
+            <SettingsRowButton
+              icon={<CircleUser className="size-4" aria-hidden="true" />}
+              label="Account"
+              value={settings.account ? settings.account.email : 'Not signed in'}
+              onClick={() => setAccountOpen(true)}
+            />
+            <Separator />
+          </>
+        )}
         <SettingsRow icon={<LockIcon className="size-4" />} label="App lock">
           <Switch checked={settings.pinLockEnabled} onCheckedChange={handleTogglePinLock} aria-label="App lock" />
         </SettingsRow>
@@ -423,6 +437,7 @@ export function SettingsScreen() {
             <AlertDialogDescription>
               This permanently deletes every log and setting on this device. It can't be undone — export a backup first if
               you might want it back.
+              {settings.account && ' It also signs you out here, but your copy on the server stays: delete it in Account.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Label htmlFor="erase-confirm" className="text-sm">
@@ -449,6 +464,15 @@ export function SettingsScreen() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {accountsEnabled() && (
+        <AccountSheet
+          open={accountOpen}
+          onOpenChange={setAccountOpen}
+          account={settings.account}
+          onSessionChange={(account) => persist({ account })}
+        />
+      )}
 
       <RemindersSheet open={remindersOpen} onOpenChange={setRemindersOpen} entries={entries} settings={settings} />
 

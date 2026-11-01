@@ -23,7 +23,8 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    cspPlugin(),
+    // VITE_ACCOUNTS=1 also lets the page reach the backend (T98, ADR-053).
+    cspPlugin({ accounts: process.env.VITE_ACCOUNTS === '1' }),
     tailwindcss(),
     VitePWA({
       // manifest: false — manifest.json/manifest-discreet.json stay

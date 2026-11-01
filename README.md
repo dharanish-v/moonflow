@@ -44,6 +44,7 @@ git config core.hooksPath .githooks   # once per clone: enables the git hooks be
 cd apps/moonflow-pwa-react
 npm ci
 npm run dev        # dev server
+VITE_ACCOUNTS=1 npm run dev   # with the optional account (ADR-053); off in production builds until sync ships
 npm test           # Vitest: unit, screen, a11y and build-guard tests
 npm run lint       # oxlint
 npx tsc -b         # typecheck

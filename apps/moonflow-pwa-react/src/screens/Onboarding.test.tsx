@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { render, screen } from '@testing-library/react';
 import { axe } from 'jest-axe';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StateProvider } from '../state/store';
 import { OnboardingScreen } from './Onboarding';
 
@@ -95,5 +95,33 @@ describe('OnboardingScreen — three steps (T93)', () => {
     expect(screen.getByText('Step 3 of 3')).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /set up a pin lock/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Get started' })).toBeEnabled();
+  });
+});
+
+describe('OnboardingScreen — privacy step (T98)', () => {
+  async function reachPrivacyStep() {
+    const { fireEvent } = await import('@testing-library/react');
+    render(
+      <StateProvider testState={{}}>
+        <OnboardingScreen />
+      </StateProvider>,
+    );
+    fireEvent.change(document.getElementById('onboarding-date')!, { target: { value: '2026-09-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByText('Private by design');
+  }
+
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('promises no account and no server when accounts are off', async () => {
+    await reachPrivacyStep();
+    expect(screen.getByText(/There's no account and no server/)).toBeInTheDocument();
+  });
+
+  it('says an account is optional when accounts are on', async () => {
+    vi.stubEnv('VITE_ACCOUNTS', '1');
+    await reachPrivacyStep();
+    expect(screen.getByText(/An account is optional, only for syncing your devices/)).toBeInTheDocument();
+    expect(screen.queryByText(/no account and no server/)).not.toBeInTheDocument();
   });
 });

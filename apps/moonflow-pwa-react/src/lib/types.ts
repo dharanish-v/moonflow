@@ -81,6 +81,14 @@ export interface Settings {
   confirmedLongCycles: string[];
   /** Epoch ms of the last successful export (T47). */
   lastBackupAt: number | null;
+  /** Signed-in session for sync (T98, ADR-053). Device-only: never exported. */
+  account: AccountSession | null;
+}
+
+export interface AccountSession {
+  userId: string;
+  email: string;
+  token: string;
 }
 
 export type SettingKey = keyof Settings;

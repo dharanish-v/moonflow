@@ -10,7 +10,7 @@ Mainstream period trackers typically require an account, sync data to a company'
 
 ## Non-Goals (explicitly out of scope)
 - **Not a medical diagnostic tool.** Predictions are estimates based on logged history, not medical advice, and must never be presented as a reliable method of contraception
-- **Not multi-user.** No partner sharing, no caregiver access, no accounts of any kind
+- **Not multi-user.** No partner sharing, no caregiver access. *Changed by ADR-053 (2026-11-01): an optional account syncs one person's devices; without it, nothing changes. Sharing would need its own ADR.*
 - **Not a fertility-coaching tool in V1.** BBT and ovulation-test logging are deferred to V2
 - **Not distributed via the App Store.** Sideloaded as a PWA only (see ADR-001)
 - **Not synced across devices.** Single iPhone only (see ADR-002)
