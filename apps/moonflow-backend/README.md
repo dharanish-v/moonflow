@@ -36,10 +36,19 @@ curl https://<instance>.pockethost.io/api/moonflow/health
 phio logs                 # tail instance logs
 ```
 
+## Push reminder secrets and webhook (ADR-055)
+
+`scripts/configure-push.mts` sets `VAPID_PRIVATE_KEY`, `REMINDER_TICK_KEY` and the every-minute tick webhook through phio's login (the same API call the dashboard makes). It reads a local env file and never prints a secret:
+
+```bash
+tsx scripts/configure-push.mts ~/.config/moonflow-push/secrets.env
+```
+
+To rotate keys: generate new ones, update `src/lib/push-config.ts` in the app with the new public key, run the script, release. Existing subscriptions were made with the old public key, so devices need to turn notifications off and on again.
+
 ## Dashboard-only settings
 
 PocketHost has no CLI for these. Set them in the dashboard and note them here:
 
 - PocketBase version: `0.40.*` (upgraded from 0.22 on 2026-11-01, after the instance's old vehicle/owner data was backed up locally and cleared)
-- Webhooks (scheduled calls; they run even while the instance hibernates)
-- Secrets / environment variables
+- Webhooks and secrets: the dashboard, or `scripts/configure-push.mts` for the push ones
