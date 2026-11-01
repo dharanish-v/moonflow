@@ -49,6 +49,8 @@ The gate every change must pass, as CI does on every push to `main`:
 npx tsc -b && npm run lint && npm test && LANG=en_US.UTF-8 TZ=UTC npm test && npm run build
 ```
 
+The `pre-push` git hook runs this for you once hooks are enabled (`git config core.hooksPath .githooks`).
+
 Ship a new version by bumping `version` in `package.json`, tagging `vX.Y.Z`, and attaching the new dist zip and `SHA256SUMS` to a release. Installed apps show "A new version is ready — Update"; nothing changes on a phone until that button is tapped.
 
 Dependency policy after the freeze: **no updates except security fixes**, each through the full gate.

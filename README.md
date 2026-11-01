@@ -32,12 +32,15 @@ Things to know:
 
 ```
 apps/moonflow-pwa-react/   the app — React 19, TypeScript, Vite, Tailwind v4, shadcn/ui, Dexie
+apps/moonflow-backend/     optional accounts and sync — PocketBase on PocketHost (ADR-053)
+.githooks/                 pre-commit and pre-push checks
 docs/                      product and engineering docs (below)
 ```
 
 ## Development
 
 ```bash
+git config core.hooksPath .githooks   # once per clone: enables the git hooks below
 cd apps/moonflow-pwa-react
 npm ci
 npm run dev        # dev server
@@ -47,6 +50,8 @@ npx tsc -b         # typecheck
 npm run build      # production build → dist/ (index.html + planner.html)
 npm run preview    # serve the build, including the service worker
 ```
+
+Git hooks (plain shell, no dependency): **pre-commit** runs lint and the typecheck when app files are staged, and `node --check` on backend hooks and migrations. **pre-push** runs the full gate below for whatever the push changes. Skip once with `--no-verify`.
 
 Every push to `main` runs the tests, lint and build in CI (`.github/workflows/deploy-pages.yml`), then deploys to GitHub Pages.
 

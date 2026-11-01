@@ -1,0 +1,33 @@
+#!/bin/sh
+# Every push to main deploys, so run the same gate as CI first.
+# Skip once with `git push --no-verify`.
+set -e
+root=$(git rev-parse --show-toplevel)
+zero=0000000000000000000000000000000000000000
+changed=""
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue
+  if [ "$remote_sha" = "$zero" ]; then
+    changed="$changed
+$(git ls-tree -r --name-only "$local_sha")"
+  else
+    changed="$changed
+$(git diff --name-only "$remote_sha" "$local_sha")"
+  fi
+done
+
+if printf '%s\n' "$changed" | grep -q '^apps/moonflow-pwa-react/'; then
+  echo "pre-push: frontend gate (types, lint, tests, UTC tests, build)"
+  cd "$root/apps/moonflow-pwa-react"
+  npx tsc -b
+  npm run --silent lint
+  npm test --silent
+  LANG=en_US.UTF-8 TZ=UTC npm test --silent
+  npm run --silent build
+  cd "$root"
+fi
+
+if printf '%s\n' "$changed" | grep -qE '^apps/moonflow-backend/pb_(hooks|migrations)/.*\.js$'; then
+  echo "pre-push: backend syntax"
+  find "$root/apps/moonflow-backend/pb_hooks" "$root/apps/moonflow-backend/pb_migrations" -name '*.js' -exec node --check {} \;
+fi
