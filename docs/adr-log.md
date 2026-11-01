@@ -382,3 +382,22 @@ It also caught a real bug: update detection was decided once at launch, so an up
 - End-to-end encryption can be added later: the encrypted-backup recipe (`docs/data-format.md`) is reusable, but existing server data must then be migrated.
 
 **Open:** the permanent address (ADR-042) should be settled before accounts ship, because sessions are tied to it. Sharing scope (what is shared, read-only, revoking). Email provider for codes and reset, if ever wanted.
+
+### ADR-054: How sync works (T99)
+**Status:** Accepted 2026-11-01 (decided in a design interview with the owner)
+**Decision:**
+- **Conflicts:** per day, the newest `updatedAt` (stamped by the phone) wins. No field-level merge.
+- **Deletes:** a Dexie `tombstones` table (`date`, `deletedAt`), schema version 2. Written on every delete, signed in or not; saving the date again removes it; pruned once the server has the tombstone.
+- **First sync after sign-in:** merge, after a confirmation with counts ("This phone has 42 days and your account has 120…"). Cancel signs out.
+- **When:** on open (after unlock), a few seconds after each save, on returning to the foreground, on reconnect, and "Sync now". No realtime connection.
+- **Settings:** the whole `cycle_settings` row, newest wins on one local "settings changed at" stamp; `customTags` merge as a union. Theme stays per device; temperature unit syncs.
+- **Duress PIN:** a sync records which database it started on and aborts, writing nothing, if that changes. Signing in inside the decoy is allowed; the disclosure says anyone with the account password can see synced logs. Nothing about the real account shows in the decoy.
+- **Other writes:** undo stamps a fresh `updatedAt` (and leaves tombstones for undone new days); an import stamps fresh times so it wins and syncs up; erase all data stays local, clears tombstones and never touches the server.
+- **Transport:** incremental pull by the server's `updated` time (not the phone clock), pages of 500. Push from a local outbox of dirty dates plus a settings flag, through PocketBase's batch API (≤ 50 per request, enabled by a migration), to stay under PocketHost's 50 requests per 10 s per IP. Server record ids are remembered locally.
+- **Errors:** offline retries quietly; an expired session keeps data and outbox and asks to sign in again; a row the server rejects is skipped and counted. Status shows only in Settings → Account ("Synced 2 min ago", "Sign in again to sync", …). No Home nudge.
+- **PIN lock:** sync runs only after unlock.
+- **Sign-out or a different account:** sync metadata (outbox, remote ids, cursors, tombstones already on the server) is reset, so nothing is pushed into the wrong account.
+- **Rollout:** merge logic unit-tested; the engine tested with two simulated devices against a local PocketBase 0.40.6 in pre-push and CI; then the owner's two-device check (`docs/qa-checklist.md`); turning `VITE_ACCOUNTS` on in production is its own commit after that.
+
+**Consequences:** a wrong phone clock can make an older edit win; one of two offline settings changes made on different devices can be lost. Both judged rare for one person's own devices. Realtime can be added later without changing the model.
+
