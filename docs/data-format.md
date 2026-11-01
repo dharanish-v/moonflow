@@ -93,3 +93,14 @@ This is Settings → Calendar reminders. It is standard iCalendar (RFC 5545): al
 ## 5. On the phone
 
 The app stores the same data in IndexedDB database `MoonflowDB`, with tables `entries` (keyed by `date`) and `settings` (keyed by `key`, one row per setting). The duress PIN uses a separate database, `PlannerData`, with the same shape. Neither can be read from outside the installed web app; export is the way out.
+
+## 6. Server copy (signed-in sync, ADR-053)
+
+Only for people who sign in. Stored readable (not end-to-end encrypted) in PocketBase on PocketHost; the schema is `apps/moonflow-backend/pb_migrations/`. Every row has a `user` and only that user can read or change it. Deleting the account deletes every row.
+
+- `users`: email and password (at least 10 characters). No name, avatar, verification or email codes.
+- `entries`: one row per user per `date`, with the fields of section 1 plus `deleted` (a tombstone, so a deletion syncs) and `updatedAt` (last write wins).
+- `cycle_settings`: one row per user: `lastPeriodStart`, `avgCycleLength`, `avgPeriodLength`, `predictionsPaused`, `customTags` (≤ 200), `birthYear`, `perimenopauseMode`, `fertilityAwareness`, `temperatureUnit`, `confirmedLongCycles` (≤ 500 dates), `updatedAt`.
+
+PocketBase has no null: an empty select or text, or a number `0` (`temperature`, `birthYear`), means "not set". Device-only settings (PIN, lockout, theme, draft, onboarding, last backup) are never sent.
+

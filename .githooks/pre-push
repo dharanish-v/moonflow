@@ -34,7 +34,11 @@ if printf '%s\n' "$changed" | grep -q '^apps/moonflow-pwa-react/'; then
   cd "$root"
 fi
 
-if printf '%s\n' "$changed" | grep -qE '^apps/moonflow-backend/pb_(hooks|migrations)/.*\.js$'; then
-  echo "pre-push: backend syntax"
-  find "$root/apps/moonflow-backend/pb_hooks" "$root/apps/moonflow-backend/pb_migrations" -name '*.js' -exec node --check {} \;
+if printf '%s\n' "$changed" | grep -q '^apps/moonflow-backend/'; then
+  echo "pre-push: backend syntax + rule tests on a local PocketBase"
+  cd "$root/apps/moonflow-backend"
+  find pb_hooks pb_migrations -name '*.js' -exec node --check {} \;
+  ./scripts/fetch-pocketbase.sh >/dev/null
+  node --test 'test/**/*.test.mjs'
+  cd "$root"
 fi

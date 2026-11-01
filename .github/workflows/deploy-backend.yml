@@ -28,6 +28,13 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 26
+      # Migrations and access rules must pass on the pinned PocketBase before
+      # anything reaches the live instance.
+      - name: Rule tests
+        working-directory: apps/moonflow-backend
+        run: |
+          ./scripts/fetch-pocketbase.sh
+          node --test 'test/**/*.test.mjs'
       # phio 0.4.0's bin is `#!/usr/bin/env tsx`, so tsx must be on PATH too.
       - run: npm install -g phio@0.4.0 tsx@4.23.15
       # phio refuses to deploy if its local key doesn't match the account's

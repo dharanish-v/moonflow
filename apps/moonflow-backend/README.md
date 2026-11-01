@@ -3,7 +3,8 @@
 Optional accounts and sync (ADR-053). Everything the instance runs lives here as code:
 
 - `pb_hooks/` — PocketBase JS hooks (goja runtime: CommonJS only, no Node or browser APIs)
-- `pb_migrations/` — schema, access rules and auth settings as JS migrations
+- `pb_migrations/` — schema, access rules and auth settings as JS migrations (format: `docs/data-format.md` §6)
+- `test/` — rule tests: run the migrations and hooks on a throwaway local PocketBase and check every user sees only their own data
 
 Deployed with [`phio`](https://pockethost.io/docs/phio) over SFTP. `pb_data/` is never synced.
 
@@ -15,6 +16,16 @@ phio login                # your PocketHost email + password; file sync then use
 cd apps/moonflow-backend
 phio link <instance>      # writes .phioconfig
 ```
+
+## Test
+
+```bash
+cd apps/moonflow-backend
+./scripts/fetch-pocketbase.sh        # pinned PocketBase (same minor as the instance) into .bin/, checksum-verified
+node --test 'test/**/*.test.mjs'
+```
+
+pre-push and CI run these before any deploy.
 
 ## Deploy
 
