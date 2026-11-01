@@ -351,7 +351,7 @@ It also caught a real bug: update detection was decided once at launch, so an up
   - Bleeding after 12 months without a period is always flagged, in every mode, to see a clinician.
 
 ### ADR-052: v1.0.0 feature freeze ("finished forever")
-**Status:** Accepted 2026-09-26
+**Status:** Accepted 2026-09-26 · Freeze lifted for accounts and sync by ADR-053 (2026-11-01)
 **Decision:**
 - Moonflow v1.0.0 is feature-complete and frozen.
 - Every dependency is pinned to an exact version, and the build declares its Node version (`engines`).
@@ -361,3 +361,24 @@ It also caught a real bug: update detection was decided once at launch, so an up
 - After the freeze, dependencies change only for security fixes, through the full gate. Changes happen only when Safari breaks something.
 
 **Open:** the permanent address (ADR-042) is deliberately left for the owner to decide.
+
+### ADR-053: Optional accounts and sync on PocketHost, no end-to-end encryption (for now)
+**Status:** Accepted 2026-11-01
+**Context:** The owner wants one account usable from several devices, push reminders, and later sharing with a partner or caregiver. The owner already has a lifetime PocketHost slot.
+**Decision:**
+- Backend: the owner's PocketHost instance (hosted PocketBase). Schema, access rules and hooks live in this repo (`apps/moonflow-backend`) as migrations and JS hooks, deployed with `phio`. No dashboard-only configuration except what PocketHost forces (webhooks, secrets, version).
+- **The account is optional.** Without signing in, Moonflow works exactly as v1.0.0: offline, on-device only. Signing in adds sync between devices (and later reminders and sharing).
+- Sign-in: email + password only. No outgoing email provider, so no email verification, no self-service reset and no email codes. A forgotten password is reset by the owner in the PocketBase admin panel.
+- **No end-to-end encryption, by the owner's choice.** Synced data is stored readable on the server. Anyone with superuser access, PocketHost, or an attacker who breaches either can read it.
+- Before signing up, the app says plainly what is stored on the server and who can read it. The "nothing leaves this phone" copy changes only for signed-in users.
+- Signed-in users can delete their account, which deletes all their server data.
+- The superuser account uses MFA, and automation uses a separate superuser whose credentials live only in environment variables.
+- This lifts the v1.0.0 freeze (ADR-052) for this work and replaces the PRD's "no account and no server" for signed-in users.
+
+**Consequences:**
+- Moonflow now depends on a server for sync. The local app keeps working if PocketHost goes away. Only sync stops.
+- PocketHost hibernates idle instances, so scheduled work must use PocketHost webhooks, not `cronAdd()`.
+- Sharing other people's health data readable on the server raises the stakes. Sharing gets its own ADR and should revisit encryption first.
+- End-to-end encryption can be added later: the encrypted-backup recipe (`docs/data-format.md`) is reusable, but existing server data must then be migrated.
+
+**Open:** the permanent address (ADR-042) should be settled before accounts ship, because sessions are tied to it. Sharing scope (what is shared, read-only, revoking). Email provider for codes and reset, if ever wanted.
