@@ -51,7 +51,18 @@ npm run build      # production build → dist/ (index.html + planner.html)
 npm run preview    # serve the build, including the service worker
 ```
 
-Git hooks (plain shell, no dependency): **pre-commit** runs lint and the typecheck when app files are staged, and `node --check` on backend hooks and migrations. **pre-push** runs the full gate below for whatever the push changes. Skip once with `--no-verify`.
+Git hooks in `.githooks/` (plain shell, no dependency). Skip the blocking ones once with `--no-verify`.
+
+| Hook | Does |
+|---|---|
+| pre-commit | Blocks staged keys and tokens. Lint + typecheck when app files are staged; `node --check` on backend hooks and migrations |
+| pre-merge-commit | Same checks for merges that create a commit |
+| prepare-commit-msg | On a ticket branch (`t97-…`) starts the message with `T97: ` |
+| commit-msg | Subject under 100 characters; no `fixup!`, `squash!` or `WIP` commits on main |
+| post-commit | Says how many commits main is ahead of origin (pushing main deploys) |
+| pre-rebase | Refuses to rebase commits already pushed (`git pull --rebase` still works) |
+| post-merge, post-rewrite, post-checkout | After a pull, rebase or branch switch, runs `npm ci` if `package-lock.json` changed |
+| pre-push | Refuses to delete or force-push main. Runs the full gate below for whatever the push changes |
 
 Every push to `main` runs the tests, lint and build in CI (`.github/workflows/deploy-pages.yml`), then deploys to GitHub Pages.
 

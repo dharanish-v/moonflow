@@ -1,0 +1,14 @@
+#!/bin/sh
+# On a ticket branch (t97-schema, T97/sync, …) start the message with "T97: ",
+# the repo's commit style. Leaves merges, squashes, amends and main alone.
+msg_file=$1
+source=$2
+case "$source" in
+  "" | message) ;;
+  *) exit 0 ;;
+esac
+branch=$(git symbolic-ref --quiet --short HEAD) || exit 0
+ticket=$(printf '%s' "$branch" | sed -n 's/^[tT]\([0-9][0-9]*\).*/T\1/p')
+[ -n "$ticket" ] || exit 0
+grep -q "^$ticket:" "$msg_file" && exit 0
+printf '%s: %s\n' "$ticket" "$(cat "$msg_file")" > "$msg_file.tmp" && mv "$msg_file.tmp" "$msg_file"

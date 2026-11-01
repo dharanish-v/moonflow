@@ -1,0 +1,6 @@
+#!/bin/sh
+# After switching branches: keep node_modules in step with the lockfile.
+# $3 is 1 for a branch checkout, 0 for checking out files.
+[ "$3" = 1 ] || exit 0
+. "$(git rev-parse --show-toplevel)/.githooks/_lib.sh"
+sync_deps "$1" "$2"

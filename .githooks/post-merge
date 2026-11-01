@@ -1,0 +1,4 @@
+#!/bin/sh
+# After `git pull` (merge) or `git merge`: keep node_modules in step with the lockfile.
+. "$(git rev-parse --show-toplevel)/.githooks/_lib.sh"
+sync_deps ORIG_HEAD HEAD

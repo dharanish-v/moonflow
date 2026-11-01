@@ -5,6 +5,14 @@ set -e
 root=$(git rev-parse --show-toplevel)
 staged=$(git diff --cached --name-only --diff-filter=ACMR)
 
+# Secrets: refuse added lines that look like keys or tokens. This folder is
+# skipped because it holds the patterns themselves.
+secrets='-----BEGIN [A-Z ]*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|PHIO_PASSWORD=[^$[:space:]]'
+if git diff --cached -U0 --diff-filter=ACMR -- . ':(exclude).githooks' | grep '^+' | grep -qE -- "$secrets"; then
+  echo "pre-commit: staged changes look like they contain a secret (key or token). Remove it, then rotate it if it was real." >&2
+  exit 1
+fi
+
 if printf '%s\n' "$staged" | grep -q '^apps/moonflow-pwa-react/'; then
   echo "pre-commit: frontend lint + types"
   cd "$root/apps/moonflow-pwa-react"

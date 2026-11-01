@@ -1,0 +1,15 @@
+#!/bin/sh
+# Keep main's history readable: a real subject line, not too long, and no
+# fixup!/squash!/WIP commits left on main (fine on branches, then squash them).
+msg_file=$1
+subject=$(grep -v '^#' "$msg_file" | sed -n '/[^[:space:]]/{p;q;}')
+len=$(printf '%s' "$subject" | wc -m | tr -d ' ')
+if [ "$len" -gt 100 ]; then
+  echo "commit-msg: subject is $len characters; keep it under 100 and put detail in the body." >&2
+  exit 1
+fi
+branch=$(git symbolic-ref --quiet --short HEAD || true)
+if [ "$branch" = main ] && printf '%s' "$subject" | grep -qiE '^(fixup!|squash!|wip\b)'; then
+  echo "commit-msg: '$subject' on main. Make it on a branch and squash it, or reword it." >&2
+  exit 1
+fi

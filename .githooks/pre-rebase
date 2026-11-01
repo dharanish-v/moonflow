@@ -1,0 +1,15 @@
+#!/bin/sh
+# Refuse to rebase commits that are already on origin: rewriting them would need
+# a force push, and on main that redeploys rewritten history. `git pull --rebase`
+# only moves unpushed commits, so it still works. Skip once with --no-verify.
+upstream=$1
+branch=${2:-HEAD}
+name=$(git rev-parse --abbrev-ref "$branch")
+git rev-parse --verify --quiet "origin/$name" >/dev/null || exit 0
+published=$(git rev-list "$upstream..$branch" | while read -r c; do
+  git merge-base --is-ancestor "$c" "origin/$name" && echo "$c"
+done)
+if [ -n "$published" ]; then
+  echo "pre-rebase: this would rewrite $(printf '%s\n' "$published" | wc -l | tr -d ' ') commit(s) already pushed to origin/$name." >&2
+  exit 1
+fi

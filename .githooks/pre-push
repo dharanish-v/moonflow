@@ -5,7 +5,14 @@ set -e
 root=$(git rev-parse --show-toplevel)
 zero=0000000000000000000000000000000000000000
 changed=""
-while read -r _local_ref local_sha _remote_ref remote_sha; do
+while read -r _local_ref local_sha remote_ref remote_sha; do
+  # main's history is what's deployed: never delete it or force-push over it.
+  if [ "$remote_ref" = refs/heads/main ] && [ "$remote_sha" != "$zero" ]; then
+    if [ "$local_sha" = "$zero" ] || ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
+      echo "pre-push: refusing to delete or force-push main." >&2
+      exit 1
+    fi
+  fi
   [ "$local_sha" = "$zero" ] && continue
   if [ "$remote_sha" = "$zero" ]; then
     changed="$changed

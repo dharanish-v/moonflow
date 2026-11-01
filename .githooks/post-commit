@@ -1,0 +1,7 @@
+#!/bin/sh
+# A nudge: on main every push deploys, so say how much is waiting to go out.
+branch=$(git symbolic-ref --quiet --short HEAD) || exit 0
+upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null) || exit 0
+ahead=$(git rev-list --count "$upstream..HEAD")
+[ "$ahead" -gt 0 ] && echo "$branch is $ahead commit(s) ahead of $upstream. Pushing main deploys the app and backend."
+exit 0
