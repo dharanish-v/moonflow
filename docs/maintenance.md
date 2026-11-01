@@ -29,7 +29,7 @@ Everything is pinned: exact dependency versions in `package.json`, the lockfile,
 git checkout v1.0.0            # or the release you want
 cd apps/moonflow-pwa-react
 npm ci                         # installs exactly the locked versions
-npx tsc -b && npm run lint && npm test && npm run build
+npx tsc -b && npm run lint && npm test && VITE_ACCOUNTS=1 npm run build   # v1.1.0+: accounts on, as CI builds it
 ```
 
 If npm or the old dependencies are ever unavailable, you don't need to build at all: every GitHub Release has the finished app attached (`moonflow-vX.Y.Z-dist.zip`, plus `SHA256SUMS`). Unzip it and serve the folder from any static host over HTTPS.
@@ -40,6 +40,15 @@ If npm or the old dependencies are ever unavailable, you don't need to build at 
 - **New installs need a host.** Upload the release zip to any static host (GitHub Pages, Cloudflare Pages, Netlify, your own server).
 - ⚠️ **The address is the data's key.** A different address is a different, empty app on the phone. Moving means: export a backup in the old app, install from the new address, import there. Face ID passkeys (if ever added) are tied to the address too.
 - ⚠️ **Never rename or delete the GitHub account (or org) that owns the address.** Someone else could claim the name, serve their own code at the same address, and read the data in installed apps.
+
+## The sync server (v1.1.0 and later)
+
+Accounts are optional (ADR-053). Without one, everything above still holds and nothing depends on a server. With one, logs sync through a PocketBase instance on PocketHost (`apps/moonflow-backend`, ADR-054).
+
+- **If PocketHost goes away:** sync stops; every phone keeps all its data and keeps working. Settings → Account shows "Waiting to sync". Moving: set up PocketBase elsewhere from `apps/moonflow-backend` (migrations and hooks are all there), change `src/lib/backend-url.ts`, release, and everyone signs in again (their phones still have their data, and the first sync re-uploads it).
+- **Forgotten password:** there's no email. Reset it in the admin UI (`https://moonflow.pockethost.io/_/` → users → set a new password).
+- **Once a year:** open Settings → Account on your phone and check it says "Synced …". Check the PocketHost dashboard still shows the instance on a supported PocketBase version; a version change needs the backend tests (`node --test` in `apps/moonflow-backend`) to pass against the new version first.
+- **Never** put the superuser password, phio credentials or the deploy key anywhere but the GitHub secrets and your own machine.
 
 ## Changing anything
 
