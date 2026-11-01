@@ -25,6 +25,11 @@ import { useSaveSettings } from '../state/useSaveSettings';
 import { isDiscreetInstall, isStandalone } from '../lib/install-identity';
 import { ImportBackup } from '../components/ImportBackup';
 import { accountsEnabled } from '../lib/features';
+import { AccountSheet } from '../components/AccountSheet';
+import { loadAllEntries, loadAllSettings, saveSettings } from '../lib/db';
+import { syncDatabase } from '../lib/sync';
+import type { AccountSession } from '../lib/types';
+import { useAppDispatch } from '../state/hooks';
 
 export function OnboardingScreen() {
   const discreet = isDiscreetInstall();
@@ -37,6 +42,33 @@ export function OnboardingScreen() {
   const [cycleLength, setCycleLength] = useState(DEFAULT_CYCLE_LENGTH);
   const [periodLength, setPeriodLength] = useState(DEFAULT_PERIOD_LENGTH);
   const [wantPin, setWantPin] = useState(false);
+  const dispatch = useAppDispatch();
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [restore, setRestore] = useState<'idle' | 'syncing' | 'empty' | 'failed'>('idle');
+
+  /** "Sign in to restore" (e.g. after Erase all data): sync now, and if the
+   * account has data, skip setup — the app opens with it. An empty account
+   * stays signed in and setup carries on. */
+  async function handleSignedIn(session: AccountSession | null): Promise<boolean> {
+    if (!session) return saveSettings({ account: null });
+    if (!(await saveSettings({ account: session }))) return false;
+    dispatch({ type: 'PATCH_SETTINGS', patch: { account: session } });
+    setSignInOpen(false);
+    setRestore('syncing');
+    const outcome = await syncDatabase();
+    if (outcome.result !== 'synced') {
+      setRestore('failed');
+      return true;
+    }
+    const [entries, restored] = await Promise.all([loadAllEntries(), loadAllSettings()]);
+    if (entries.length > 0 || restored.lastPeriodStart) {
+      await saveSettings({ onboardingComplete: true });
+      dispatch({ type: 'BOOT_RETRY' }); // re-read everything; AppGate opens the app
+    } else {
+      setRestore('empty');
+    }
+    return true;
+  }
 
   async function handleSubmit() {
     if (!lastPeriodStart || isSaving) return;
@@ -114,6 +146,35 @@ export function OnboardingScreen() {
               </Button>
             )}
           </ImportBackup>
+          {accountsEnabled() && (
+            <>
+              <Button
+                variant="ghost"
+                disabled={restore === 'syncing'}
+                onClick={() => setSignInOpen(true)}
+                className="mt-1 h-11 w-full text-sm text-muted-foreground"
+              >
+                {restore === 'syncing' ? 'Restoring your logs…' : 'Sign in to restore'}
+              </Button>
+              {restore === 'empty' && (
+                <p className="mt-1 text-center text-xs text-muted-foreground" role="status">
+                  Signed in. Your account has no logs yet, so finish setting up above.
+                </p>
+              )}
+              {restore === 'failed' && (
+                <p className="mt-1 text-center text-xs text-muted-foreground" role="status">
+                  Signed in, but couldn't reach the server to restore. Try again, or finish setting up; your logs sync later.
+                </p>
+              )}
+              <AccountSheet
+                open={signInOpen}
+                onOpenChange={setSignInOpen}
+                account={null}
+                signInOnly
+                onSessionChange={handleSignedIn}
+              />
+            </>
+          )}
         </>
       )}
 

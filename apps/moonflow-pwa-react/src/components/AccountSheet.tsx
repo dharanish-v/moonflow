@@ -38,14 +38,18 @@ export function AccountSheet({
   onOpenChange,
   account,
   onSessionChange,
+  signInOnly = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   account: AccountSession | null;
+  /** Onboarding's "Sign in to restore": straight to the sign-in form. */
+  signInOnly?: boolean;
   /** Persist the new session (or null when signed out); false if saving failed. */
   onSessionChange: (session: AccountSession | null) => Promise<boolean>;
 }) {
-  const [mode, setMode] = useState<Mode>('intro');
+  const startMode: Mode = signInOnly ? 'sign-in' : 'intro';
+  const [mode, setMode] = useState<Mode>(startMode);
   const [understood, setUnderstood] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -60,7 +64,7 @@ export function AccountSheet({
   const expired = account !== null && status.state === 'expired';
 
   function reset() {
-    setMode('intro');
+    setMode(startMode);
     setPending(null);
     setPassword('');
     setConfirm('');
@@ -145,7 +149,9 @@ export function AccountSheet({
         <DrawerHeader className="px-0">
           <DrawerTitle>Account</DrawerTitle>
           <DrawerDescription>
-            {account && mode !== 'sign-in'
+            {signInOnly
+              ? 'Sign in to bring the logs and settings synced to your account onto this phone.'
+              : account && mode !== 'sign-in'
               ? `Signed in as ${account.email}.`
               : 'Optional. Sign in to keep your logs in step across your devices. Without an account, everything stays on this phone.'}
           </DrawerDescription>
@@ -274,8 +280,8 @@ export function AccountSheet({
             <Button type="submit" disabled={!canSubmit} className="mt-1 h-11 w-full text-sm">
               {busy ? 'Please wait…' : mode === 'sign-up' ? 'Create account' : 'Sign in'}
             </Button>
-            <Button type="button" variant="ghost" onClick={() => setMode('intro')} className="h-11 w-full text-sm">
-              Back
+            <Button type="button" variant="ghost" onClick={() => (signInOnly ? handleOpenChange(false) : setMode('intro'))} className="h-11 w-full text-sm">
+              {signInOnly ? 'Cancel' : 'Back'}
             </Button>
           </form>
         )}

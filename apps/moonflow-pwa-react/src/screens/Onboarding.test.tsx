@@ -125,3 +125,75 @@ describe('OnboardingScreen — privacy step (T98)', () => {
     expect(screen.queryByText(/no account and no server/)).not.toBeInTheDocument();
   });
 });
+
+describe('OnboardingScreen — sign in to restore (after Erase all data, or a new phone)', () => {
+  const SESSION = { userId: 'u1', email: 'me@example.com', token: 'tok' };
+
+  async function signInToRestore(syncResult: () => Promise<unknown>) {
+    const { fireEvent, waitFor } = await import('@testing-library/react');
+    const account = await import('../lib/account');
+    const sync = await import('../lib/sync');
+    const dbm = await import('../lib/db');
+    const { StateProbe } = await import('../test/state-probe');
+    await dbm.db.settings.clear();
+    await dbm.db.entries.clear();
+    vi.spyOn(account, 'signIn').mockResolvedValue({ ok: true, session: SESSION });
+    vi.spyOn(sync, 'mergePreview').mockResolvedValue({ local: 0, remote: 3, otherAccount: false });
+    vi.spyOn(sync, 'syncDatabase').mockImplementation(syncResult as never);
+    let latest: { bootAttempt: number; settings: { account: unknown } } | null = null;
+    render(
+      <StateProvider testState={{}}>
+        <OnboardingScreen />
+        <StateProbe onState={(st) => (latest = st)} />
+      </StateProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in to restore' }));
+    fireEvent.change(await screen.findByLabelText('Email'), { target: { value: 'me@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'long enough pw' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    return { state: () => latest!, waitFor, dbm };
+  }
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it('is offered only when accounts are on', async () => {
+    render(
+      <StateProvider testState={{}}>
+        <OnboardingScreen />
+      </StateProvider>,
+    );
+    expect(screen.queryByRole('button', { name: 'Sign in to restore' })).not.toBeInTheDocument();
+  });
+
+  it('brings the account\u2019s logs back and skips setup', async () => {
+    vi.stubEnv('VITE_ACCOUNTS', '1');
+    const { dbm } = await import('../lib/db').then((m) => ({ dbm: m }));
+    const { state, waitFor } = await signInToRestore(async () => {
+      await dbm.db.entries.put({ date: '2026-10-20', flow: 'medium', symptoms: [], mood: null, note: '', updatedAt: 1 });
+      await dbm.db.settings.put({ key: 'lastPeriodStart', value: '2026-10-20' });
+      return { result: 'synced', changed: true, rejected: 0 };
+    });
+    await waitFor(() => expect(state().bootAttempt).toBe(1));
+    expect((await dbm.db.settings.get('onboardingComplete'))?.value).toBe(true);
+    expect((await dbm.db.settings.get('account'))?.value).toEqual(SESSION);
+  });
+
+  it('stays in setup, signed in, when the account has no logs', async () => {
+    vi.stubEnv('VITE_ACCOUNTS', '1');
+    const { state, waitFor, dbm } = await signInToRestore(async () => ({ result: 'synced', changed: false, rejected: 0 }));
+    expect(await screen.findByText(/Your account has no logs yet/)).toBeInTheDocument();
+    await waitFor(() => expect(state().settings.account).toEqual(SESSION));
+    expect(state().bootAttempt).toBe(0);
+    expect((await dbm.db.settings.get('onboardingComplete'))?.value).not.toBe(true);
+  });
+
+  it('says so when the server can\u2019t be reached', async () => {
+    vi.stubEnv('VITE_ACCOUNTS', '1');
+    await signInToRestore(async () => ({ result: 'offline' }));
+    expect(await screen.findByText(/couldn't reach the server to restore/)).toBeInTheDocument();
+  });
+});
+
