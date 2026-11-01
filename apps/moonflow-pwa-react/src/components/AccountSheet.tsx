@@ -167,7 +167,7 @@ export function AccountSheet({
           <div className="flex flex-col gap-2">
             <p className="mb-2 text-sm text-foreground">
               {pending.counts?.otherAccount
-                ? `This phone's ${days(pending.counts.local)} were synced with a different account. Combining copies them into this one too (it has ${days(pending.counts.remote)}).`
+                ? `This phone's ${days(pending.counts.local)} ${pending.counts.local === 1 ? 'was' : 'were'} synced with a different account. Combining copies ${pending.counts.local === 1 ? 'it' : 'them'} into this one too (it has ${days(pending.counts.remote)}).`
                 : pending.counts
                   ? `This phone has ${days(pending.counts.local)} and your account has ${days(pending.counts.remote)}. They'll be combined.`
                   : "This phone and your account may both have days logged. They'll be combined."}{' '}

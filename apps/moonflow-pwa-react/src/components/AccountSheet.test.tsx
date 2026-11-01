@@ -165,6 +165,18 @@ describe('Account (T98)', () => {
     expect(state().settings.account).toBeNull();
   });
 
+  it('says "1 day was" for a single day from another account', async () => {
+    vi.spyOn(account, 'signIn').mockResolvedValue({ ok: true, session: SESSION });
+    vi.spyOn(sync, 'mergePreview').mockResolvedValue({ local: 1, remote: 0, otherAccount: true });
+    await renderSettings();
+    openAccount();
+    fireEvent.click(await screen.findByRole('button', { name: 'I already have an account' }));
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'me@example.com' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'long enough pw' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(await screen.findByText(/This phone's 1 day was synced with a different account\. Combining copies it into this one too/)).toBeInTheDocument();
+  });
+
   it('cancelling the merge leaves this phone signed out', async () => {
     vi.spyOn(account, 'signIn').mockResolvedValue({ ok: true, session: SESSION });
     vi.spyOn(sync, 'mergePreview').mockResolvedValue({ local: 3, remote: 5, otherAccount: false });
