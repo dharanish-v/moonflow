@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as shareFile from '../lib/share-file';
 import { encryptBackup } from '../lib/backup-crypto';
 import { buildExportPayload } from '../lib/export';
@@ -117,7 +117,16 @@ describe('backup bookkeeping', () => {
 });
 
 describe('calendar reminders (T67)', () => {
-  afterEach(() => vi.restoreAllMocks());
+  // The fixture's last period is 2026-09-01; on a real clock it eventually
+  // reads as "late", which hides the prediction this test exports.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 8, 26, 12, 0));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
 
   it('exports an .ics of upcoming periods with neutral titles by default', async () => {
     const files = captureShare();

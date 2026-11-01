@@ -5,11 +5,18 @@ import type { AppState } from './actions';
 import { StateProvider } from './store';
 import { StateProbe } from '../test/state-probe';
 
+function freezeClock() {
+  vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+  vi.setSystemTime(new Date(2026, 8, 26, 23, 59, 30));
+}
+
+// initialState.today is read when ./actions is first imported, so the clock
+// must be frozen before the imports run — not only in beforeEach. Without this
+// the test only passed on 2026-09-26, the day it was written.
+vi.hoisted(() => freezeClock());
+
 describe('StateProvider keeps "today" current', () => {
-  beforeEach(() => {
-    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
-    vi.setSystemTime(new Date(2026, 8, 26, 23, 59, 30));
-  });
+  beforeEach(freezeClock);
   afterEach(() => vi.useRealTimers());
 
   it('rolls over at midnight while the app stays open', () => {

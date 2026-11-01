@@ -21,8 +21,9 @@ jobs:
     env:
       PHIO_USERNAME: ${{ secrets.PHIO_USERNAME }}
       PHIO_PASSWORD: ${{ secrets.PHIO_PASSWORD }}
-      PHIO_HOME: ${{ runner.temp }}/phio
     steps:
+      # The `runner` context isn't available in job-level `env`.
+      - run: echo "PHIO_HOME=$RUNNER_TEMP/phio" >> "$GITHUB_ENV"
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
