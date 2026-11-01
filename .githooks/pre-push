@@ -25,6 +25,8 @@ done
 
 if printf '%s\n' "$changed" | grep -q '^apps/moonflow-pwa-react/'; then
   echo "pre-push: frontend gate (types, lint, tests, UTC tests, build)"
+  # The sync integration tests run against the backend's pinned PocketBase.
+  "$root/apps/moonflow-backend/scripts/fetch-pocketbase.sh" >/dev/null
   cd "$root/apps/moonflow-pwa-react"
   npx tsc -b
   npm run --silent lint

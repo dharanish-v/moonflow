@@ -16,6 +16,7 @@ import { PIN_RELOCK_AFTER_MINUTES } from '../lib/constants';
 import { needsUnlock } from '../lib/pin-auth';
 import { switchDatabase } from '../lib/db';
 import { PinUnlockScreen } from '../screens/PinUnlock';
+import { SyncRunner } from '../components/SyncRunner';
 import { useAppDispatch, useAppState } from '../state/hooks';
 import { BootErrorScreen, SplashScreen } from './placeholders';
 
@@ -133,6 +134,7 @@ export function AppGate({ children, tabBar }: { children: ReactNode; tabBar?: Re
 
   return (
     <Frame tabBar={tabBar}>
+      <SyncRunner />
       <RouteTracker
         onRouteChange={(href) => {
           lastRouteRef.current = href;

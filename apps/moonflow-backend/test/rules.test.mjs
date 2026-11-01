@@ -173,6 +173,31 @@ describe('cycle_settings', () => {
   });
 });
 
+describe('batch API (T99)', () => {
+  const batch = (token, requests) => api('POST', '/api/batch', { token, body: { requests } });
+  const create = (user, date) => ({ method: 'POST', url: '/api/collections/entries/records', body: entry(user, date) });
+
+  it('writes up to 50 of your own days in one request', async () => {
+    const requests = Array.from({ length: 50 }, (_, i) => create(a.id, new Date(Date.UTC(2025, 0, 1 + i)).toISOString().slice(0, 10)));
+    const r = await batch(a.token, requests);
+    assert.equal(r.status, 200, JSON.stringify(r.body));
+    assert.equal(r.body.length, 50);
+    assert.ok(r.body.every((x) => x.status === 200));
+  });
+
+  it('refuses more than 50 requests', async () => {
+    const requests = Array.from({ length: 51 }, (_, i) => create(a.id, new Date(Date.UTC(2024, 0, 1 + i)).toISOString().slice(0, 10)));
+    assert.equal((await batch(a.token, requests)).status, 400);
+  });
+
+  it('still applies the access rules, and writes nothing if any request fails', async () => {
+    const r = await batch(b.token, [create(b.id, '2023-03-01'), create(a.id, '2023-03-02')]);
+    assert.notEqual(r.status, 200);
+    const filter = encodeURIComponent('date = "2023-03-01"');
+    assert.equal((await api('GET', `/api/collections/entries/records?filter=${filter}`, { token: b.token })).body.totalItems, 0);
+  });
+});
+
 describe('deleting an account', () => {
   it('deletes all of that user’s data', async () => {
     const c = await signUp('c@test.local');

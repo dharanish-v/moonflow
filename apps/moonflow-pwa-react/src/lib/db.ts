@@ -5,15 +5,52 @@
 import Dexie, { type Table } from 'dexie';
 import type { Entry, LogEntryInput, Settings, SettingKey } from './types';
 import { defaultTemperatureUnit } from './temperature';
+import { bumpSessionEpoch, notifyLocalChange } from './sync-signal';
 
 interface SettingRow<K extends SettingKey = SettingKey> {
   key: K;
   value: Settings[K];
 }
 
-class MoonflowDB extends Dexie {
+/** A day deleted on this phone, kept so the deletion syncs (ADR-054). */
+export interface Tombstone {
+  date: string;
+  deletedAt: number;
+}
+
+/** Something sync still has to send: `entry:YYYY-MM-DD` or `settings`. */
+export interface OutboxRow {
+  key: string;
+}
+
+/** Sync bookkeeping (cursor, remote ids, status…), one row per key. */
+export interface SyncStateRow {
+  key: string;
+  value: unknown;
+}
+
+/** The settings that describe the person and sync (ADR-054). Everything else
+ * — PIN, lockout, theme, draft, onboarding, backups, the session — stays on
+ * this phone. */
+export const SYNCED_SETTING_KEYS = [
+  'lastPeriodStart',
+  'avgCycleLength',
+  'avgPeriodLength',
+  'predictionsPaused',
+  'customTags',
+  'birthYear',
+  'perimenopauseMode',
+  'fertilityAwareness',
+  'temperatureUnit',
+  'confirmedLongCycles',
+] as const satisfies readonly SettingKey[];
+
+export class MoonflowDB extends Dexie {
   entries!: Table<Entry, string>;
   settings!: Table<SettingRow, string>;
+  tombstones!: Table<Tombstone, string>;
+  outbox!: Table<OutboxRow, string>;
+  syncState!: Table<SyncStateRow, string>;
 
   constructor(name = 'MoonflowDB') {
     super(name);
@@ -24,8 +61,34 @@ class MoonflowDB extends Dexie {
     // Future fields (BBT, ovulation-test results, etc.) get added via
     // this.version(2).stores({...}) per Dexie's migration model — never by
     // mutating version 1 in place.
+    // v2 (T99): sync bookkeeping. Existing data is untouched.
+    this.version(2).stores({
+      tombstones: 'date',
+      outbox: 'key',
+      syncState: 'key',
+    });
   }
 }
+
+// Sync bookkeeping, called inside the same transaction as the write itself so
+// a change can never land without being queued (or the other way round).
+async function touchEntry(target: MoonflowDB, date: string) {
+  await target.outbox.put({ key: `entry:${date}` });
+  await target.tombstones.delete(date);
+}
+
+async function buryEntry(target: MoonflowDB, date: string, now: number) {
+  await target.tombstones.put({ date, deletedAt: now });
+  await target.outbox.put({ key: `entry:${date}` });
+}
+
+async function touchSettings(target: MoonflowDB, patch: Partial<Settings>, now: number) {
+  if (!SYNCED_SETTING_KEYS.some((k) => k in patch)) return;
+  await target.syncState.put({ key: 'settingsChangedAt', value: now });
+  await target.outbox.put({ key: 'settings' });
+}
+
+const ENTRY_WRITE = () => [db.entries, db.outbox, db.tombstones] as const;
 
 export type DatabaseKind = 'real' | 'decoy';
 
@@ -114,7 +177,11 @@ export async function getSetting<K extends SettingKey>(key: K): Promise<Settings
 
 export async function setSetting<K extends SettingKey>(key: K, value: Settings[K]): Promise<boolean> {
   try {
-    await db.settings.put({ key, value });
+    await db.transaction('rw', db.settings, db.syncState, db.outbox, async () => {
+      await db.settings.put({ key, value });
+      await touchSettings(db, { [key]: value }, Date.now());
+    });
+    notifyLocalChange();
     return true;
   } catch (err) {
     console.error(`setSetting(${key}) failed:`, err);
@@ -129,7 +196,11 @@ export async function setSetting<K extends SettingKey>(key: K, value: Settings[K
 export async function saveSettings(patch: Partial<Settings>): Promise<boolean> {
   try {
     const rows = Object.entries(patch).map(([key, value]) => ({ key, value }) as SettingRow);
-    await db.transaction('rw', db.settings, () => db.settings.bulkPut(rows));
+    await db.transaction('rw', db.settings, db.syncState, db.outbox, async () => {
+      await db.settings.bulkPut(rows);
+      await touchSettings(db, patch, Date.now());
+    });
+    notifyLocalChange();
     return true;
   } catch (err) {
     console.error('saveSettings failed:', err);
@@ -152,7 +223,11 @@ export async function loadAllSettings(): Promise<Settings> {
 /** Save (upsert) a day's log entry by date — never appends, per the data-safety rules. */
 export async function saveEntry(entry: LogEntryInput): Promise<boolean> {
   try {
-    await db.entries.put({ ...entry, updatedAt: Date.now() });
+    await db.transaction('rw', ENTRY_WRITE(), async () => {
+      await db.entries.put({ ...entry, updatedAt: Date.now() });
+      await touchEntry(db, entry.date);
+    });
+    notifyLocalChange();
     return true;
   } catch (err) {
     console.error('saveEntry failed:', err);
@@ -172,10 +247,12 @@ export async function loadAllEntries(): Promise<Entry[]> {
 export async function saveEntryAndClearDraft(entry: LogEntryInput): Promise<Entry | null> {
   try {
     const stored: Entry = { ...entry, updatedAt: Date.now() };
-    await db.transaction('rw', db.entries, db.settings, async () => {
+    await db.transaction('rw', [...ENTRY_WRITE(), db.settings], async () => {
       await db.entries.put(stored);
+      await touchEntry(db, stored.date);
       await db.settings.put({ key: 'draftEntry', value: null });
     });
+    notifyLocalChange();
     return stored;
   } catch (err) {
     console.error('saveEntryAndClearDraft failed:', err);
@@ -185,10 +262,12 @@ export async function saveEntryAndClearDraft(entry: LogEntryInput): Promise<Entr
 
 export async function deleteEntryAndClearDraft(date: string): Promise<boolean> {
   try {
-    await db.transaction('rw', db.entries, db.settings, async () => {
+    await db.transaction('rw', [...ENTRY_WRITE(), db.settings], async () => {
       await db.entries.delete(date);
+      await buryEntry(db, date, Date.now());
       await db.settings.put({ key: 'draftEntry', value: null });
     });
+    notifyLocalChange();
     return true;
   } catch (err) {
     console.error('deleteEntryAndClearDraft failed:', err);
@@ -198,7 +277,11 @@ export async function deleteEntryAndClearDraft(date: string): Promise<boolean> {
 
 export async function deleteEntry(date: string): Promise<boolean> {
   try {
-    await db.entries.delete(date);
+    await db.transaction('rw', ENTRY_WRITE(), async () => {
+      await db.entries.delete(date);
+      await buryEntry(db, date, Date.now());
+    });
+    notifyLocalChange();
     return true;
   } catch (err) {
     console.error('deleteEntry failed:', err);
@@ -213,7 +296,7 @@ export async function markPeriodDays(
   dates: string[],
 ): Promise<{ saved: Entry[]; previous: Array<Entry | undefined> } | null> {
   try {
-    return await db.transaction('rw', db.entries, async () => {
+    const result = await db.transaction('rw', ENTRY_WRITE(), async () => {
       const previous = await Promise.all(dates.map((d) => db.entries.get(d)));
       const saved: Entry[] = dates.map((date, i) => {
         const prev = previous[i];
@@ -226,24 +309,36 @@ export async function markPeriodDays(
         };
       });
       await db.entries.bulkPut(saved);
+      for (const date of dates) await touchEntry(db, date);
       return { saved, previous };
     });
+    notifyLocalChange();
+    return result;
   } catch (err) {
     console.error('markPeriodDays failed:', err);
     return null;
   }
 }
 
-/** Undo for markPeriodDays: put back what was there, remove what wasn't. */
+/** Undo for markPeriodDays: put back what was there, remove what wasn't.
+ * The restored rows get a fresh updatedAt — undoing is a new change, and with
+ * the old stamp the server's newer copy would win the next sync (ADR-054). */
 export async function restoreDays(dates: string[], previous: Array<Entry | undefined>): Promise<boolean> {
   try {
-    await db.transaction('rw', db.entries, async () => {
+    const now = Date.now();
+    await db.transaction('rw', ENTRY_WRITE(), async () => {
       for (let i = 0; i < dates.length; i++) {
         const prev = previous[i];
-        if (prev) await db.entries.put(prev);
-        else await db.entries.delete(dates[i]!);
+        if (prev) {
+          await db.entries.put({ ...prev, updatedAt: now });
+          await touchEntry(db, prev.date);
+        } else {
+          await db.entries.delete(dates[i]!);
+          await buryEntry(db, dates[i]!, now);
+        }
       }
     });
+    notifyLocalChange();
     return true;
   } catch (err) {
     console.error('restoreDays failed:', err);
@@ -254,9 +349,15 @@ export async function restoreDays(dates: string[], previous: Array<Entry | undef
 /** Forgot-PIN recovery: erase every entry and setting on this device. */
 export async function eraseAllData(): Promise<boolean> {
   try {
-    await db.transaction('rw', db.entries, db.settings, async () => {
+    // Local only: clears sync bookkeeping too, never touches the server
+    // (ADR-054). The session lives in settings, so this also signs out.
+    bumpSessionEpoch();
+    await db.transaction('rw', [db.entries, db.settings, db.tombstones, db.outbox, db.syncState], async () => {
       await db.entries.clear();
       await db.settings.clear();
+      await db.tombstones.clear();
+      await db.outbox.clear();
+      await db.syncState.clear();
     });
     return true;
   } catch (err) {
@@ -278,8 +379,13 @@ export async function importData(
   try {
     // One transaction: a half-applied import (entries in, settings not) is
     // worse than none.
-    await db.transaction('rw', db.entries, db.settings, async () => {
-      await db.entries.bulkPut(entries);
+    // Restoring is a deliberate act, so it wins: fresh stamps, queued to sync
+    // (ADR-054). Locally it already overwrote by date.
+    const now = Date.now();
+    await db.transaction('rw', [...ENTRY_WRITE(), db.settings, db.syncState], async () => {
+      await db.entries.bulkPut(entries.map((e) => ({ ...e, updatedAt: now })));
+      for (const e of entries) await touchEntry(db, e.date);
+      await touchSettings(db, settings, now);
       await db.settings.bulkPut([
         { key: 'lastPeriodStart', value: settings.lastPeriodStart },
         { key: 'avgCycleLength', value: settings.avgCycleLength },
@@ -287,6 +393,7 @@ export async function importData(
         { key: 'onboardingComplete', value: true },
       ]);
     });
+    notifyLocalChange();
     return true;
   } catch (err) {
     console.error('importData failed:', err);

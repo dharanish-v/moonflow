@@ -1,7 +1,7 @@
 // src/screens/Settings.tsx — ported from screens/settings.js. Setting a new
 // PIN (create-1/create-2) is its own route (PinSetup.tsx) — see that file
 // for why.
-import { forwardRef, useState, type ComponentProps, type ReactNode } from 'react';
+import { forwardRef, useState, useSyncExternalStore, type ComponentProps, type ReactNode } from 'react';
 import { Calendar, CalendarClock, CircleUser, Info, Monitor, Moon, PauseCircle, ShieldAlert, Sun, Sunset, Thermometer, Upload, Zap } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from 'cn';
@@ -38,6 +38,9 @@ import { ExportSheet } from '../components/ExportSheet';
 import { RemindersSheet } from '../components/RemindersSheet';
 import { AccountSheet } from '../components/AccountSheet';
 import { accountsEnabled } from '../lib/features';
+import { getSyncStatus, subscribeSyncStatus } from '../lib/sync';
+import { syncLabel } from '../lib/sync-label';
+import { useMinuteClock } from '../hooks/useMinuteClock';
 import { ImportBackup } from '../components/ImportBackup';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -80,6 +83,8 @@ export function SettingsScreen() {
   const [exportOpen, setExportOpen] = useState(false);
   const [remindersOpen, setRemindersOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const syncStatus = useSyncExternalStore(subscribeSyncStatus, getSyncStatus);
+  const now = useMinuteClock();
   const [removeDuressOpen, setRemoveDuressOpen] = useState(false);
   const [eraseOpen, setEraseOpen] = useState(false);
   const [eraseConfirm, setEraseConfirm] = useState('');
@@ -164,7 +169,7 @@ export function SettingsScreen() {
             <SettingsRowButton
               icon={<CircleUser className="size-4" aria-hidden="true" />}
               label="Account"
-              value={settings.account ? settings.account.email : 'Not signed in'}
+              value={settings.account ? syncLabel(syncStatus, now) : 'Not signed in'}
               onClick={() => setAccountOpen(true)}
             />
             <Separator />

@@ -40,6 +40,9 @@ jobs:
         working-directory: apps/moonflow-pwa-react
       - run: npx tsc -b
         working-directory: apps/moonflow-pwa-react
+      # The sync integration tests run against the backend's pinned PocketBase.
+      - run: ../moonflow-backend/scripts/fetch-pocketbase.sh
+        working-directory: apps/moonflow-pwa-react
       - run: npm test
         working-directory: apps/moonflow-pwa-react
       - run: npm run build

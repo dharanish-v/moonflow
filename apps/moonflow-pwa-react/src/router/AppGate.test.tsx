@@ -122,3 +122,18 @@ describe('AppGate — onboarding', () => {
     expect(await screen.findByRole('navigation', { name: 'Primary' })).toBeInTheDocument();
   });
 });
+
+describe('AppGate — sync waits for the unlock (ADR-054)', () => {
+  it('never syncs while the PIN screen is showing', async () => {
+    const { vi } = await import('vitest');
+    const sync = await import('../lib/sync');
+    vi.stubEnv('VITE_ACCOUNTS', '1');
+    const run = vi.spyOn(sync, 'syncDatabase').mockResolvedValue({ result: 'synced', changed: false, rejected: 0 });
+    await renderGated('#/settings', { ...LOCKED_SETTINGS, account: { userId: 'u', email: 'e', token: 't' } });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.getByRole('heading', { name: /enter your pin/i })).toBeInTheDocument();
+    expect(run).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+});

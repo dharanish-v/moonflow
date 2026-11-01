@@ -94,6 +94,8 @@ This is Settings → Calendar reminders. It is standard iCalendar (RFC 5545): al
 
 The app stores the same data in IndexedDB database `MoonflowDB`, with tables `entries` (keyed by `date`) and `settings` (keyed by `key`, one row per setting). The duress PIN uses a separate database, `PlannerData`, with the same shape. Neither can be read from outside the installed web app; export is the way out.
 
+Since schema version 2 (T99) both also have sync bookkeeping: `tombstones` (days deleted on this phone, `date` + `deletedAt`), `outbox` (what sync still has to send: `entry:YYYY-MM-DD` or `settings`) and `syncState` (the pull cursor, server record ids, last sync time). None of it is exported.
+
 ## 6. Server copy (signed-in sync, ADR-053)
 
 Only for people who sign in. Stored readable (not end-to-end encrypted) in PocketBase on PocketHost; the schema is `apps/moonflow-backend/pb_migrations/`. Every row has a `user` and only that user can read or change it. Deleting the account deletes every row.

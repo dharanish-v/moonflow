@@ -80,3 +80,18 @@ Most behaviour is covered by the automated suite (`npm test`, 300+ Vitest/Testin
 
 ## Performance baseline (T94, 2026-09-26)
 Chrome with 4× CPU throttle, iPhone 15 Pro viewport, 400 days of history with temperatures. Worst event duration (INP-style): open log sheet 64 ms · flow pill 32 · symptom chip 24 · save 40 · Calendar tab 16 · next month 24 · Insights 40. All well under the 200 ms "good" INP threshold (log sheet was 144 ms before T87). Launch JS ~168 KB gzip across all preloaded chunks.
+
+## Sync on two devices (T99, before turning accounts on — ADR-054)
+
+Use a build with `VITE_ACCOUNTS=1` on the iPhone and on a second device (iPad, Mac Safari, or another browser profile), against the live backend, with a throwaway account.
+
+- [ ] Sign up on device A (the disclosure and acknowledgement show first). Log 3 days. Settings → Account says "Synced just now".
+- [ ] Sign in on device B, which already has a day logged: the "This phone has 1 day and your account has 3 days" confirmation shows; Combine. Both devices end with 4 days.
+- [ ] Edit the same day on both while both are in airplane mode, A first, then B. Turn the network back on, open A then B: both show B's version.
+- [ ] Delete a day on B. Open A: the day is gone and stays gone after another sync.
+- [ ] Change the average cycle length on A; open B: it changed. Add a custom tag on each device offline; after syncing both have both tags.
+- [ ] Undo a "period started" on A: after syncing, B doesn't have those days.
+- [ ] With App lock and a duress PIN on device A: open with the duress PIN: Settings → Account says "Not signed in"; nothing from the real data appears. Relaunch with the real PIN: still signed in and synced.
+- [ ] Sign out on B: B keeps its days; Account says "Not signed in". Sign back in: no duplicate days.
+- [ ] Delete the account on A (type DELETE): B shows "Sign in again to sync" on its next sync; both devices keep their days.
+

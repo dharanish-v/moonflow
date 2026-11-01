@@ -2,8 +2,12 @@
 // Signing up first shows, in plain words, what goes to the server and who can
 // read it, and needs that acknowledged. Signing out or deleting the account
 // never touches the data on this phone.
-import { useState, type FormEvent } from 'react';
+import { useState, useSyncExternalStore, type FormEvent } from 'react';
 import { MIN_PASSWORD_LENGTH, deleteAccount, signIn, signUp } from '../lib/account';
+import { beginSession, endSession, getSyncStatus, mergePreview, subscribeSyncStatus } from '../lib/sync';
+import { syncLabel } from '../lib/sync-label';
+import { requestSync } from '../lib/sync-trigger';
+import { useMinuteClock } from '../hooks/useMinuteClock';
 import type { AccountSession } from '../lib/types';
 import { Alert, AlertDescription } from './ui/alert';
 import {
@@ -21,7 +25,12 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 
-type Mode = 'intro' | 'sign-up' | 'sign-in';
+type Mode = 'intro' | 'sign-up' | 'sign-in' | 'confirm-merge';
+
+interface PendingMerge {
+  session: AccountSession;
+  counts: { local: number; remote: number; otherAccount: boolean } | null;
+}
 
 export function AccountSheet({
   open,
@@ -44,9 +53,14 @@ export function AccountSheet({
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [pending, setPending] = useState<PendingMerge | null>(null);
+  const status = useSyncExternalStore(subscribeSyncStatus, getSyncStatus);
+  const now = useMinuteClock();
+  const expired = account !== null && status.state === 'expired';
 
   function reset() {
     setMode('intro');
+    setPending(null);
     setPassword('');
     setConfirm('');
     setError(null);
@@ -75,15 +89,33 @@ export function AccountSheet({
       setBusy(false);
       return;
     }
-    if (!(await onSessionChange(result.session))) {
+    // Signing back in to the same account after the session expired: just
+    // carry on. Anything else is a first sync for this phone, which merges —
+    // confirmed first when both sides have days (ADR-054).
+    if (account?.userId === result.session.userId) return finish(result.session);
+    const counts = await mergePreview(result.session);
+    // Nothing to combine — unless this phone's days belong to another
+    // account, which would copy them in without asking.
+    if (counts && (counts.local === 0 || (counts.remote === 0 && !counts.otherAccount))) return finish(result.session);
+    setPending({ session: result.session, counts });
+    setMode('confirm-merge');
+    setBusy(false);
+  }
+
+  async function finish(session: AccountSession) {
+    setBusy(true);
+    await beginSession(session);
+    if (!(await onSessionChange(session))) {
       setError('Signed in, but couldn’t save that on this phone. Try again.');
       setBusy(false);
       return;
     }
     reset();
+    requestSync();
   }
 
   async function handleSignOut() {
+    await endSession();
     if (await onSessionChange(null)) reset();
     else setError('Couldn’t sign out. Try again.');
   }
@@ -102,13 +134,15 @@ export function AccountSheet({
     await handleSignOut();
   }
 
+  const days = (count: number) => `${count} ${count === 1 ? 'day' : 'days'}`;
+
   return (
     <Drawer open={open} onOpenChange={handleOpenChange}>
       <DrawerContent className="mx-auto max-w-[26rem] px-4 pb-5">
         <DrawerHeader className="px-0">
           <DrawerTitle>Account</DrawerTitle>
           <DrawerDescription>
-            {account
+            {account && mode !== 'sign-in'
               ? `Signed in as ${account.email}.`
               : 'Optional. Sign in to keep your logs in step across your devices. Without an account, everything stays on this phone.'}
           </DrawerDescription>
@@ -120,9 +154,44 @@ export function AccountSheet({
           </Alert>
         )}
 
-        {account ? (
+        {mode === 'confirm-merge' && pending ? (
           <div className="flex flex-col gap-2">
-            <p className="mb-2 text-xs text-muted-foreground">
+            <p className="mb-2 text-sm text-foreground">
+              {pending.counts?.otherAccount
+                ? `This phone's ${days(pending.counts.local)} were synced with a different account. Combining copies them into this one too (it has ${days(pending.counts.remote)}).`
+                : pending.counts
+                  ? `This phone has ${days(pending.counts.local)} and your account has ${days(pending.counts.remote)}. They'll be combined.`
+                  : "This phone and your account may both have days logged. They'll be combined."}{' '}
+              Where both have the same day, the more recently saved one is kept.
+            </p>
+            <Button disabled={busy} onClick={() => void finish(pending.session)} className="h-11 w-full text-sm">
+              {busy ? 'Please wait…' : 'Combine and sync'}
+            </Button>
+            <Button variant="outline" onClick={reset} className="h-11 w-full text-sm">
+              Cancel
+            </Button>
+          </div>
+        ) : account && mode !== 'sign-in' ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-foreground" role="status">
+              {syncLabel(status, now)}
+            </p>
+            {expired ? (
+              <Button
+                onClick={() => {
+                  setEmail(account.email);
+                  setMode('sign-in');
+                }}
+                className="h-11 w-full text-sm"
+              >
+                Sign in again
+              </Button>
+            ) : (
+              <Button variant="outline" disabled={status.state === 'syncing'} onClick={requestSync} className="h-11 w-full text-sm">
+                Sync now
+              </Button>
+            )}
+            <p className="my-2 text-xs text-muted-foreground">
               Signing out or deleting the account leaves everything on this phone as it is.
             </p>
             <Button variant="outline" onClick={() => void handleSignOut()} className="h-11 w-full text-sm">
@@ -266,6 +335,7 @@ function Disclosure() {
         <li>Your PIN, theme and other settings for this phone never leave it.</li>
         <li>There's no email. A forgotten password is reset by the app's owner.</li>
         <li>Delete the account any time to remove everything from the server.</li>
+        <li>If you use a duress PIN: anyone who gets your account password can see your synced logs.</li>
       </ul>
     </div>
   );

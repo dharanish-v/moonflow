@@ -2,14 +2,13 @@
 // (PocketBase on PocketHost, ADR-053): sign up, sign in, refresh, delete.
 // Plain fetch, no SDK — four endpoints don't justify a dependency that would
 // need updating for years.
-import { BACKEND_URL } from './backend-url';
+import { backendBase } from './backend';
 import type { AccountSession } from './types';
 
 export const MIN_PASSWORD_LENGTH = 10;
 
 export type AccountResult = { ok: true; session: AccountSession } | { ok: false; error: string };
 
-const USERS = `${BACKEND_URL}/api/collections/users`;
 const OFFLINE = "Can't reach the server. Check your connection and try again.";
 
 interface PocketBaseError {
@@ -19,7 +18,7 @@ interface PocketBaseError {
 
 async function call(path: string, init: RequestInit): Promise<{ status: number; body: unknown } | null> {
   try {
-    const res = await fetch(`${USERS}${path}`, {
+    const res = await fetch(`${backendBase()}/api/collections/users${path}`, {
       ...init,
       headers: { 'content-type': 'application/json', ...init.headers },
     });
