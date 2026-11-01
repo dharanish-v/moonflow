@@ -15,5 +15,8 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     globals: true,
     include: ['src/**/*.test.{ts,tsx}', 'build/**/*.test.ts', 'integration/**/*.test.ts'],
+    // PBKDF2, axe and the sync integration tests are CPU-heavy; under load the
+    // 5 s default timed out tests whose findBy* alone may wait 5 s (setup.ts).
+    testTimeout: 20_000,
   },
 });
